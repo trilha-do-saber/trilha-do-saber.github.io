@@ -64,14 +64,23 @@ const store={
 function trimSessions(map){const arr=Object.values(map).sort((a,b)=>b.start-a.start).slice(0,300);const o={};arr.forEach(s=>o[s.id]=s);return o}
 const aiOn=()=>!!(API.url&&API.aiReady);
 
-/* ATUALIZAÇÃO: o app confere se há versão nova publicada e oferece o botão "Atualizar agora".
+/* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
+   (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, mostra o botão.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v14';
+const APP_VERSAO='trilha-v15';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
-    if(j.versao&&j.versao!==APP_VERSAO){novaVersao=j.versao;mostrarAtualizacao()}else return false}catch(e){return null}
+    if(j.versao&&j.versao!==APP_VERSAO){novaVersao=j.versao;atualizarSePuder()}else return false}catch(e){return null}
   return true;
+}
+function atualizarSePuder(){
+  if(!novaVersao)return;
+  if(R||S.view==='parent'||S.view==='pin')return;           // no meio de lição ou na área dos pais: espera
+  const t=LS.get('updTent',{});
+  if(t.v===novaVersao&&Date.now()-t.ts<120000){mostrarAtualizacao();return} // já tentou há pouco: oferece o botão
+  LS.set('updTent',{v:novaVersao,ts:Date.now()});
+  toast('Atualizando o app…');atualizarApp();
 }
 function mostrarAtualizacao(){
   if(document.getElementById('upd'))return;
@@ -343,6 +352,7 @@ function roteiroHTML(r){
 }
 function renderMap(){
   S.view='map';
+  if(novaVersao)setTimeout(atualizarSePuder,300);
   const rotOn=S.config.roteiro!==false,rot=rotOn?roteiro():null,livre=!rotOn||rot.done||S.config.livreDepois===false;
   if(rot&&rot.done&&!LS.get('rotCel:'+today(),false)){LS.set('rotCel:'+today(),true);setTimeout(()=>{confetti();speak('Roteiro completo! Agora é tempo livre.')},300)}
   const goalMs=S.config.goal*60000,tm=todayMs(),pct=Math.min(100,Math.round(tm/goalMs*100));
