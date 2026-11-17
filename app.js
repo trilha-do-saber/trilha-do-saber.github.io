@@ -76,7 +76,8 @@ function chosenVoice(){const vs=ptVoices(),pref=LS.get('voiceName','');return vs
 function voiceStatus(){if(!hasWebSpeech())return 'nenhuma voz neste navegador';const v=chosenVoice();return v?v.name:'voz padrão do aparelho'}
 function voiceControls(){
   const vs=ptVoices(),cur=chosenVoice(),rate=LS.get('voiceRate',.95);
-  if(!vs.length)return `<p class="muted" style="font-size:14px;margin:0">Voz: ${esc(voiceStatus())}</p>`;
+  const android=/android/i.test(navigator.userAgent);
+  if(vs.length<2)return `<p class="muted" style="font-size:14px;margin:0">Voz: ${esc(voiceStatus())}</p>`+(android?`<div class="note">Neste celular/tablet Android, o navegador usa a voz do sistema. Para trocar: <b>Configurações → Acessibilidade (ou Gerenciamento geral) → Saída de texto para voz</b> → escolha <b>Serviços de fala do Google</b> → engrenagem → <b>Instalar dados de voz → Português (Brasil)</b> → escolha a voz e baixe em qualidade alta. Depois feche e abra o app.</div>`:'');
   return `<div class="form"><label for="cf-voice">Voz (deste aparelho)<select id="cf-voice" style="height:48px;border-radius:12px;border:2px solid #D5DDEE;padding:0 10px;font:inherit;font-size:16px;color:var(--ink);background:#fff">
     ${vs.map(v=>`<option value="${esc(v.name)}" ${cur&&v.name===cur.name?'selected':''}>${esc(v.name)}${/natural|neural|online|premium|enhanced|aprimorad/i.test(v.name)?' ★':''}</option>`).join('')}</select></label>
     <label for="cf-rate">Velocidade da fala: <span id="ratev">${Math.round(rate*100)}%</span><input id="cf-rate" type="range" min="0.7" max="1.2" step="0.05" value="${rate}"></label></div>

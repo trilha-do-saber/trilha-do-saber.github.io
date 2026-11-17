@@ -1,6 +1,6 @@
 /* Trilha do Saber · funciona sem internet.
    Ao publicar uma versão nova, troque o número abaixo para o tablet baixar tudo de novo. */
-const VERSAO = 'trilha-v2';
+const VERSAO = 'trilha-v3';
 const ARQUIVOS = ['./', 'index.html', 'conteudo.js', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {
