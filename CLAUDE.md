@@ -18,5 +18,8 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - Nada de personagens, músicas ou textos protegidos por direitos autorais. Na trilha Memória, só letras originais ou cantigas de domínio público.
 - Nunca colocar nome, escola ou dados pessoais dela no repositório, que é público.
 
+## Memória CC
+A trilha Memória é montada em tempo real por `buildMemoria()` (em `conteudo.js`), a partir da aba privada `MemoriaCC` da planilha, com as colunas ciclo, semana, materia e texto. O Pedro digita ali as frases do livro Foundations, que a família possui. **Nunca copie essas frases para o repositório nem para mensagens de commit.** Elas são material protegido do Classical Conversations. A rotina pode ler a aba só para avaliar o desempenho (habilidades "Memória · ...") e pode melhorar o código das atividades.
+
 ## Dados de desempenho
 Planilha "Trilha do Saber - Dados", ID `1lqJ3i7vUyY1xGPtDd9xEvWAtQ17XABTrS9iMZT2_z1E`, lida pelo conector Google Sheets. Aba `Sessoes`: colunas A a M, com o JSON da sessão na coluna N. Aba `Respostas`: habilidade, pergunta, respondeu, certo, acertou, tempoSeg e tipoErro.

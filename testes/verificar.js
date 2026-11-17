@@ -4,6 +4,17 @@ const fs=require('fs'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'..','conteudo.js'),'utf8');
 const ctx={};new Function('ctx',src+';ctx.GEN=GEN;ctx.LESSONS=LESSONS;ctx.SUBJECTS=SUBJECTS;')(ctx);
 const {GEN,LESSONS,SUBJECTS}=ctx;const erros=[];
+/* Memória: testa o construtor com frases de exemplo inventadas (as reais ficam só na planilha da família) */
+const EXEMPLO=[{ciclo:'1',semana:1,materia:'História',texto:'Pedro Álvares Cabral chegou ao Brasil em 1500.'},{ciclo:'1',semana:1,materia:'Ciências',texto:'As plantas precisam de luz, água e ar.'},
+  {ciclo:'1',semana:2,materia:'Geografia',texto:'O Brasil fica na América do Sul.'},{ciclo:'1',semana:2,materia:'Matemática',texto:'Dois vezes três é igual a seis.'},{ciclo:'1',semana:3,materia:'Linha do tempo',texto:'Descobrimento, Independência, República.'}];
+const memLessons=new Function('ctx','rows',src+';return buildMemoria(rows).map(l=>({l,gens:[...new Set([...l.practice,...l.quiz])].map(k=>[k,GEN[k]])}))')(ctx,EXEMPLO);
+if(memLessons.length!==4)erros.push('memória: esperava 4 lições, veio '+memLessons.length);
+for(const {l,gens} of memLessons)for(const [k,g] of gens){if(!g){erros.push('memória: gerador faltando '+k);continue}
+  for(let i=0;i<300;i++){const q=g();if(!q){erros.push('memória: questão nula em '+k);break}
+    if(q.kind==='syll'){if(q.parts.join('')!==q.word){erros.push('memória: ordem inconsistente');break}continue}
+    if(q.options.filter(o=>o.ok).length!==1||new Set(q.options.map(o=>o.label)).size!==q.options.length){erros.push(`memória: opções ruins em ${k} ${JSON.stringify(q.options.map(o=>o.label))}`);break}}}
+if(buildMemoriaVazio())erros.push('memória: planilha vazia deveria gerar 0 lições');
+function buildMemoriaVazio(){return new Function(src+';return buildMemoria([]).length')()}
 const ids=new Set();
 for(const l of LESSONS){
   if(ids.has(l.id))erros.push('id repetido: '+l.id);ids.add(l.id);

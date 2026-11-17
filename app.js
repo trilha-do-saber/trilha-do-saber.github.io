@@ -38,6 +38,7 @@ const store={
       if(d.progress&&d.progress.lessons){const loc=(LS.get('progress',{lessons:{}}).lessons)||{};const srv=d.progress.lessons;
         for(const id in srv){const a=loc[id]||{},b=srv[id];loc[id]={...b,...a,stars:Math.max(a.stars||0,b.stars||0),best:Math.max(a.best||0,b.best||0),tries:Math.max(a.tries||0,b.tries||0)}}
         LS.set('progress',{lessons:loc})}
+      if(Array.isArray(d.memoria))LS.set('memoria',d.memoria);
       if(Array.isArray(d.sessions)){const map=LS.get('sessions',{});d.sessions.forEach(s=>s&&s.id&&mergeSession(map,s));LS.set('sessions',trimSessions(map))}
       API.aiReady=!!d.aiReady;LS.set('aiReady',API.aiReady);this.synced=true;
     }catch(e){console.warn('sem sincronizar',e)}
@@ -195,8 +196,8 @@ function renderQ(){
 }
 function drawSyl(){
   const q=R.q,sy=R.syl;
-  document.getElementById('sa').innerHTML=sy.picked.length?`<span class="big" style="font-size:52px;letter-spacing:2px">${sy.picked.map(i=>q.parts[i]).join('')}</span>`:'<span class="muted">Toque nas sílabas abaixo</span>';
-  document.getElementById('stiles').innerHTML=sy.order.map(i=>`<button class="btn" style="font-size:30px;min-width:96px;background:var(--sun);box-shadow:0 4px 0 #C27C00" data-act="sylPick" data-arg="${i}" ${sy.picked.includes(i)?'disabled':''}>${q.parts[i]}</button>`).join('');
+  document.getElementById('sa').innerHTML=sy.picked.length?`<span class="big" style="font-size:${q.small?26:52}px;letter-spacing:${q.small?0:2}px;line-height:1.3">${sy.picked.map(i=>q.parts[i]).join('')}</span>`:'<span class="muted">Toque nas sílabas abaixo</span>';
+  document.getElementById('stiles').innerHTML=sy.order.map(i=>`<button class="btn" style="font-size:${q.small?20:30}px;min-width:96px;background:var(--sun);box-shadow:0 4px 0 #C27C00" data-act="sylPick" data-arg="${i}" ${sy.picked.includes(i)?'disabled':''}>${q.parts[i]}</button>`).join('');
 }
 function drawBuild(){
   document.getElementById('ba').innerHTML=(R.build.t||R.build.u)?blocksHTML(R.build.t,R.build.u):'<span class="muted">Toque nos botões para montar</span>';
@@ -413,7 +414,7 @@ async function exportData(){
    AÇÕES
    ========================================================= */
 const ACT={
-  subj(id){const s=SUBJECTS.find(x=>x.id===id);if(s&&s.ready){S.subject=id;try{localStorage.setItem('ts:subject',id)}catch(e){}renderMap()}else{toast(s.nome+' chega em breve!');speak(s.nome+' chega em breve!')}},
+  subj(id){const s=SUBJECTS.find(x=>x.id===id);if(s&&s.ready){S.subject=id;try{localStorage.setItem('ts:subject',id)}catch(e){}renderMap()}else if(s&&s.id==='mem'){toast('Peça para o papai colocar as frases da semana na planilha.')}else{toast(s.nome+' chega em breve!');speak(s.nome+' chega em breve!')}},
   locked(){toast('Ganhe pelo menos 1 estrela na lição anterior para abrir esta.');speak('Termine a lição anterior para abrir esta.')},
   open(i){startLesson(+i)},
   home(){if(S.view==='lesson'||R)leaveLesson();else renderMap()},
@@ -454,6 +455,13 @@ async function loadState(){
   if(cfg)S.config={...S.config,...cfg};
   if(prog&&prog.lessons)S.progress=prog.lessons;
   S.sessions=sess||[];
+  applyMemoria(LS.get('memoria',[]));
+}
+function applyMemoria(rows){
+  const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;
+  let L=[];try{L=buildMemoria(rows)}catch(e){console.warn('memória',e)}
+  for(let i=LESSONS.length-1;i>=0;i--)if(LESSONS[i].subject==='Memória')LESSONS.splice(i,1);
+  LESSONS.push(...L);subj.lessons=L;subj.ready=L.length>0;subj.nome='Memória CC';subj.ano=L.length?`${L.length} lições`:'em breve';
 }
 (async function init(){
   await loadState();renderMap();           // abre na hora com os dados do aparelho

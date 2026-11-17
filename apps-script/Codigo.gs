@@ -18,6 +18,7 @@ function configurar() {
   criarAba_(ss, 'Sessoes', ['id', 'data', 'inicio', 'fim', 'minutosAtivos', 'materia', 'licao', 'etapa', 'desafio', 'total', 'estrelas', 'ajudasIA', 'nRespostas', 'json']);
   criarAba_(ss, 'Respostas', ['sessaoId', 'quando', 'materia', 'licao', 'etapa', 'habilidade', 'pergunta', 'respondeu', 'certo', 'acertou', 'tempoSeg', 'tipoErro', 'tentativa']);
   criarAba_(ss, 'Estado', ['chave', 'json', 'atualizado']);
+  criarAba_(ss, 'MemoriaCC', ['ciclo', 'semana', 'materia', 'texto']);
 
   if (!PROPS.getProperty('TOKEN')) PROPS.setProperty('TOKEN', Utilities.getUuid().replace(/-/g, ''));
   if (!PROPS.getProperty('HORA_ALERTA')) PROPS.setProperty('HORA_ALERTA', '19');
@@ -32,6 +33,19 @@ function configurar() {
 
   Logger.log('Pronto! Seu TOKEN secreto é: ' + PROPS.getProperty('TOKEN'));
   Logger.log('Alertas vão para: ' + PROPS.getProperty('EMAIL_ALERTA') + ' às ' + PROPS.getProperty('HORA_ALERTA') + 'h');
+}
+
+/** Rode uma vez para criar a aba MemoriaCC (sem mexer nos alertas). */
+function criarAbaMemoria() {
+  criarAba_(SpreadsheetApp.getActiveSpreadsheet(), 'MemoriaCC', ['ciclo', 'semana', 'materia', 'texto']);
+}
+
+function lerMemoria_() {
+  const sh = aba_('MemoriaCC');
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues()
+    .filter(r => String(r[3]).trim())
+    .map(r => ({ ciclo: String(r[0]), semana: Number(r[1]) || 0, materia: String(r[2]), texto: String(r[3]) }));
 }
 
 function criarAba_(ss, nome, cab) {
@@ -138,7 +152,7 @@ function getAll_() {
       .map(r => { try { return JSON.parse(r[0]); } catch (e) { return null; } })
       .filter(Boolean);
   }
-  return { config: lerEstado_('config'), progress: lerEstado_('progress'), sessions: sessoes, aiReady: !!PROPS.getProperty('GEMINI_KEY') };
+  return { config: lerEstado_('config'), progress: lerEstado_('progress'), sessions: sessoes, memoria: lerMemoria_(), aiReady: !!PROPS.getProperty('GEMINI_KEY') };
 }
 
 function dataHora_(ms) {
