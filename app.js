@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v19';
+const APP_VERSAO='trilha-v20';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -281,7 +281,14 @@ function ccProxima(ciclo){const m=ccSemanas()[ciclo];return m&&m.size?Math.min(2
 function ccSectionHTML(){
   const sem=ccSemanas(),ciclo=CCD?CCD.ciclo:(Object.keys(sem).sort().pop()||'1'),semana=CCD?CCD.semana:ccProxima(ciclo);
   const lista=Object.keys(sem).sort().map(c=>`Ciclo ${c}: semana${sem[c].size>1?'s':''} ${[...sem[c]].sort((a,b)=>a-b).join(', ')}`).join(' · ');
-  return `<div class="sec"><h2>🎵 Memória CC: nova semana</h2><div class="card col">
+  const dm=ts=>new Date(ts).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'}),nomeK=k=>{const[c,s]=k.split('|');return `ciclo ${c}, semana ${s}`};
+  const M=MEMINFO,atual=M.lib[M.lib.length-1];
+  const fila=!M.ks.length?'':`<div class="note" style="margin:0">📅 Liberadas: <b>${M.lib.length} de ${M.ks.length}</b> semana${M.ks.length>1?'s':''}.
+    ${atual?` Semana atual: ${nomeK(atual.k)}${atual.em?`, prazo até ${dm(atual.em+6*864e5)}`:''}${memConcluida(atual.k)?' ✅ concluída':''}.`:''}
+    ${M.prox?(M.proxEm?` Próxima (${nomeK(M.prox)}) abre ${dm(M.proxEm)}.`:` Próxima (${nomeK(M.prox)}) abre na segunda-feira depois que ela concluir a semana atual.`)+` <button class="btn small ghost" data-act="ccforcar" style="min-height:36px;margin-left:6px">Liberar agora</button>`
+      :' Não há semana guardada na fila: cadastre a próxima para ela abrir na segunda.'}</div>`;
+  return `<div class="sec"><h2>🎵 Memória CC: semanas</h2><div class="card col">${fila}
+    <p class="muted" style="margin:0;font-size:15px">Pode cadastrar várias semanas de uma vez: elas ficam guardadas e abrem uma por semana, sempre na segunda-feira.</p>
     <p class="muted" style="margin:0;font-size:15px">Fotografe a página da semana no livro Foundations. A IA lê, você confere e salva. As frases ficam só na sua planilha.</p>
     ${lista?`<div class="pill mid" style="align-self:flex-start">${esc(lista)}</div>`:''}
     <div class="form">
@@ -324,7 +331,7 @@ async function ccSalvar(btn){
     const rows=LS.get('memoria',[]).filter(r=>!(String(r.ciclo)===CCD.ciclo&&Number(r.semana)===CCD.semana));
     itens.forEach(x=>rows.push({ciclo:CCD.ciclo,semana:CCD.semana,materia:x.materia,texto:x.texto}));
     LS.set('memoria',rows);applyMemoria(rows);
-    toast(`Semana ${CCD.semana} salva! A Memória CC vai acender na tela dela.`);CCD=null;renderParent();
+    toast(MEMINFO.lib.some(x=>x.k===memChave(CCD))?`Semana ${CCD.semana} salva! A Memória CC vai acender na tela dela.`:`Semana ${CCD.semana} guardada. Ela abre sozinha quando chegar a vez dela.`);CCD=null;renderParent();
   }catch(e){btn.disabled=false;toast('Não consegui salvar: '+((e&&e.code)||'sem internet')+'. Tente de novo.')}
 }
 /* ---- Roteiro do dia ---- */
@@ -542,7 +549,7 @@ Regras: no máximo 2 frases curtas; palavras simples; português do Brasil; use 
 function finishLesson(){
   const total=R.items.length,ok=R.quizOk,stars=ok>=total?3:ok>=total-1?2:ok>=total-2?1:0;
   if(R.lesson.id!=='aquecimento'){const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
-    p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();
+    p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();if(p.stars>=1&&!p.passouEm)p.passouEm=Date.now();
     S.progress[R.lesson.id]=p;saveProgress();}
   S.session.quizScore=ok;S.session.stars=stars;S.session.phaseReached='done';
   const done=S.session;flushSession().then(()=>{S.sessions=[done,...S.sessions.filter(s=>s.id!==done.id)]});
@@ -785,6 +792,7 @@ const ACT={
   ccdel(i){ccSync();CCD.itens.splice(+i,1);ccRedraw()},
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
+  ccforcar(){if(!MEMINFO.prox)return;S.config.ccForcar=[...new Set([...(S.config.ccForcar||[]),MEMINFO.prox])];saveConfig();applyMemoria(LS.get('memoria',[]));toast('Semana liberada na tela dela.');renderParent()},
   parent(){renderPin()},
   pk(d){pinKey(d)},
   pdel(){pinKey('del')},
@@ -811,9 +819,28 @@ async function loadState(){
   applyFundo();
   try{aplicarRendimento()}catch(e){console.warn(e)}
 }
+/* LIBERAÇÃO SEMANAL DA MEMÓRIA CC: o Pedro pode cadastrar várias semanas de uma vez.
+   A 1ª fica aberta; cada semana seguinte abre na segunda-feira depois que ela concluir (1 estrela) a anterior.
+   Semanas que ela já começou continuam abertas, e o Pedro pode liberar a próxima na hora pela área dos pais. */
+function proxSegunda(ts){const d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()+(((8-d.getDay())%7)||7));return d.getTime()}
+const memChave=r=>(String(r.ciclo||'').trim()||'1')+'|'+(Number(r.semana)||0);
+const memIdDe=k=>{const[c,s]=k.split('|');return `mem-c${c}-s${s}`};
+const memConcluida=k=>{const p=S.progress[memIdDe(k)]||{};return (p.stars||0)>=1?(p.passouEm||p.lastAt||1):null};
+function memLiberacao(rows){
+  const ks=[...new Set((rows||[]).filter(r=>r&&r.texto&&String(r.texto).trim()).map(memChave))].sort((a,b)=>{const[ca,sa]=a.split('|'),[cb,sb]=b.split('|');return ca===cb?sa-sb:ca.localeCompare(cb)});
+  const lib=[];let i=0;
+  for(;i<ks.length;i++){const k=ks[i],p=S.progress[memIdDe(k)]||{};
+    if(i===0||p.tries||(S.config.ccForcar||[]).includes(k)){lib.push({k,em:null});continue}
+    const q=memConcluida(ks[i-1]);if(q&&Date.now()>=proxSegunda(q)){lib.push({k,em:proxSegunda(q)});continue}
+    break}
+  const q=ks[i]?memConcluida(ks[i-1]):null;
+  return {ks,lib,prox:ks[i]||null,proxEm:q?proxSegunda(q):null};
+}
+let MEMINFO={ks:[],lib:[],prox:null,proxEm:null};
 function applyMemoria(rows){
   const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;
-  let L=[];try{L=buildMemoria(rows)}catch(e){console.warn('memória',e)}
+  MEMINFO=memLiberacao(rows);const abertas=new Set(MEMINFO.lib.map(x=>x.k));
+  let L=[];try{L=buildMemoria((rows||[]).filter(r=>r&&abertas.has(memChave(r))))}catch(e){console.warn('memória',e)}
   for(let i=LESSONS.length-1;i>=0;i--)if(LESSONS[i].subject==='Memória')LESSONS.splice(i,1);
   LESSONS.push(...L);subj.lessons=L;subj.ready=L.length>0;subj.nome='Memória CC';subj.ano=L.length?`${L.length} lições`:'em breve';
 }
