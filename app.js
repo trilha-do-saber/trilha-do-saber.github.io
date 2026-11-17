@@ -133,7 +133,8 @@ function saveConfig(){return store.set('config/main',S.config)}
 function starHTML(n){return '<span class="stars">'+[1,2,3].map(i=>`<span class="${i<=n?'':'off'}">⭐</span>`).join('')+'</span>'}
 const curSubj=()=>SUBJECTS.find(s=>s.id===S.subject)||SUBJECTS[0];
 const curLessons=()=>curSubj().lessons;
-function unlocked(i){const L=curLessons();return S.config.unlockAll||i===0||((S.progress[L[i-1].id]||{}).stars||0)>=1}
+const memNovas=()=>LESSONS.filter(l=>l.subject==='Memória'&&l.id!=='mem-mestre'&&!((S.progress[l.id]||{}).tries));
+function unlocked(i){const L=curLessons();if(curSubj().id==='mem')return true;return S.config.unlockAll||i===0||((S.progress[L[i-1].id]||{}).stars||0)>=1}
 /* ---- missão, aquecimento, leitura, potes ---- */
 const weekIdx=()=>Math.floor((Date.now()-new Date(2026,0,5).getTime())/6048e5);
 const missaoAtual=()=>MISSOES[((weekIdx()%MISSOES.length)+MISSOES.length)%MISSOES.length];
@@ -161,6 +162,59 @@ function potesHTML(){const p=potes();if(!p)return '<div class="mini"><span class
   const pct=p.metaValor?Math.min(100,Math.round((p.guardar||0)/p.metaValor*100)):0;
   return `<div class="card col" style="margin-bottom:14px"><div class="potes"><span>🛍️<b>Gastar</b>R$ ${p.gastar||0}</span><span>🐷<b>Guardar</b>R$ ${p.guardar||0}</span><span>💝<b>Doar</b>R$ ${p.doar||0}</span></div>
     ${p.metaNome?`<div><div class="row" style="justify-content:space-between"><span>Meta: ${esc(p.metaNome)}</span><span>R$ ${p.guardar||0} de R$ ${p.metaValor}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`:''}</div>`}
+/* ---- Memória CC: cadastro por foto ---- */
+let CCD=null;
+function ccSemanas(){const rows=LS.get('memoria',[]),m={};rows.forEach(r=>{const k=String(r.ciclo||'1');(m[k]=m[k]||new Set()).add(Number(r.semana))});return m}
+function ccProxima(ciclo){const m=ccSemanas()[ciclo];return m&&m.size?Math.min(24,Math.max(...m)+1):1}
+function ccSectionHTML(){
+  const sem=ccSemanas(),ciclo=CCD?CCD.ciclo:(Object.keys(sem).sort().pop()||'1'),semana=CCD?CCD.semana:ccProxima(ciclo);
+  const lista=Object.keys(sem).sort().map(c=>`Ciclo ${c}: semana${sem[c].size>1?'s':''} ${[...sem[c]].sort((a,b)=>a-b).join(', ')}`).join(' · ');
+  return `<div class="sec"><h2>🎵 Memória CC: nova semana</h2><div class="card col">
+    <p class="muted" style="margin:0;font-size:15px">Fotografe a página da semana no livro Foundations. A IA lê, você confere e salva. As frases ficam só na sua planilha.</p>
+    ${lista?`<div class="pill mid" style="align-self:flex-start">${esc(lista)}</div>`:''}
+    <div class="form">
+      <label for="cc-ciclo">Ciclo<select id="cc-ciclo" class="sel">${['1','2','3'].map(c=>`<option ${c===ciclo?'selected':''}>${c}</option>`).join('')}</select></label>
+      <label for="cc-semana">Semana<input id="cc-semana" type="number" min="1" max="24" value="${semana}"></label>
+      <label for="cc-fotos">Fotos da página (até 4)<input id="cc-fotos" type="file" accept="image/*" capture="environment" multiple></label>
+    </div>
+    <div class="row"><button class="btn small" data-act="ccler">📷 Ler fotos com IA</button><button class="btn small ghost" data-act="ccmanual">Digitar à mão</button><span class="muted" style="font-size:14px" id="cc-status"></span></div>
+    <div id="ccdraft">${ccDraftHTML()}</div>
+  </div></div>`;
+}
+function ccDraftHTML(){
+  if(!CCD)return '';
+  return `<div class="col" style="gap:10px"><b>Confira as frases da semana ${CCD.semana} (ciclo ${CCD.ciclo}):</b>
+    ${CCD.itens.map((x,i)=>`<div class="ccrow"><input class="cc-m" aria-label="Matéria" value="${esc(x.materia)}" maxlength="40"><textarea class="cc-t" aria-label="Frase" rows="2">${esc(x.texto)}</textarea><button class="btn small ghost" data-act="ccdel" data-arg="${i}" aria-label="Remover">✕</button></div>`).join('')}
+    <div class="row"><button class="btn small ghost" data-act="ccadd">+ Linha</button><button class="btn small okb" data-act="ccsalvar">Salvar semana</button><button class="btn small ghost" data-act="cccancel">Cancelar</button></div></div>`;
+}
+function ccSync(){if(!CCD)return;const ms=[...document.querySelectorAll('.cc-m')],ts=[...document.querySelectorAll('.cc-t')];CCD.itens=ms.map((m,i)=>({materia:m.value.trim(),texto:(ts[i]||{}).value||''}))}
+function ccRedraw(){const d=document.getElementById('ccdraft');if(d)d.innerHTML=ccDraftHTML()}
+function ccLerCampos(){const c=document.getElementById('cc-ciclo').value,sm=Math.max(1,Math.min(24,parseInt(document.getElementById('cc-semana').value,10)||1));return {ciclo:c,semana:sm}}
+function lerImagem(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{const mx=1600,sc=Math.min(1,mx/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.82).split(',')[1])};img.onerror=rej;img.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+async function ccLer(btn){
+  const st=document.getElementById('cc-status'),files=[...(document.getElementById('cc-fotos').files||[])].slice(0,4),{ciclo,semana}=ccLerCampos();
+  if(!files.length){toast('Escolha ou tire pelo menos uma foto.');return}
+  if(!aiOn()){toast('A IA não está ativa. Confira a conexão com a planilha e a chave do Gemini.');return}
+  btn.disabled=true;st.textContent='Preparando as fotos…';
+  try{const imagens=await Promise.all(files.map(lerImagem));st.textContent='A IA está lendo a página…';
+    const r=await api('lerFotoCC',{ciclo,semana,imagens});
+    if(!r.itens||!r.itens.length){st.textContent='Não encontrei frases de memorização. Tente uma foto mais nítida e reta.';return}
+    CCD={ciclo,semana,itens:r.itens};st.textContent='Pronto! Confira abaixo e salve.';ccRedraw();
+  }catch(e){st.textContent='Não deu certo: '+(e&&e.code==='limite_ia'?'limite diário de IA atingido':e&&e.code==='sem_conexao'?'sem conexão com a planilha':(e&&e.code)||'erro de conexão')}
+  finally{btn.disabled=false}
+}
+async function ccSalvar(btn){
+  ccSync();const itens=CCD.itens.filter(x=>x.texto.trim()).map(x=>({materia:x.materia||'Memória',texto:x.texto.trim()}));
+  if(!itens.length){toast('Não há frases para salvar.');return}
+  btn.disabled=true;
+  try{await api('salvarMemoria',{ciclo:CCD.ciclo,semana:CCD.semana,itens});
+    const rows=LS.get('memoria',[]).filter(r=>!(String(r.ciclo)===CCD.ciclo&&Number(r.semana)===CCD.semana));
+    itens.forEach(x=>rows.push({ciclo:CCD.ciclo,semana:CCD.semana,materia:x.materia,texto:x.texto}));
+    LS.set('memoria',rows);applyMemoria(rows);
+    toast(`Semana ${CCD.semana} salva! A Memória CC vai acender na tela dela.`);CCD=null;renderParent();
+  }catch(e){btn.disabled=false;toast('Não consegui salvar: '+((e&&e.code)||'sem internet')+'. Tente de novo.')}
+}
 function renderMap(){
   S.view='map';
   const goalMs=S.config.goal*60000,tm=todayMs(),pct=Math.min(100,Math.round(tm/goalMs*100));
@@ -169,7 +223,7 @@ function renderMap(){
   <div class="top"><h1 class="hello">Olá${name}! 👋</h1><div class="spacer"></div>
     <div class="goal card" style="padding:12px 16px"><div class="row" style="justify-content:space-between"><span>Meta de hoje</span><span>${mins(tm)} de ${S.config.goal} min</span></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
   ${!API.url?'<div class="note" style="margin-bottom:12px">Os dados estão salvos só neste aparelho até a planilha ser conectada na área dos pais.</div>':''}
-  <div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'}" data-act="subj" data-arg="${s.id}"><span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
+  <div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'} ${s.id==='mem'&&memNovas().length?'novo':''}" data-act="subj" data-arg="${s.id}">${s.id==='mem'&&memNovas().length?'<span class="badge-novo">NOVO!</span>':''}<span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
   ${(()=>{const wk=warmupKeys().length,m=missaoAtual(),f=missaoFeita(),lv=livrosLidos();return `<div class="cards2">
     ${wk?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
     <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
@@ -177,7 +231,7 @@ function renderMap(){
   <h2 style="font-size:26px;margin-bottom:12px">Trilha de ${curSubj().nome}</h2>
   ${S.subject==='fin'?potesHTML():''}
   <div class="path">${curLessons().map((l,i)=>{const p=S.progress[l.id]||{},ok=unlocked(i);
-    return `<button class="node ${p.stars?'done':''} ${ok?'':'locked'}" data-act="${ok?'open':'locked'}" data-arg="${i}">
+    return `<button class="node ${p.stars?'done':''} ${ok?'':'locked'} ${l.subject==='Memória'&&l.id!=='mem-mestre'&&!p.tries?'novo':''}" data-act="${ok?'open':'locked'}" data-arg="${i}">
       <span class="badge">${ok?l.icone:'🔒'}</span><span class="col" style="gap:4px"><h3>${esc(l.titulo)}</h3>${starHTML(p.stars||0)}</span></button>`}).join('')}</div>
   <div class="parentlink"><button data-act="parent">Área dos pais</button></div>`;
 }
@@ -393,6 +447,7 @@ function renderParent(){
     <div class="row" style="flex-wrap:nowrap"><span style="font-size:40px">${mis.icone}</span><span>${esc(mis.texto)}</span></div>
     <div class="row">${misF?`<span class="pill ok">Feita em ${new Date(misF.ts).toLocaleDateString('pt-BR')}</span>`:'<button class="btn small okb" data-act="missaook">Marcar como feita</button>'}<span class="muted" style="font-size:14px">A missão muda toda segunda-feira.</span></div>
   </div></div>
+  ${ccSectionHTML()}
   <div class="sec"><h2>🐷 Potes de dinheiro</h2><div class="card col">
     <p class="muted" style="margin:0;font-size:15px">Quanto ela tem em cada pote. A meta aparece para ela na trilha Dinheiro.</p>
     <div class="form">
@@ -520,6 +575,12 @@ const ACT={
     store.setDiario({id:'l-'+Date.now().toString(36),tipo:'leitura',data:today(),ts:Date.now(),livro:livro.slice(0,80),minutos:Math.max(1,Math.min(180,parseInt(document.getElementById('lt-min').value,10)||15)),
       quem:document.getElementById('lt-quem').value,recontou:document.getElementById('lt-reconto').checked,gostou:+document.getElementById('lt-gostou').value});
     toast('Leitura registrada!');renderParent()},
+  ccler(_,el){ccLer(el)},
+  ccmanual(){const c=ccLerCampos();CCD={...c,itens:[{materia:'História',texto:''}]};ccRedraw()},
+  ccadd(){ccSync();CCD.itens.push({materia:'',texto:''});ccRedraw()},
+  ccdel(i){ccSync();CCD.itens.splice(+i,1);ccRedraw()},
+  cccancel(){CCD=null;ccRedraw()},
+  ccsalvar(_,el){ccSalvar(el)},
   potes(){const n=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
     store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),gastar:n('pt-g'),guardar:n('pt-u'),doar:n('pt-d'),metaNome:document.getElementById('pt-mn').value.trim().slice(0,40),metaValor:n('pt-mv')});
     toast('Potes salvos!');renderParent()},

@@ -83,6 +83,8 @@ function doPost(e) {
       case 'saveConfig': res = comTrava_(() => salvarEstado_('config', p)); break;
       case 'saveDiario': res = comTrava_(() => salvarDiario_(p)); break;
       case 'ai': res = ia_(p); break;
+      case 'lerFotoCC': res = lerFotoCC_(p); break;
+      case 'salvarMemoria': res = comTrava_(() => salvarMemoria_(p)); break;
       default: throw new Error('acao_desconhecida');
     }
     return json_({ ok: true, data: res });
@@ -188,33 +190,82 @@ function dataHora_(ms) {
 
 /* ===================== IA (GEMINI, OPCIONAL) ===================== */
 
-function ia_(p) {
-  if (!PROPS.getProperty('GEMINI_KEY')) throw new Error('ia_nao_configurada');
+function contarUsoIA_() {
   const hoje = Utilities.formatDate(new Date(), FUSO, 'yyyy-MM-dd');
   const chave = 'IA_USO_' + hoje;
   const uso = Number(PROPS.getProperty(chave) || 0);
   if (uso >= LIMITE_IA_POR_DIA) throw new Error('limite_ia');
   PROPS.setProperty(chave, String(uso + 1));
+}
+
+function ia_(p) {
+  if (!PROPS.getProperty('GEMINI_KEY')) throw new Error('ia_nao_configurada');
+  contarUsoIA_();
   const prompt = String(p.prompt || '').slice(0, 12000);
   return { text: gemini_(prompt, p.kind === 'analyze' ? 1500 : 400) };
 }
 
 function gemini_(prompt, maxTokens) {
+  return geminiParts_([{ text: prompt }], maxTokens, false);
+}
+
+function geminiParts_(parts, maxTokens, json) {
   const key = PROPS.getProperty('GEMINI_KEY');
   const modelo = PROPS.getProperty('GEMINI_MODEL') || 'gemini-3.5-flash-lite';
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent';
+  const cfg = { temperature: json ? 0.1 : 0.6, maxOutputTokens: maxTokens || 800 };
+  if (json) cfg.responseMimeType = 'application/json';
   const r = UrlFetchApp.fetch(url, {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { 'x-goog-api-key': key },
-    payload: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: maxTokens || 800 }
-    })
+    payload: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: cfg })
   });
   const j = JSON.parse(r.getContentText());
   if (r.getResponseCode() !== 200) throw new Error('gemini_' + r.getResponseCode() + (j.error ? ': ' + j.error.message : ''));
   const c = j.candidates && j.candidates[0];
   return c && c.content && c.content.parts ? c.content.parts.map(x => x.text || '').join('').trim() : '';
+}
+
+/* ===================== MEMÓRIA CC POR FOTO ===================== */
+
+/** Lê fotos de páginas do livro Foundations (material da família) e devolve as frases por matéria, para o Pedro conferir. */
+function lerFotoCC_(p) {
+  if (!PROPS.getProperty('GEMINI_KEY')) throw new Error('ia_nao_configurada');
+  const imgs = (p.imagens || []).slice(0, 4);
+  if (!imgs.length) throw new Error('sem_imagem');
+  contarUsoIA_();
+  const prompt = 'Estas são fotos de páginas do guia Foundations do Classical Conversations, livro que a família possui, '
+    + 'para uso privado nos estudos da filha. Transcreva fielmente o conteúdo de memorização (memory work) '
+    + 'da semana ' + p.semana + ' do ciclo ' + p.ciclo + ', separado por matéria. '
+    + 'Ignore instruções ao professor, atividades, números de página e textos decorativos. '
+    + 'Use estes nomes de matéria quando couber: História, Geografia, Ciências, Matemática, Inglês, Latim, Linha do tempo. '
+    + 'Se uma matéria tiver várias frases, junte em um só texto. Se não achar a semana pedida, use o conteúdo de memorização visível. '
+    + 'Responda somente JSON no formato {"itens":[{"materia":"História","texto":"..."}]}.';
+  const parts = [{ text: prompt }].concat(imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } })));
+  const txt = geminiParts_(parts, 3000, true);
+  let j;
+  try { j = JSON.parse(txt.replace(/^```(json)?/, '').replace(/```$/, '').trim()); } catch (e) { throw new Error('ia_resposta_invalida'); }
+  const itens = (j.itens || []).filter(x => x && x.texto)
+    .map(x => ({ materia: String(x.materia || 'Memória').slice(0, 40), texto: String(x.texto).slice(0, 800) }));
+  return { itens: itens };
+}
+
+/** Grava (ou substitui) as frases de uma semana na aba MemoriaCC. */
+function salvarMemoria_(p) {
+  const ciclo = String(p.ciclo || '1'), semana = Number(p.semana) || 0;
+  const itens = (p.itens || []).filter(x => x && String(x.texto || '').trim());
+  if (!semana || !itens.length) throw new Error('semana_vazia');
+  let sh = aba_('MemoriaCC');
+  if (!sh) { criarAbasNovas(); sh = aba_('MemoriaCC'); }
+  if (sh.getLastRow() > 1) {
+    const vals = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
+    for (let i = vals.length - 1; i >= 0; i--) {
+      if (String(vals[i][0]) === ciclo && Number(vals[i][1]) === semana) sh.deleteRow(i + 2);
+    }
+  }
+  const linhas = itens.map(x => [ciclo, semana, String(x.materia || 'Memória').slice(0, 40), String(x.texto).trim().slice(0, 800)]);
+  sh.getRange(sh.getLastRow() + 1, 1, linhas.length, 4).setValues(linhas);
+  return { salvas: linhas.length };
 }
 
 /** Rode pelo editor para testar a IA depois de colocar a GEMINI_KEY. */

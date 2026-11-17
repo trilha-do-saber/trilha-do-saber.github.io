@@ -185,6 +185,16 @@ html.fundo body{background:transparent}
 .grade{display:grid;grid-template-columns:repeat(4,64px);gap:4px;background:#D5DDEE;padding:4px;border-radius:12px}
 .grade span{width:64px;height:64px;background:#fff;border-radius:8px;display:grid;place-items:center;font-size:36px}
 .sel{height:48px;border-radius:12px;border:2px solid #D5DDEE;padding:0 10px;font:inherit;font-size:17px;color:var(--ink);background:#fff}
+.subj{position:relative}
+.subj.novo{border-color:var(--sun);animation:brilho 1.4s ease-in-out infinite}
+.badge-novo{position:absolute;top:-9px;right:-6px;background:var(--bad);color:#fff;font-size:12px;font-weight:800;padding:2px 8px;border-radius:99px}
+.node.novo{outline:3px solid var(--sun);animation:brilho 1.4s ease-in-out infinite}
+@keyframes brilho{0%,100%{box-shadow:0 0 0 0 rgba(255,176,32,.8)}50%{box-shadow:0 0 0 12px rgba(255,176,32,0)}}
+.ccrow{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:start}
+.ccrow input,.ccrow textarea{border-radius:12px;border:2px solid #D5DDEE;padding:8px 10px;font:inherit;font-size:16px;color:var(--ink);background:#fff;width:100%}
+.ccrow textarea{resize:vertical;min-height:52px}
+@media (max-width:600px){.ccrow{grid-template-columns:1fr auto}.ccrow input{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.subj.novo,.node.novo{animation:none}}
 @media (max-width:520px){.hello{font-size:28px}.qtext{font-size:25px}.big{font-size:52px}.opt{font-size:34px;min-height:74px}}
 </style>
 </head>
