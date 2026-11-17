@@ -158,10 +158,64 @@ function warmupKeys(){
 const warmupDone=()=>S.sessions.some(x=>x.lessonId==='aquecimento'&&x.date===today()&&x.phaseReached==='done');
 function startWarmup(){const keys=warmupKeys();if(!keys.length){toast('Complete uma lição primeiro.');return}
   startLessonObj({id:'aquecimento',titulo:'Aquecimento do dia',icone:'🔥',subject:'Revisão',slides:[],practice:[],quiz:keys},-1,'Revisão',true)}
-function potesHTML(){const p=potes();if(!p)return '<div class="mini"><span class="ic">🐷</span><span><b>Meus potes</b><small>Peça para o papai cadastrar seus potes de Gastar, Guardar e Investir.</small></span></div>';
-  const pct=p.metaValor?Math.min(100,Math.round((p.guardar||0)/p.metaValor*100)):0;
-  return `<div class="card col" style="margin-bottom:14px"><div class="potes"><span>🛍️<b>Gastar</b>R$ ${p.gastar||0}</span><span>🐷<b>Guardar</b>R$ ${p.guardar||0}</span><span>📈<b>Investir</b>R$ ${p.investir??p.doar??0}</span></div>
-    ${p.metaNome?`<div><div class="row" style="justify-content:space-between"><span>Meta: ${esc(p.metaNome)}</span><span>R$ ${p.guardar||0} de R$ ${p.metaValor}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`:''}</div>`}
+/* ---- Potes: o app faz as contas a partir dos movimentos ---- */
+const POTES=['gastar','guardar','investir'],POTE_IC={gastar:'🛍️',guardar:'🐷',investir:'📈'},POTE_NM={gastar:'Gastar',guardar:'Guardar',investir:'Investir'};
+const brl=v=>{const n=Math.round((v||0)*100)/100;return 'R$ '+(Number.isInteger(n)?String(n):n.toFixed(2).replace('.',','))};
+function potesCfg(){const p=potes()||{};return {ativo:!!potes(),mesada:p.mesada??10,pct:p.pct||{gastar:40,guardar:40,investir:20},cada:p.cada??10,ganha:p.ganha??1,metaNome:p.metaNome||'',metaValor:p.metaValor||0,
+  base:p.base||{gastar:p.gastar||0,guardar:p.guardar||0,investir:p.investir??p.doar??0}}}
+const movs=()=>store.diario().filter(r=>r.tipo==='pote').sort((a,b)=>a.ts-b.ts);
+function saldos(ate){const c=potesCfg(),s={...c.base};movs().filter(m=>!ate||m.ts<ate).forEach(m=>POTES.forEach(k=>{s[k]=Math.round(((s[k]||0)+((m.v||{})[k]||0))*100)/100}));return s}
+function dividir(valor){const c=potesCfg(),v={};const g=Math.floor(valor*c.pct.gastar)/100,u=Math.floor(valor*c.pct.guardar)/100;v.gastar=g;v.guardar=u;v.investir=Math.round((valor-g-u)*100)/100;return v}
+function addMov(op,v,desc){store.setDiario({id:'t-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),tipo:'pote',op,data:today(),ts:Date.now(),v,desc:String(desc||'').slice(0,60)})}
+function aplicarRendimento(){
+  const c=potesCfg();if(!c.ativo||!c.cada||!c.ganha)return;
+  const d=new Date(),ini=new Date(d.getFullYear(),d.getMonth(),1).getTime(),pm=new Date(d.getFullYear(),d.getMonth()-1,1);
+  const key=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0'),id='rend-'+key;
+  if(store.diario().some(r=>r.id===id))return;
+  const bal=saldos(ini).investir,g=Math.floor(bal/c.cada)*c.ganha;if(g<=0)return;
+  store.setDiario({id,tipo:'pote',op:'rendimento',data:today(),ts:ini,v:{investir:g},desc:`Rendimento de ${['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][pm.getMonth()]}`});
+}
+function metaInfo(){const c=potesCfg(),s=saldos();if(!c.metaNome||!c.metaValor)return null;const falta=Math.max(0,c.metaValor-s.guardar),porSem=c.mesada*c.pct.guardar/100;
+  return {pct:Math.min(100,Math.round(s.guardar/c.metaValor*100)),falta,semanas:falta&&porSem?Math.ceil(falta/porSem):0}}
+function movTexto(m){const tot=POTES.reduce((a,k)=>a+((m.v||{})[k]||0),0),ic={mesada:'💵',gasto:'🛍️',entrada:'➕',rendimento:'📈',meta:'🎯'}[m.op]||'•';
+  return `${ic} ${esc(m.desc||m.op)} <b style="color:${tot<0?'var(--bad)':'var(--ok)'}">${tot<0?'−':'+'}${brl(Math.abs(tot))}</b>`}
+function potesParentHTML(){
+  const c=potesCfg(),s=saldos(),mi=metaInfo(),hist=movs().slice(-12).reverse(),p=c.pct;
+  const cfg=`<div class="form">
+      <label for="pc-mesada">Mesada por semana (R$)<input id="pc-mesada" type="number" min="0" step="0.5" value="${c.mesada}"></label>
+      <label for="pc-g">🛍️ Gastar (%)<input id="pc-g" type="number" min="0" max="100" value="${p.gastar}"></label>
+      <label for="pc-u">🐷 Guardar (%)<input id="pc-u" type="number" min="0" max="100" value="${p.guardar}"></label>
+      <label for="pc-i">📈 Investir (%)<input id="pc-i" type="number" min="0" max="100" value="${p.investir}"></label>
+      <label for="pc-ganha">Rendimento: ganha R$<input id="pc-ganha" type="number" min="0" step="0.5" value="${c.ganha}"></label>
+      <label for="pc-cada">… a cada R$ no pote Investir, por mês<input id="pc-cada" type="number" min="1" step="1" value="${c.cada}"></label>
+      <label for="pc-mn">Meta: o que ela quer comprar<input id="pc-mn" type="text" maxlength="40" value="${esc(c.metaNome)}"></label>
+      <label for="pc-mv">Valor da meta (R$)<input id="pc-mv" type="number" min="0" step="0.5" value="${c.metaValor||''}"></label>
+    </div><div class="row"><button class="btn small okb" data-act="ptcfg">${c.ativo?'Salvar configuração':'Ligar os potes'}</button></div>`;
+  if(!c.ativo)return `<div class="sec"><h2>🐷 Potes de dinheiro</h2><div class="card col"><p class="muted" style="margin:0">Configure uma vez. Depois você só registra a mesada e os gastos, e o app faz as contas.</p>${cfg}</div></div>`;
+  return `<div class="sec"><h2>🐷 Potes de dinheiro</h2><div class="card col">
+    <div class="potes">${POTES.map(k=>`<span>${POTE_IC[k]}<b>${POTE_NM[k]}</b>${brl(s[k])}</span>`).join('')}</div>
+    ${mi?`<div><div class="row" style="justify-content:space-between"><span>🎯 ${esc(c.metaNome)}</span><span>${brl(s.guardar)} de ${brl(c.metaValor)} (${mi.pct}%)</span></div><div class="bar"><i style="width:${mi.pct}%"></i></div><small class="muted">${mi.falta?`Faltam ${brl(mi.falta)}, cerca de ${mi.semanas} semana(s) de mesada.`:'Meta alcançada!'}</small></div>`:''}
+    <div class="row"><button class="btn small okb" data-act="ptmesada">💵 Dar mesada (${brl(c.mesada)})</button><span class="muted" style="font-size:14px">Divide sozinho: ${POTES.map(k=>`${POTE_NM[k]} ${brl(dividir(c.mesada)[k])}`).join(' · ')}</span></div>
+    <div class="form">
+      <label for="pt-val">Valor (R$)<input id="pt-val" type="number" min="0" step="0.5"></label>
+      <label for="pt-pote">Pote<select id="pt-pote" class="sel"><option value="auto">Dividir nos 3 potes</option>${POTES.map(k=>`<option value="${k}">${POTE_IC[k]} ${POTE_NM[k]}</option>`).join('')}</select></label>
+      <label for="pt-desc">Descrição<input id="pt-desc" type="text" maxlength="60" placeholder="ex.: figurinha, presente da vó"></label>
+    </div>
+    <div class="row"><button class="btn small" data-act="ptgasto">➖ Ela gastou</button><button class="btn small ghost" data-act="ptentrada">➕ Ela ganhou</button>${mi&&!mi.falta?`<button class="btn small" style="background:var(--sun);box-shadow:0 4px 0 #C27C00" data-act="ptmeta">🎯 Comprou a meta</button>`:''}</div>
+    <p class="muted" style="margin:0;font-size:14px">Gasto sem pote escolhido sai do Gastar. Entrada com "Dividir" segue as porcentagens. O rendimento do mês entra sozinho no dia 1º.</p>
+    ${hist.length?`<div class="tbl"><table><thead><tr><th>Data</th><th>Movimento</th>${POTES.map(k=>`<th class="n">${POTE_IC[k]}</th>`).join('')}</tr></thead><tbody>${hist.map(m=>`<tr><td>${new Date(m.ts).toLocaleDateString('pt-BR')}</td><td>${esc(m.desc||m.op)}</td>${POTES.map(k=>{const x=(m.v||{})[k]||0;return `<td class="n" style="color:${x<0?'var(--bad)':x>0?'var(--ok)':'var(--muted)'}">${x?(x>0?'+':'−')+brl(Math.abs(x)).replace('R$ ',''):'·'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`:''}
+    <details><summary style="cursor:pointer;color:var(--pri)">Configurar mesada, porcentagens, rendimento e meta</summary><div class="col" style="margin-top:10px">${cfg}</div></details>
+  </div></div>`;
+}
+function potesHTML(){
+  const c=potesCfg();if(!c.ativo)return '<div class="mini" style="margin-bottom:14px"><span class="ic">🐷</span><span><b>Meus potes</b><small>Peça para o papai ligar seus potes de Gastar, Guardar e Investir.</small></span></div>';
+  const s=saldos(),mi=metaInfo(),ult=movs().slice(-3).reverse();
+  return `<div class="card col" style="margin-bottom:14px"><div class="potes">${POTES.map(k=>`<span>${POTE_IC[k]}<b>${POTE_NM[k]}</b>${brl(s[k])}</span>`).join('')}</div>
+    ${mi?`<div><div class="row" style="justify-content:space-between"><span>🎯 Meta: ${esc(c.metaNome)}</span><span>${brl(s.guardar)} de ${brl(c.metaValor)}</span></div><div class="bar"><i style="width:${mi.pct}%"></i></div>
+      <small class="muted">${mi.falta?`Faltam ${brl(mi.falta)}: mais ou menos ${mi.semanas} semana${mi.semanas>1?'s':''} de mesada.`:'Você já tem o dinheiro da meta! 🎉'}</small></div>`:''}
+    ${ult.length?`<div class="col" style="gap:4px;font-size:15px">${ult.map(m=>`<span>${movTexto(m)}</span>`).join('')}</div>`:''}</div>`;
+}
+
 /* ---- Memória CC: cadastro por foto ---- */
 let CCD=null;
 function ccSemanas(){const rows=LS.get('memoria',[]),m={};rows.forEach(r=>{const k=String(r.ciclo||'1');(m[k]=m[k]||new Set()).add(Number(r.semana))});return m}
@@ -496,17 +550,7 @@ function renderParent(){
     <div class="row">${misF?`<span class="pill ok">Feita em ${new Date(misF.ts).toLocaleDateString('pt-BR')}</span>`:'<button class="btn small okb" data-act="missaook">Marcar como feita</button>'}<span class="muted" style="font-size:14px">A missão muda toda segunda-feira.</span></div>
   </div></div>
   ${ccSectionHTML()}
-  <div class="sec"><h2>🐷 Potes de dinheiro</h2><div class="card col">
-    <p class="muted" style="margin:0;font-size:15px">Quanto ela tem em cada pote. A meta aparece para ela na trilha Dinheiro.</p>
-    <div class="form">
-      <label for="pt-g">🛍️ Gastar (R$)<input id="pt-g" type="number" min="0" step="0.5" value="${pt.gastar||0}"></label>
-      <label for="pt-u">🐷 Guardar (R$)<input id="pt-u" type="number" min="0" step="0.5" value="${pt.guardar||0}"></label>
-      <label for="pt-d">📈 Investir (R$)<input id="pt-d" type="number" min="0" step="0.5" value="${pt.investir??pt.doar??0}"></label>
-      <label for="pt-mn">Meta: o que ela quer comprar<input id="pt-mn" type="text" maxlength="40" value="${esc(pt.metaNome||'')}"></label>
-      <label for="pt-mv">Valor da meta (R$)<input id="pt-mv" type="number" min="0" step="0.5" value="${pt.metaValor||0}"></label>
-    </div>
-    <div class="row"><button class="btn small okb" data-act="potes">Salvar potes</button></div>
-  </div></div>
+  ${potesParentHTML()}
   <div class="sec"><h2>Análise com IA</h2>
     <div class="row"><button class="btn small" data-act="aianalyze">Gerar análise da semana</button><span class="muted" style="font-size:14px">Envia só números e erros, sem o nome dela.</span></div><div id="aianalysis"></div></div>
   <div class="sec"><h2>Desempenho por habilidade</h2><div class="card tbl">${st.skills.length?`<table><thead><tr><th>Habilidade</th><th>Acerto</th><th class="n">Respostas</th><th class="n">Tempo médio</th></tr></thead><tbody>
@@ -630,15 +674,27 @@ const ACT={
     store.setDiario({id:'l-'+Date.now().toString(36),tipo:'leitura',data:today(),ts:Date.now(),livro:livro.slice(0,80),minutos:Math.max(1,Math.min(180,parseInt(document.getElementById('lt-min').value,10)||15)),
       quem:document.getElementById('lt-quem').value,recontou:document.getElementById('lt-reconto').checked,gostou:+document.getElementById('lt-gostou').value});
     toast('Leitura registrada!');renderParent()},
+  ptcfg(){const n=(id,d)=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?d:Math.max(0,v)};
+    const pct={gastar:Math.round(n('pc-g',40)),guardar:Math.round(n('pc-u',40)),investir:Math.round(n('pc-i',20))};
+    if(pct.gastar+pct.guardar+pct.investir!==100){toast('As porcentagens precisam somar 100%.');return}
+    const old=potes()||{},c=potesCfg();
+    store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),base:c.base,mesada:n('pc-mesada',10),pct,ganha:n('pc-ganha',1),cada:Math.max(1,n('pc-cada',10)),
+      metaNome:document.getElementById('pc-mn').value.trim().slice(0,40),metaValor:n('pc-mv',0)});
+    toast(old.id?'Configuração salva!':'Potes ligados!');renderParent()},
+  ptmesada(){const c=potesCfg();if(!c.mesada){toast('Defina o valor da mesada na configuração.');return}addMov('mesada',dividir(c.mesada),'Mesada');toast('Mesada dividida nos potes!');renderParent()},
+  ptgasto(){const v=parseFloat(document.getElementById('pt-val').value),k0=document.getElementById('pt-pote').value,k=k0==='auto'?'gastar':k0,desc=document.getElementById('pt-desc').value.trim()||'Gasto';
+    if(!(v>0)){toast('Digite o valor.');return}const s=saldos();if(v>s[k]+1e-9){toast(`O pote ${POTE_NM[k]} só tem ${brl(s[k])}.`);return}
+    addMov('gasto',{[k]:-v},desc);toast(`Gasto registrado no pote ${POTE_NM[k]}.`);renderParent()},
+  ptentrada(){const v=parseFloat(document.getElementById('pt-val').value),k=document.getElementById('pt-pote').value,desc=document.getElementById('pt-desc').value.trim()||'Entrada';
+    if(!(v>0)){toast('Digite o valor.');return}addMov('entrada',k==='auto'?dividir(v):{[k]:v},desc);toast('Entrada registrada!');renderParent()},
+  ptmeta(el){const c=potesCfg(),b=document.querySelector('[data-act=ptmeta]');if(b&&!b.dataset.ok){b.dataset.ok='1';b.textContent='Toque de novo para confirmar';return}
+    addMov('meta',{guardar:-c.metaValor},'Comprou: '+c.metaNome);const p=potes();store.setDiario({...p,ts:Date.now(),metaNome:'',metaValor:0});toast('Parabéns pela conquista! Escolham uma meta nova.');renderParent()},
   ccler(_,el){ccLer(el)},
   ccmanual(){const c=ccLerCampos();CCD={...c,itens:[{materia:'História',texto:''}]};ccRedraw()},
   ccadd(){ccSync();CCD.itens.push({materia:'',texto:''});ccRedraw()},
   ccdel(i){ccSync();CCD.itens.splice(+i,1);ccRedraw()},
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
-  potes(){const n=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
-    store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),gastar:n('pt-g'),guardar:n('pt-u'),investir:n('pt-d'),metaNome:document.getElementById('pt-mn').value.trim().slice(0,40),metaValor:n('pt-mv')});
-    toast('Potes salvos!');renderParent()},
   parent(){renderPin()},
   pk(d){pinKey(d)},
   pdel(){pinKey('del')},
@@ -660,6 +716,7 @@ async function loadState(){
   S.sessions=sess||[];
   applyMemoria(LS.get('memoria',[]));
   applyFundo();
+  try{aplicarRendimento()}catch(e){console.warn(e)}
 }
 function applyMemoria(rows){
   const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;

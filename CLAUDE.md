@@ -15,7 +15,7 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - **Aquecimento do dia:** 5 questões sorteadas das lições com estrela, com peso maior para as habilidades com erro nos últimos 14 dias (`warmupKeys` em `app.js`).
 - **Resposta digitada:** os geradores listados no bloco "Contas com resposta digitada" de `conteudo.js` viram teclado numérico (`q.num`). Geradores numéricos novos de contas devem entrar nessa lista.
 - **Missão da semana:** `MISSOES` em `conteudo.js`, uma por semana, feita fora da tela. O Pedro marca na área dos pais. Pode acrescentar missões novas ligadas às lições recentes.
-- **Leitura do dia, estante e potes:** são registrados pelo Pedro na área dos pais e salvos na aba `Diario` da planilha (coluna E = JSON, tipos `leitura`, `missao` e `potes`). As perguntas de leitura ficam em `LEIT_PERGUNTAS`.
+- **Leitura do dia, estante e potes:** são registrados pelo Pedro na área dos pais e salvos na aba `Diario` da planilha (coluna E = JSON; tipos `leitura`, `missao`, `potes` = configuração dos potes e `pote` = cada movimento, com variações em `v.gastar/guardar/investir`; os saldos são a soma dos movimentos, e o rendimento mensal entra sozinho com id `rend-AAAA-MM`). As perguntas de leitura ficam em `LEIT_PERGUNTAS`.
 
 ## Regras do conteúdo
 - Criança de 7 anos: frases curtas, palavras simples, tudo em português do Brasil. A explicação (`explain`) diz o porquê da resposta.

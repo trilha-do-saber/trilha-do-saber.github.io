@@ -140,7 +140,8 @@ function salvarDiario_(r) {
   if (!sh) { criarAbasNovas(); sh = aba_('Diario'); }
   const resumo = r.tipo === 'leitura' ? (r.livro + ' · ' + r.minutos + ' min · ' + r.quem + (r.recontou ? ' · recontou' : ''))
     : r.tipo === 'missao' ? ('Missão feita: ' + r.texto)
-    : r.tipo === 'potes' ? ('Gastar R$ ' + r.gastar + ' · Guardar R$ ' + r.guardar + ' · Investir R$ ' + (r.investir != null ? r.investir : r.doar) + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
+    : r.tipo === 'pote' ? (r.desc + ': ' + Object.keys(r.v || {}).map(k => k + ' ' + (r.v[k] > 0 ? '+' : '') + r.v[k]).join(', '))
+    : r.tipo === 'potes' ? ('Configuração: mesada R$ ' + r.mesada + (r.pct ? ' (' + r.pct.gastar + '/' + r.pct.guardar + '/' + r.pct.investir + '%)' : '') + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
   const linha = [r.id, r.data || '', r.tipo || '', resumo, JSON.stringify(r)];
   const achado = sh.getRange('A:A').createTextFinder(String(r.id)).matchEntireCell(true).findNext();
   if (achado) sh.getRange(achado.getRow(), 1, 1, linha.length).setValues([linha]);
@@ -151,7 +152,7 @@ function salvarDiario_(r) {
 function lerDiario_() {
   const sh = aba_('Diario');
   if (!sh || sh.getLastRow() < 2) return [];
-  const ini = Math.max(2, sh.getLastRow() - 399);
+  const ini = Math.max(2, sh.getLastRow() - 4999);
   return sh.getRange(ini, 5, sh.getLastRow() - ini + 1, 1).getValues()
     .map(x => { try { return JSON.parse(x[0]); } catch (e) { return null; } }).filter(Boolean);
 }
