@@ -67,7 +67,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, mostra o botão.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v16';
+const APP_VERSAO='trilha-v17';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -316,7 +316,7 @@ const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&
 const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n).map(z=>z.start));
 function rotOpcoes(){
   const memOk=(S.config.memDias||[1,3,5]).includes(new Date().getDay())||memNovas().length>0;
-  const pool=SUBJECTS.filter(x=>x.ready&&['cie','fin','log','emo','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
+  const pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','emo','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
   let ops=pool.slice(0,2).map(x=>x.id);
   if(memNovas().length&&pool.some(x=>x.id==='mem')&&!ops.includes('mem'))ops=[ops[0],'mem'];
   return ops;
@@ -417,7 +417,7 @@ function marcarVista(q){
     Object.entries(vistosCache).sort((a,b)=>b[1]-a[1]).forEach(([k,t])=>{if(t>lim&&n<4000){m[k]=t;n++}});vistosCache=m;LS.set('vistos',m)},1500);
 }
 /* ---- Níveis: sobe com 7 acertos em 8 respostas; desce com 3 ou menos em 6 (só primeira tentativa) ---- */
-const HAB_NIVEL=['Antes e depois','Reta numérica','Contar pulando','Somar dezenas e unidades','Subtrair dezenas e unidades','Ler números com blocos'];
+const HAB_NIVEL=['Antes e depois','Reta numérica','Contar pulando','Somar dezenas e unidades','Subtrair dezenas e unidades','Ler números com blocos','Problemas de somar','Problemas de subtrair','Problemas de comparar','Problemas: quanto falta','Grupos iguais','Dobro e metade','Horas no relógio','Medir com régua'];
 function calcNiveis(){
   const ans=S.sessions.flatMap(x=>(x.answers||[])).filter(a=>HAB_NIVEL.includes(a.skill)&&(a.attempt||1)===1).sort((a,b)=>a.ts-b.ts);
   const est={};HAB_NIVEL.forEach(h=>est[h]={n:1,j:[]});

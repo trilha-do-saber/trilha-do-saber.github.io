@@ -672,6 +672,429 @@ POR_LESSONS.splice(POR_LESSONS.findIndex(l=>l.id==='alfabeto')+1,0,
     {t:'O B aparece antes do G no alfabeto. Por isso BOLA vem antes de GATO.',v:'<div class="emo" style="font-size:56px">⚽ → 🐱</div>'}],
    practice:['alfaApoio','letraAntes','alfaApoio','letraDepois','alfaApoio','letraAntes'],quiz:['alfaApoio','primeiraAlf','letraAntes','primeiraAlf','alfaApoio']});
 
+/* ================= LOTE 4 · 17/11/2026 · problemas, horas, formas, medidas, gráficos, textos, História e Geografia ================= */
+const bk=(skill,erro,itens)=>bankGen(skill,itens.map(([q,a,w,e,x])=>({q,a,w,e,x,erro})));
+const pad2=n=>String(n).padStart(2,'0');
+/* ---- Problemas do dia a dia (EF02MA06) ---- */
+const PCOISAS=[['figurinhas','f'],['bolinhas de gude','f'],['adesivos','m'],['lápis de cor','m'],['balas','f'],['carrinhos','m'],['conchinhas','f'],['livros','m']];
+const qt=g=>g==='f'?'quantas':'quantos';
+function probNum(tipo){
+  const sk={juntar:'Problemas de somar',tirar:'Problemas de subtrair',comparar:'Problemas de comparar',falta:'Problemas: quanto falta'}[tipo],L=LIM[nv(sk)];
+  const n=pick(NOMES),[n1,n2]=shuffle(NOMES.slice()).slice(0,2),[c,g]=pick(PCOISAS);let a,b,r,t,cands,dica,expl;
+  if(tipo==='juntar'){a=rnd(2,L-2);b=rnd(2,Math.min(L-a,a>3?a-1:L-a));r=a+b;
+    t=pick([`${cap1(n)} tinha ${a} ${c} e ganhou mais ${b}. ${cap1(qt(g))} ${c} tem agora?`,`Numa sala há ${a} meninas e ${b} meninos. Quantas crianças há na sala?`,
+      `No ônibus havia ${a} pessoas. No ponto, subiram mais ${b}. Quantas pessoas estão no ônibus agora?`,`${cap1(n)} leu ${a} páginas ontem e ${b} páginas hoje. Quantas páginas leu ao todo?`,
+      `Na fruteira há ${a} laranjas e ${b} bananas. Quantas frutas há ao todo?`]);
+    cands=[{v:a-b,type:'subtraiu em vez de somar'},{v:r+1,type:'errou a conta'},{v:r-10,type:'errou nas dezenas'}];dica='Juntar, ganhar ou chegar mais: é conta de mais.';expl=`Juntamos: ${a} + ${b} = ${r}.`}
+  if(tipo==='tirar'){a=rnd(5,L);b=rnd(1,a-1);r=a-b;
+    t=pick([`${cap1(n)} tinha ${a} ${c} e deu ${b} para a irmã. ${cap1(qt(g))} ${c} sobraram?`,`Havia ${a} passarinhos na árvore. ${b} voaram. Quantos ficaram?`,
+      `${cap1(n)} tinha ${a} reais e gastou ${b} reais. Quantos reais sobraram?`,`Uma caixa tinha ${a} ovos. ${b} quebraram. Quantos ovos ficaram inteiros?`,
+      `O livro tem ${a} páginas. ${cap1(n)} já leu ${b}. Quantas páginas faltam para terminar?`]);
+    cands=[{v:a+b,type:'somou em vez de subtrair'},{v:r+1,type:'errou a conta'},{v:b,type:'respondeu a parte que saiu'}];dica='Dar, gastar, perder ou sair: é conta de menos.';expl=`Tiramos: ${a} − ${b} = ${r}.`}
+  if(tipo==='comparar'){a=rnd(4,L);b=rnd(1,a-1);r=a-b;
+    t=pick([`${cap1(n1)} tem ${a} ${c}. ${cap1(n2)} tem ${b}. ${cap1(qt(g))} ${c} ${n1} tem a mais?`,`O prédio azul tem ${a} andares e o verde tem ${b}. Quantos andares o azul tem a mais?`,
+      `Na corrida, ${n1} deu ${a} voltas e ${n2} deu ${b}. Quantas voltas ${n2} deu a menos?`,`Uma caneta custa ${a} reais e um lápis custa ${b} reais. Quantos reais a caneta custa a mais?`]);
+    cands=[{v:a+b,type:'somou em vez de comparar'},{v:a,type:'respondeu o número maior'},{v:r+1,type:'errou a conta'}];dica='Para saber quanto um tem a mais, tire o menor do maior.';expl=`Comparamos tirando o menor do maior: ${a} − ${b} = ${r}.`}
+  if(tipo==='falta'){b=rnd(5,L);a=rnd(1,b-1);r=b-a;
+    t=pick([`${cap1(n)} quer juntar ${b} ${c}. Já tem ${a}. ${cap1(qt(g))} faltam?`,`O álbum tem ${b} figurinhas. ${cap1(n)} já colou ${a}. Quantas faltam para completar?`,
+      `${cap1(n)} quer comprar um jogo de ${b} reais. Já tem ${a} reais. Quantos reais faltam?`,`A turma precisa de ${b} cadeiras. Já tem ${a}. Quantas cadeiras faltam?`]);
+    cands=[{v:a+b,type:'somou em vez de subtrair'},{v:b,type:'respondeu o total'},{v:r+1,type:'errou a conta'}];dica='Quanto falta: comece no que já tem e conte até o total, ou faça total menos o que já tem.';expl=`O total é ${b} e já tem ${a}: ${b} − ${a} = ${r}.`}
+  return{skill:sk,text:t,visual:'',desc:t,options:opts(r,cands),hint:dica,explain:expl,_a:a,_b:b,_r:r,_tipo:tipo};
+}
+Object.assign(GEN,{
+  probJuntar:comoNum(()=>probNum('juntar')),probTirar:comoNum(()=>probNum('tirar')),
+  probComparar:comoNum(()=>probNum('comparar')),probFalta:comoNum(()=>probNum('falta')),
+  probConta(){const tipo=pick(['juntar','tirar','comparar','falta']),p=probNum(tipo),{_a:a,_b:b}=p;
+    const certo=tipo==='juntar'?`${a} + ${b}`:tipo==='falta'?`${b} − ${a}`:`${a} − ${b}`,
+      outros=tipo==='juntar'?[[`${a} − ${b}`,'escolheu menos em vez de mais']]:
+        [[`${a} + ${b}`,'escolheu mais em vez de menos'],[tipo==='falta'?`${a} − ${b}`:`${b} − ${a}`,'inverteu a ordem da conta']];
+    const ops=shuffle([{v:certo,label:certo,ok:true,type:null},...outros.filter(o=>o[0]!==certo).map(([v,type])=>({v,label:v,ok:false,type}))]);
+    return{skill:'Escolher a conta',text:p.text+' Qual conta resolve?',speak:p.text+' Qual conta resolve?',visual:'',desc:'conta: '+p.text,optClass:'txt',options:ops,hint:p.hint,explain:p.explain}},
+});
+/* ---- Dobro, metade e grupos iguais (EF02MA07/08) ---- */
+const GRUPOS=[['🍓','pratos','morangos','em cada prato','m'],['🥚','caixas','ovos','em cada caixa','m'],['🐞','folhas','joaninhas','em cada folha','f'],['🍪','pacotes','biscoitos','em cada pacote','m'],['⚽','sacolas','bolas','em cada sacola','f'],['🐟','aquários','peixes','em cada aquário','m'],['🌸','vasos','flores','em cada vaso','f']];
+const gruposHTML=(g,k,e)=>`<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">${Array(g).fill(`<span style="border:3px dashed var(--pri);border-radius:14px;padding:6px 8px;font-size:26px;max-width:160px;line-height:1.3">${rep(e,k)}</span>`).join('')}</div>`;
+function grupoBase(){const l=nv('Grupos iguais'),g=rnd(2,l===1?5:6),k=rnd(2,l===1?5:l===2?6:10),ctx=pick(GRUPOS);return{g,k,ctx}}
+Object.assign(GEN,{
+  grupos:comoNum(()=>{const{g,k,ctx:[e,pl,it,emc,gen]}=grupoBase(),r=g*k;
+    return{skill:'Grupos iguais',text:`São ${g} ${pl} com ${k} ${it} ${emc}. ${cap1(qt(gen))} ${it} ao todo?`,visual:gruposHTML(g,k,e),desc:`${g} grupos de ${k} ${it}`,
+      options:opts(r,[{v:g+k,type:'somou os grupos com os itens'},{v:r-k,type:'contou um grupo a menos'},{v:r+k,type:'contou um grupo a mais'}]),
+      hint:`Conte de ${k} em ${k}, um grupo de cada vez.`,explain:`${Array(g).fill(k).join(' + ')} = ${r}. ${g} grupos de ${k} dão ${r}.`}}),
+  somaRepetida(){const{g,k,ctx:[e,pl,it]}=grupoBase(),certo=Array(g).fill(k).join(' + ');
+    const cand=[[`${g} + ${k}`,'somou os grupos com os itens'],[Array(g+1).fill(k).join(' + '),'contou um grupo a mais'],[Array(k).fill(g).join(' + '),'trocou grupos e itens']];
+    const ops=[{v:certo,label:certo,ok:true,type:null}];for(const [v,type] of cand)if(ops.length<3&&!ops.some(o=>o.label===v))ops.push({v,label:v,ok:false,type});
+    return{skill:'Grupos iguais',text:`Qual conta mostra ${g} ${pl} com ${k} ${it} cada?`,visual:gruposHTML(g,k,e),desc:`conta de ${g} grupos de ${k} ${it}`,optClass:'txt',options:shuffle(ops),
+      hint:'Cada grupo vira um número na conta. Quantos grupos? Quantos em cada um?',explain:`São ${g} grupos, e cada um tem ${k}: ${certo}.`}},
+  dobro:comoNum(()=>{const l=nv('Dobro e metade'),n=rnd(2,l===1?10:l===2?25:45),r=2*n;
+    return{skill:'Dobro e metade',text:`Qual é o dobro de ${n}?`,visual:n<=10?`<div class="emo">${rep('🔵',n)}<span class="op">+</span>${rep('🔵',n)}</div>`:'',desc:`dobro de ${n}`,
+      options:opts(r,[{v:n+2,type:'somou 2 em vez de dobrar'},{v:n,type:'respondeu o próprio número'},{v:r+1,type:'errou a conta'}]),
+      hint:'Dobro é duas vezes o número: some o número com ele mesmo.',explain:`O dobro de ${n} é ${n} + ${n} = ${r}.`}}),
+  metade:comoNum(()=>{const l=nv('Dobro e metade'),r=rnd(1,l===1?10:l===2?25:45),m=2*r;
+    return{skill:'Dobro e metade',text:`Qual é a metade de ${m}?`,visual:m<=20?`<div class="emo">${rep('🍬',r)} │ ${rep('🍬',r)}</div>`:'',desc:`metade de ${m}`,
+      options:opts(r,[{v:m-2,type:'tirou 2 em vez de dividir'},{v:m*2<=100?m*2:m+1,type:m*2<=100?'dobrou em vez de dividir':'errou a conta'},{v:r+1,type:'dividiu em partes diferentes'}]),
+      hint:'Metade é dividir em duas partes iguais. Que número somado com ele mesmo dá esse?',explain:`${r} + ${r} = ${m}. Então a metade de ${m} é ${r}.`}}),
+});
+/* ---- Horas e calendário (EF02MA18/19) ---- */
+function relogioSVG(h,m){const ah=((h%12)+m/60)*30*Math.PI/180,am=m*6*Math.PI/180,P=(a,r)=>[(100+r*Math.sin(a)).toFixed(1),(100-r*Math.cos(a)).toFixed(1)];
+  let s=`<svg viewBox="0 0 200 200" style="width:200px;max-width:70vw"><circle cx="100" cy="100" r="92" fill="#fff" stroke="#1D2846" stroke-width="5"/>`;
+  for(let i=1;i<=12;i++){const [x,y]=P(i*Math.PI/6,72);s+=`<text x="${x}" y="${(+y+7).toFixed(1)}" text-anchor="middle" font-size="20" font-weight="700" fill="#1D2846">${i}</text>`}
+  const [hx,hy]=P(ah,46),[mx,my]=P(am,74);
+  return s+`<line x1="100" y1="100" x2="${mx}" y2="${my}" stroke="#3557E8" stroke-width="5" stroke-linecap="round"/><line x1="100" y1="100" x2="${hx}" y2="${hy}" stroke="#E5484D" stroke-width="8" stroke-linecap="round"/><circle cx="100" cy="100" r="6" fill="#1D2846"/></svg>`}
+const DIAS=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'],MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const CAL_FATOS=[['Quantos dias tem uma semana?','7 dias',['5 dias','10 dias'],'Uma semana tem 7 dias: de domingo a sábado.'],['Quantos meses tem um ano?','12 meses',['7 meses','10 meses'],'Um ano tem 12 meses: de janeiro a dezembro.'],
+  ['Quais dias são o fim de semana?','Sábado e domingo',['Segunda e terça','Quarta e quinta'],'Sábado e domingo formam o fim de semana.'],['Qual é o primeiro mês do ano?','Janeiro',['Dezembro','Março'],'O ano começa em janeiro.'],
+  ['Qual é o último mês do ano?','Dezembro',['Janeiro','Novembro'],'O ano termina em dezembro.'],['Em que mês é o Natal?','Dezembro',['Junho','Abril'],'O Natal é no dia 25 de dezembro.'],
+  ['Quantas vezes por ano fazemos aniversário?','Uma vez',['Todo mês','Toda semana'],'O aniversário acontece uma vez por ano, sempre no mesmo dia.'],['O que usamos para ver os dias e os meses?','Calendário',['Relógio','Régua'],'O calendário mostra os dias, as semanas e os meses.']];
+Object.assign(GEN,{
+  relogio(){const l=nv('Horas no relógio'),h=rnd(1,12),m=l===1?0:l===2?pick([0,30]):pick([0,30,15,45]),lab=(hh,mm)=>`${hh}:${pad2(mm)}`,prox=h%12+1;
+    const cand=m===0?[[lab(prox,0),'leu o número vizinho'],[lab(h,30),'confundiu hora cheia com meia hora'],...(h!==12?[[lab(12,h*5),'trocou os ponteiros']]:[])]
+      :[[lab(h,m/5),'leu o número sem contar de 5 em 5'],[lab(h,0),'ignorou o ponteiro grande'],[lab(m>=30?prox:(h===1?12:h-1),m),'leu a hora errada']];
+    const ops=[{v:lab(h,m),label:lab(h,m),ok:true,type:null}];for(const [v,type] of shuffle(cand))if(ops.length<3&&!ops.some(o=>o.label===v))ops.push({v,label:v,ok:false,type});
+    return{skill:'Horas no relógio',text:'Que horas o relógio está mostrando?',visual:relogioSVG(h,m),desc:`relógio ${lab(h,m)}`,options:shuffle(ops),
+      hint:'O ponteiro pequeno e vermelho mostra a hora. O grande e azul mostra os minutos: cada número vale 5 minutos.',
+      explain:m===0?`O ponteiro grande está no 12 e o pequeno no ${h}: são ${h} horas em ponto, ${lab(h,0)}.`:`O ponteiro pequeno já passou do ${h} e o grande está no ${m/5}. Contando de 5 em 5 até o ${m/5}: ${m} minutos. São ${lab(h,m)}.`}},
+  duracao:comoNum(()=>{const[ev,art]=pick([['a aula','A aula'],['o passeio','O passeio'],['o filme','O filme'],['a festa','A festa'],['a viagem','A viagem'],['o jogo','O jogo']]),h=rnd(1,8),d=rnd(1,4),f=h+d;
+    return{skill:'Duração do tempo',text:`${art} começou ${h===1?'à 1 hora':`às ${h} horas`} e terminou às ${f} horas. Quantas horas durou?`,visual:`<div style="display:flex;gap:16px;justify-content:center;align-items:center">${relogioSVG(h,0).replace('width:200px','width:120px')}<b style="font-size:32px">→</b>${relogioSVG(f,0).replace('width:200px','width:120px')}</div>`,desc:`${ev} das ${h} às ${f}`,
+      options:opts(d,[{v:f,type:'respondeu a hora do fim'},{v:d+1,type:'contou a hora do começo também'},{v:h,type:'respondeu a hora do começo'}]),
+      hint:`Comece no ${h} e conte as horas até chegar no ${f}.`,explain:`Do ${h} até o ${f}: ${Array.from({length:d},(_,i)=>h+i+1).join(', ')}. Durou ${d} ${d===1?'hora':'horas'}.`}}),
+  calendario(){const t=pick(['diaDepois','ontem','amanha','mesDepois','mesAntes','fato']),C=cap1;let q,a,w,x;
+    if(t==='fato'){const f=pick(CAL_FATOS);q=f[0];a=f[1];w=f[2].map(v=>[v,'não lembrou do calendário']);x=f[3]}
+    else if(t.startsWith('mes')){const i=rnd(0,11),M=MESES,dep=t==='mesDepois';q=dep?`Que mês vem depois de ${M[i]}?`:`Que mês vem antes de ${M[i]}?`;a=C(M[(i+(dep?1:11))%12]);
+      w=[[C(M[(i+(dep?11:1))%12]),'confundiu antes com depois'],[C(M[(i+(dep?2:10))%12]),'pulou um mês']];x=`Na ordem dos meses: ${C(M[(i+11)%12])}, ${M[i]}, ${M[(i+1)%12]}.`}
+    else{const i=rnd(0,6),D=DIAS,dep=t!=='ontem';q=t==='diaDepois'?`Que dia da semana vem depois de ${D[i]}?`:t==='ontem'?`Se hoje é ${D[i]}, que dia foi ontem?`:`Se hoje é ${D[i]}, que dia será amanhã?`;
+      a=C(D[(i+(dep?1:6))%7]);w=[[C(D[(i+(dep?6:1))%7]),t==='diaDepois'?'confundiu antes com depois':'confundiu ontem com amanhã'],[C(D[(i+(dep?2:5))%7]),'pulou um dia']];x=`Na ordem da semana: ${C(D[(i+6)%7])}, ${D[i]}, ${D[(i+1)%7]}.`}
+    const ops=shuffle([{v:a,label:a,ok:true,type:null},...w.map(([v,type])=>({v,label:v,ok:false,type}))]);
+    return{skill:'Calendário',text:q,visual:'<div class="emo" style="font-size:56px">📅</div>',desc:q,optClass:'txt',options:ops,hint:'Fale os dias da semana ou os meses em ordem, bem devagar.',explain:x}},
+});
+/* ---- Formas (EF02MA14/15) ---- */
+const FORMAS={circulo:['Círculo',0,0,'<circle cx="80" cy="60" r="48"/>'],quadrado:['Quadrado',4,4,'<rect x="32" y="12" width="96" height="96"/>'],retangulo:['Retângulo',4,4,'<rect x="8" y="27" width="144" height="66"/>'],triangulo:['Triângulo',3,3,'<polygon points="80,8 148,112 12,112"/>']};
+const CORES_F=['#E06666','#6FA8DC','#F6C342','#93C47D'];
+Object.assign(GEN,{
+  formaPlana(){const k=pick(Object.keys(FORMAS)),[nome,lados,vert,svg]=FORMAS[k],ci=rnd(0,3),rot=k==='circulo'?0:pick([0,0,15,30]),t=pick(['nome','nome','lados','vertices']);
+    const vis=`<svg viewBox="0 0 160 120" style="width:220px;max-width:70vw"><g fill="${CORES_F[ci]}" stroke="#1D2846" stroke-width="3" transform="rotate(${rot} 80 60)">${svg}</g></svg>`;let ops,text,expl;
+    if(t==='nome'){const outros=shuffle(Object.keys(FORMAS).filter(x=>x!==k)).slice(0,2);if(k==='quadrado'&&!outros.includes('retangulo'))outros[0]='retangulo';if(k==='retangulo'&&!outros.includes('quadrado'))outros[0]='quadrado';
+      ops=[{v:nome,label:nome,ok:true,type:null},...outros.map(o=>({v:FORMAS[o][0],label:FORMAS[o][0],ok:false,type:(k+o).includes('quadrado')&&(k+o).includes('retangulo')?'confundiu quadrado com retângulo':'confundiu as formas'}))];
+      text='Qual é o nome desta forma?';expl=k==='quadrado'?'O quadrado tem 4 lados do mesmo tamanho.':k==='retangulo'?'O retângulo tem 4 lados: dois compridos e dois curtos.':k==='circulo'?'O círculo é redondo e não tem lados retos nem cantos.':'O triângulo tem 3 lados e 3 cantos.'}
+    else{const certo=t==='lados'?lados:vert,lb=v=>v===0?'Nenhum':String(v);
+      ops=['Nenhum','3','4'].map(v=>({v,label:v,ok:v===lb(certo),type:v===lb(certo)?null:t==='lados'?'contou os lados errado':'contou os cantos errado'}));
+      text=t==='lados'?'Quantos lados retos tem esta forma?':'Quantos cantos (vértices) tem esta forma?';expl=k==='circulo'?'O círculo é todo curvo: não tem lados retos nem cantos.':`O ${nome.toLowerCase()} tem ${lados} lados e ${vert} cantos.`}
+    return{skill:'Formas planas',text,visual:vis,desc:`${t} ${k} cor${ci} giro${rot}`,optClass:'txt',options:shuffle(ops),hint:'Passe o dedo pela borda da forma e conte os lados e as pontas.',explain:expl}},
+  solidos:bk('Sólidos geométricos','confundiu os sólidos',[
+    ['Uma bola de futebol parece com qual forma?','Esfera',['Cubo','Cone'],'⚽','A bola é redonda por todos os lados: é uma esfera.'],
+    ['Um dado parece com qual forma?','Cubo',['Esfera','Cilindro'],'🎲','O dado tem 6 faces quadradas: é um cubo.'],
+    ['Uma lata de milho parece com qual forma?','Cilindro',['Cubo','Cone'],'🥫','A lata tem duas bases redondas e um lado que rola: é um cilindro.'],
+    ['Uma casquinha de sorvete parece com qual forma?','Cone',['Esfera','Cubo'],'🍦','A casquinha tem uma base redonda e uma ponta: é um cone.'],
+    ['Uma caixa de sapato parece com qual forma?','Bloco retangular',['Esfera','Cone'],'📦','A caixa tem faces retangulares: é um bloco retangular.'],
+    ['Uma laranja parece com qual forma?','Esfera',['Cilindro','Cubo'],'🍊','A laranja é redonda como uma bola: parece uma esfera.'],
+    ['Um chapéu de festa parece com qual forma?','Cone',['Cubo','Cilindro'],'🥳','O chapéu de festa tem uma ponta e uma base redonda: é um cone.'],
+    ['Uma vela comprida parece com qual forma?','Cilindro',['Esfera','Cone'],'🕯️','A vela é comprida e redonda dos lados: é um cilindro.'],
+    ['Qual destas formas rola com facilidade?','Esfera',['Cubo','Bloco retangular'],'🛝','A esfera não tem cantos, então rola para todo lado.'],
+    ['Qual forma tem todas as faces quadradas?','Cubo',['Esfera','Cone'],'🧊','O cubo tem 6 faces, e todas são quadrados iguais.'],
+    ['Qual forma não tem nenhuma ponta?','Esfera',['Cubo','Pirâmide'],'🔮','A esfera é toda redonda: não tem pontas.'],
+    ['Um tijolo parece com qual forma?','Bloco retangular',['Cone','Esfera'],'🧱','O tijolo tem faces retangulares: é um bloco retangular.'],
+    ['As pirâmides do Egito têm a forma de...','Pirâmide',['Esfera','Cilindro'],'🏜️','Elas têm a base no chão e os lados que se encontram numa ponta lá em cima.'],
+    ['Qual destas é uma figura plana, achatada como um desenho?','Círculo',['Esfera','Cubo'],'✏️','O círculo é plano, como um desenho no papel. A esfera é a bola, que tem volume.'],
+    ['Um globo terrestre parece com qual forma?','Esfera',['Cubo','Cone'],'🌍','O globo é redondo como uma bola: é uma esfera.']]),
+});
+/* ---- Medidas (EF02MA16/17) ---- */
+function reguaSVG(s,n){let t='';for(let i=0;i<=15;i++){const x=20+i*20;t+=`<line x1="${x}" y1="58" x2="${x}" y2="${i%5===0?78:70}" stroke="#1D2846" stroke-width="2"/><text x="${x}" y="96" text-anchor="middle" font-size="13" fill="#1D2846">${i}</text>`}
+  return`<svg viewBox="0 0 340 105" style="width:440px;max-width:92vw"><rect x="${20+s*20}" y="20" width="${n*20}" height="26" rx="8" fill="#F6C342" stroke="#1D2846" stroke-width="2"/><polygon points="${20+(s+n)*20},20 ${20+(s+n)*20+0},46 ${20+(s+n)*20},33" fill="#1D2846"/><rect x="10" y="56" width="320" height="46" rx="6" fill="#FFF3D1" stroke="#1D2846" stroke-width="2"/>${t}</svg>`}
+Object.assign(GEN,{
+  regua:comoNum(()=>{const l=nv('Medir com régua'),s=l===1?0:rnd(1,5),n=rnd(2,15-s),f=s+n;
+    return{skill:'Medir com régua',text:'Quantos centímetros mede a barra amarela?',visual:reguaSVG(s,n),desc:`régua de ${s} a ${f}`,
+      options:opts(n,[...(s>0?[{v:f,type:'leu só o número do fim'}]:[]),{v:n+1,type:'contou os riscos em vez dos espaços'},{v:n-1,type:'errou a contagem'}]),
+      hint:s?'A barra não começa no 0. Faça o número do fim menos o número do começo.':'Veja em que número a barra termina. Ela começa no 0.',
+      explain:s?`A barra vai do ${s} até o ${f}. ${f} − ${s} = ${n} centímetros.`:`A barra começa no 0 e termina no ${n}: mede ${n} centímetros.`}}),
+  medidas:bk('Medidas','confundiu as medidas',[
+    ['Para medir o comprimento da mesa, usamos...','Fita métrica',['Balança','Copo'],'📏','A fita métrica mede o comprimento.'],
+    ['Para saber quanto pesa uma melancia, usamos...','Balança',['Régua','Relógio'],'⚖️','A balança mede o peso (a massa).'],
+    ['Uma garrafa grande de suco tem 2...','Litros',['Metros','Quilos'],'🧃','Líquidos são medidos em litros.'],
+    ['Um saco de arroz pesa 5...','Quilos',['Litros','Metros'],'🍚','O peso é medido em quilos (quilogramas).'],
+    ['O que é mais pesado?','Uma melancia',['Uma uva','Uma pena'],'🍉','A melancia é bem mais pesada que a uva e a pena.'],
+    ['O que é mais leve?','Uma pena',['Um tijolo','Uma melancia'],'🪶','A pena é levinha.'],
+    ['O que é mais comprido?','Um ônibus',['Um lápis','Uma formiga'],'🚌','O ônibus é muito mais comprido.'],
+    ['Em qual cabe mais água?','Um balde',['Uma xícara','Uma colher'],'🪣','O balde tem a maior capacidade: cabe mais água.'],
+    ['Para medir um lápis, usamos...','Centímetros',['Quilos','Litros'],'✏️','Coisas pequenas medimos em centímetros, com a régua.'],
+    ['Para medir a altura de uma pessoa, usamos...','Metros e centímetros',['Litros','Quilos'],'🧍','Altura é comprimento: metros e centímetros.'],
+    ['O leite da caixinha vem em 1...','Litro',['Metro','Quilo'],'🥛','Leite é líquido: medimos em litros.'],
+    ['Para medir a febre, usamos...','Termômetro',['Régua','Balança'],'🌡️','O termômetro mede a temperatura do corpo.'],
+    ['Ana mediu a mesa e contou 8 palmos. O papai contou 5. Por que deu diferente?','O palmo do papai é maior',['A mesa mudou de tamanho','A Ana contou errado'],'✋','Mãos de tamanhos diferentes dão medidas diferentes. Por isso usamos a régua!'],
+    ['Quantos centímetros tem 1 metro?','100',['10','1000'],'📐','Um metro tem 100 centímetros.'],
+    ['Qual tem menos capacidade?','Uma colher',['Um balde','Uma panela'],'🥄','Na colher cabe pouca coisa.']]),
+});
+/* ---- Gráficos e tabelas (EF02MA22/23) ---- */
+const FRUTAS=[['🍎','maçã'],['🍌','banana'],['🍇','uva'],['🍓','morango'],['🍉','melancia'],['🍊','laranja'],['🍍','abacaxi']];
+Object.assign(GEN,{
+  grafico(){const k=rnd(3,4),cats=shuffle(FRUTAS.slice()).slice(0,k),vals=shuffle([1,2,3,4,5,6,7,8]).slice(0,k),mx=vals.indexOf(Math.max(...vals)),mn=vals.indexOf(Math.min(...vals));
+    const vis=`<div style="display:inline-block;text-align:left;background:#fff;border-radius:14px;padding:10px 14px"><b>Fruta preferida da turma</b>${cats.map((c,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span style="font-size:30px;width:38px">${c[0]}</span>${'<i style="display:inline-block;width:22px;height:22px;background:#3557E8;border-radius:5px"></i>'.repeat(vals[i])}</div>`).join('')}<div class="muted" style="font-size:14px;margin-top:6px">Cada quadradinho = 1 criança</div></div>`;
+    const t=pick(['mais','menos','quantos','quantos','diferenca','total']),nm=i=>`${cats[i][0]} ${cap1(cats[i][1])}`;let text,ops,expl;
+    if(t==='mais'||t==='menos'){const ok=t==='mais'?mx:mn;text=`Qual fruta teve ${t==='mais'?'MAIS':'MENOS'} votos?`;
+      ops=cats.map((c,i)=>({v:c[1],label:nm(i),ok:i===ok,type:i===ok?null:(i===(t==='mais'?mn:mx)?'confundiu mais com menos':'leu o gráfico errado')}));expl=`A barra ${t==='mais'?'mais comprida':'mais curta'} é a de ${cats[ok][1]}, com ${vals[ok]}.`}
+    else if(t==='quantos'){const i=rnd(0,k-1),o=vals.find((v,j)=>j!==i);text=`Quantas crianças escolheram ${cats[i][1]}?`;ops=opts(vals[i],[{v:o,type:'olhou a linha errada'},{v:vals[i]+1,type:'contou um a mais'},{v:vals[i]-1,type:'contou um a menos'}]);expl=`Na linha da ${cats[i][1]} há ${vals[i]} quadradinhos.`}
+    else if(t==='diferenca'){const j=mx===0?1:0,r=vals[mx]-vals[j];text=`Quantas crianças a mais escolheram ${cats[mx][1]} do que ${cats[j][1]}?`;
+      ops=opts(r,[{v:vals[mx]+vals[j],type:'somou em vez de comparar'},{v:vals[mx],type:'respondeu só o maior'},{v:r+1,type:'errou a conta'}]);expl=`${vals[mx]} − ${vals[j]} = ${r}.`}
+    else{const s=vals.reduce((a,b)=>a+b,0);text='Quantas crianças votaram ao todo?';ops=opts(s,[{v:k,type:'contou as frutas em vez dos votos'},{v:s+1,type:'errou a soma'},{v:s-1,type:'errou a soma'}]);expl=`${vals.join(' + ')} = ${s}.`}
+    return{skill:'Ler gráficos',text,visual:vis,desc:`${t} ${cats.map(c=>c[1]).join(',')} ${vals.join(',')}`,optClass:t==='mais'||t==='menos'?'txt':'',options:t==='mais'||t==='menos'?shuffle(ops):ops,hint:'Cada quadradinho vale 1. Conte os quadradinhos de cada linha.',explain:expl}},
+});
+MAT_LESSONS.push(
+  {id:'problemas',titulo:'Problemas do dia a dia',icone:'🧠',bncc:'EF02MA06',
+   slides:[{t:'Num problema, leia com calma e descubra o que está acontecendo: alguém ganhou, perdeu, comparou ou falta alguma coisa?',v:'<div class="emo" style="font-size:56px">📖 🤔 ➕➖</div>'},
+    {t:'Ganhar, juntar ou chegar mais: conta de MAIS. Dar, gastar, perder ou sair: conta de MENOS.',v:'<div class="big" style="font-size:30px">🎁 ganhou → <b style="color:var(--ok)">+</b><br>🎈 voou → <b style="color:var(--bad)">−</b></div>'},
+    {t:'Para saber quanto um tem a mais, ou quanto falta, também usamos a conta de menos: o maior menos o menor.',v:'<div class="big" style="font-size:30px">12 − 8 = 4</div>'}],
+   practice:['probConta','probJuntar','probTirar','probConta','probComparar','probFalta'],quiz:['probJuntar','probTirar','probComparar','probFalta','probConta']},
+  {id:'dobro-metade',titulo:'Dobro e metade',icone:'✌️',bncc:'EF02MA08',
+   slides:[{t:'O dobro é duas vezes o mesmo número. O dobro de 4 é 4 + 4, que dá 8.',v:'<div class="emo">🔵🔵🔵🔵<span class="op">+</span>🔵🔵🔵🔵</div>'},
+    {t:'A metade é dividir em duas partes iguais. A metade de 8 é 4, porque 4 + 4 = 8.',v:'<div class="emo">🍬🍬🍬🍬 │ 🍬🍬🍬🍬</div>'}],
+   practice:['dobro','dobro','metade','dobro','metade','metade'],quiz:['dobro','metade','dobro','metade','dobro']},
+  {id:'grupos',titulo:'Grupos iguais',icone:'🍓',bncc:'EF02MA07',
+   slides:[{t:'Quando temos grupos com a mesma quantidade, podemos contar pulando. 3 pratos com 2 morangos: 2, 4, 6.',v:gruposHTML(3,2,'🍓')},
+    {t:'Também dá para somar o mesmo número várias vezes: 2 + 2 + 2 = 6. Isso é o começo da multiplicação!',v:'<div class="big" style="font-size:34px">2 + 2 + 2 = 6</div>'}],
+   practice:['grupos','somaRepetida','grupos','grupos','somaRepetida','grupos'],quiz:['grupos','somaRepetida','grupos','grupos','somaRepetida']},
+  {id:'relogio',titulo:'Horas no relógio',icone:'🕐',bncc:'EF02MA19',
+   slides:[{t:'O relógio tem dois ponteiros. O pequeno e vermelho mostra a HORA. O grande e azul mostra os MINUTOS.',v:relogioSVG(3,0)},
+    {t:'Quando o ponteiro grande está no 12, é hora em ponto. Aqui são 3 horas: 3:00.',v:relogioSVG(3,0)},
+    {t:'Quando o ponteiro grande está no 6, é meia hora: 30 minutos. Aqui são 3 e meia: 3:30.',v:relogioSVG(3,30)}],
+   practice:['relogio','relogio','duracao','relogio','duracao','relogio'],quiz:['relogio','duracao','relogio','relogio','duracao']},
+  {id:'calendario',titulo:'Dias, semanas e meses',icone:'📅',bncc:'EF02MA18',
+   slides:[{t:'A semana tem 7 dias: domingo, segunda, terça, quarta, quinta, sexta e sábado.',v:'<div class="emo" style="font-size:44px">📅 7</div>'},
+    {t:'O ano tem 12 meses. Começa em janeiro e termina em dezembro.',v:'<div class="emo" style="font-size:44px">🎆 janeiro … dezembro 🎄</div>'},
+    {t:'Ontem já passou. Hoje é agora. Amanhã ainda vai chegar.',v:'<div class="emo" style="font-size:44px">⬅️ ontem · hoje · amanhã ➡️</div>'}],
+   practice:['calendario','calendario','calendario','calendario','calendario','calendario'],quiz:['calendario','calendario','calendario','calendario','calendario']},
+  {id:'formas',titulo:'Formas e sólidos',icone:'🔺',bncc:'EF02MA14/15',
+   slides:[{t:'Formas planas são achatadas, como um desenho: círculo, quadrado, retângulo e triângulo.',v:`<svg viewBox="0 0 330 80" style="width:330px;max-width:90vw"><circle cx="40" cy="40" r="32" fill="#E06666"/><rect x="95" y="8" width="64" height="64" fill="#6FA8DC"/><rect x="180" y="20" width="70" height="40" fill="#F6C342"/><polygon points="295,6 328,74 262,74" fill="#93C47D"/></svg>`},
+    {t:'O quadrado tem 4 lados iguais. O retângulo tem 4 lados, dois compridos e dois curtos. O triângulo tem 3 lados.',v:'<div class="emo" style="font-size:44px">🟦 ▬ 🔺</div>'},
+    {t:'Sólidos têm volume e dá para pegar: a bola é uma esfera, o dado é um cubo, a lata é um cilindro e a casquinha é um cone.',v:'<div class="emo" style="font-size:48px">⚽ 🎲 🥫 🍦</div>'}],
+   practice:['formaPlana','formaPlana','solidos','formaPlana','solidos','solidos'],quiz:['formaPlana','solidos','formaPlana','solidos','formaPlana']},
+  {id:'medidas',titulo:'Medidas',icone:'📏',bncc:'EF02MA16/17',
+   slides:[{t:'Para medir o comprimento usamos a régua ou a fita métrica, em centímetros e metros.',v:reguaSVG(0,6)},
+    {t:'Na régua, comece sempre no 0. Se a coisa começa em outro número, faça o fim menos o começo.',v:reguaSVG(2,5)},
+    {t:'O peso medimos em quilos, na balança. Os líquidos medimos em litros.',v:'<div class="emo" style="font-size:48px">⚖️ 🍚 &nbsp; 🥛 1 L</div>'}],
+   practice:['regua','regua','medidas','regua','medidas','medidas'],quiz:['regua','medidas','regua','medidas','regua']},
+  {id:'graficos',titulo:'Gráficos',icone:'📊',bncc:'EF02MA22/23',
+   slides:[{t:'Um gráfico mostra quantidades com desenhos ou barras. Aqui, cada quadradinho é uma criança que votou.',v:'<div class="emo" style="font-size:40px">🍎 🟦🟦🟦<br>🍌 🟦🟦</div>'},
+    {t:'A linha mais comprida tem MAIS votos. A mais curta tem MENOS. Para saber quantos a mais, faça o maior menos o menor.',v:'<div class="big" style="font-size:30px">3 − 2 = 1</div>'}],
+   practice:['grafico','grafico','grafico','grafico','grafico','grafico'],quiz:['grafico','grafico','grafico','grafico','grafico']},
+);
+
+/* ---- Português: ler e entender textos curtos (EF12LP01/EF02LP12/EF12LP04) ---- */
+const TEXTOS=[
+ ['A pipa de Caio','Caio fez uma pipa amarela com o avô. No sábado, eles foram ao campo. O vento estava forte e a pipa subiu bem alto. Caio deu um grito de alegria.',[
+   ['Quem ajudou Caio a fazer a pipa?','O avô',['A mãe','O professor']],['De que cor era a pipa?','Amarela',['Azul','Vermelha']],
+   ['Por que a pipa subiu alto?','Porque o vento estava forte',['Porque era sábado','Porque era amarela'],'i'],['Como Caio se sentiu?','Feliz',['Triste','Com medo'],'i']]],
+ ['O gato Pingo','Pingo é um gato branco com uma mancha preta no olho. Ele dorme o dia todo no sofá. À noite, ele acorda e brinca com uma bolinha de lã.',[
+   ['Como é o Pingo?','Branco com uma mancha preta',['Todo preto','Laranja com listras']],['Onde o Pingo dorme?','No sofá',['Na cama','No telhado']],
+   ['Quando o Pingo brinca?','À noite',['De manhã','Na hora do almoço']],['Com o que ele brinca?','Uma bolinha de lã',['Um carrinho','Uma bola de futebol']]]],
+ ['A horta da escola','A turma da professora Rosa plantou alface e cenoura. Todo dia, uma criança regava a horta. Depois de dois meses, eles colheram as verduras e fizeram uma salada.',[
+   ['O que a turma plantou?','Alface e cenoura',['Milho e feijão','Tomate e batata']],['O que as crianças faziam todo dia?','Regavam a horta',['Colhiam as verduras','Faziam salada']],
+   ['O que fizeram com as verduras?','Uma salada',['Um bolo','Um suco']],['Por que regavam a horta todo dia?','Porque as plantas precisam de água',['Porque gostavam de se molhar','Porque a professora mandou brincar'],'i']]],
+ ['Dia de chuva','Choveu a manhã toda. Lia queria brincar no parque, mas não pôde sair. Então ela e o irmão montaram uma cabana com lençóis na sala.',[
+   ['Por que Lia não foi ao parque?','Porque estava chovendo',['Porque estava doente','Porque o parque fechou'],'i'],['Com quem Lia brincou?','Com o irmão',['Com a vizinha','Sozinha']],
+   ['O que eles montaram?','Uma cabana de lençóis',['Um quebra-cabeça','Um castelo de areia']],['Onde fizeram a cabana?','Na sala',['No parque','No quintal']]]],
+ ['As abelhas','As abelhas vivem em grupo, numa casa chamada colmeia. Elas visitam as flores para pegar o néctar. Com o néctar, elas fazem o mel.',[
+   ['Como se chama a casa das abelhas?','Colmeia',['Ninho','Toca']],['O que as abelhas pegam nas flores?','Néctar',['Folhas','Terra']],
+   ['O que as abelhas fazem com o néctar?','Mel',['Leite','Suco']],['Para que serve esse texto?','Para ensinar sobre as abelhas',['Para contar uma piada','Para ensinar uma receita'],'g']]],
+ ['O bilhete','Mamãe, fui à casa da vovó com o papai. Voltamos às 6 horas. Tem bolo na geladeira. Beijos, Nina.',[
+   ['Quem escreveu o bilhete?','Nina',['A mamãe','A vovó']],['Para quem é o bilhete?','Para a mamãe',['Para a vovó','Para o papai']],
+   ['Aonde Nina foi?','À casa da vovó',['À escola','Ao mercado']],['A que horas eles voltam?','Às 6 horas',['Às 2 horas','Às 10 horas']]]],
+ ['O piquenique','No domingo, a família de Beto fez um piquenique no parque. Levaram sanduíche, frutas e suco. Uma formiga subiu na toalha e Beto riu muito.',[
+   ['Quando foi o piquenique?','No domingo',['Na segunda-feira','No sábado']],['Onde foi o piquenique?','No parque',['Na praia','Na escola']],
+   ['O que subiu na toalha?','Uma formiga',['Um cachorro','Um passarinho']],['O que eles levaram para beber?','Suco',['Leite','Água de coco']]]],
+ ['A semente de feijão','Téo colocou um feijão no algodão molhado. Depois de três dias, saiu uma raiz branquinha. Uma semana depois, apareceram as primeiras folhas verdes.',[
+   ['Onde Téo colocou o feijão?','No algodão molhado',['Na geladeira','Na areia seca']],['O que apareceu primeiro?','A raiz',['As folhas','A flor'],'o'],
+   ['Depois de quantos dias saiu a raiz?','Três dias',['Um dia','Dez dias']],['O que apareceu por último?','As folhas verdes',['A raiz','O algodão'],'o']]],
+ ['O aniversário de Juca','Juca fez sete anos. A turma cantou parabéns e ele soprou as velas do bolo de chocolate. Ele ganhou um livro de dinossauros e ficou muito feliz.',[
+   ['Quantos anos Juca fez?','Sete',['Seis','Oito']],['De que era o bolo?','De chocolate',['De morango','De cenoura']],
+   ['O que Juca ganhou?','Um livro de dinossauros',['Uma bola','Um jogo de tabuleiro']],['Por que Juca soprou velas?','Porque era o aniversário dele',['Porque estava com calor','Porque a luz acabou'],'i']]],
+ ['A tartaruga','A tartaruga anda bem devagar. Quando sente perigo, ela esconde a cabeça e as patas dentro do casco. O casco é duro e protege o corpo dela.',[
+   ['Como a tartaruga anda?','Bem devagar',['Muito rápido','Pulando']],['O que ela faz quando sente perigo?','Esconde a cabeça e as patas no casco',['Sai voando','Corre para a água']],
+   ['Para que serve o casco?','Para proteger o corpo',['Para nadar mais rápido','Para guardar comida']],['Que tipo de texto é esse?','Um texto que ensina sobre um animal',['Uma receita','Um bilhete'],'g']]],
+ ['Suco de laranja','Você vai precisar de 3 laranjas e 1 copo de água. Corte as laranjas com a ajuda de um adulto. Esprema, misture com a água e sirva.',[
+   ['Quantas laranjas são necessárias?','Três',['Uma','Cinco']],['Quem deve ajudar a cortar as laranjas?','Um adulto',['Um amigo','Ninguém']],
+   ['O que se mistura com o suco?','Água',['Leite','Café']],['Para que serve esse texto?','Para ensinar a fazer suco',['Para contar uma história','Para convidar para uma festa'],'g']]],
+ ['O convite','Venha para a festa junina da escola! Dia: sábado, 20 de junho. Hora: 3 da tarde. Venha com roupa caipira!',[
+   ['Que festa é essa?','Festa junina',['Festa de Natal','Festa de aniversário']],['Em que dia da semana é a festa?','Sábado',['Domingo','Segunda-feira']],
+   ['Que roupa usar?','Roupa caipira',['Fantasia de pirata','Pijama']],['A que horas começa?','3 da tarde',['8 da manhã','9 da noite']]]],
+];
+const TIPO_ERRO_TXT={i:'não entendeu o porquê',g:'não reconheceu o tipo de texto',o:'confundiu a ordem dos fatos'};
+function textoGen(ini,fim){return()=>{const [tit,txt,qs]=pick(TEXTOS.slice(ini,fim)),[q,a,w,tp]=pick(qs);
+  const ops=shuffle([{v:a,label:a,ok:true,type:null},...w.map(x=>({v:x,label:x,ok:false,type:TIPO_ERRO_TXT[tp]||'não achou a informação no texto'}))]);
+  return{skill:tp==='i'?'Entender o texto':tp==='g'?'Tipos de texto':'Achar informação no texto',text:q,
+    visual:`<div style="text-align:left;background:#fff;border-radius:14px;padding:12px 16px;font-size:21px;line-height:1.55;max-width:560px;margin:0 auto"><b style="color:var(--pri)">${tit}</b><br>${txt}</div>`,
+    desc:`${tit}: ${q}`,optClass:ops.some(o=>o.label.length>12)?'sent':'txt',options:ops,hint:'Leia o texto de novo, devagar, e procure a parte que fala disso.',
+    explain:tp==='i'?`O texto não diz com essas palavras, mas dá para entender. Resposta: ${a}.`:tp==='g'?`Resposta: ${a}.`:`Está escrito no texto. Resposta: ${a}.`}}}
+Object.assign(GEN,{textoA:textoGen(0,6),textoB:textoGen(6,12)});
+POR_LESSONS.push(
+  {id:'textos1',titulo:'Ler e entender textos',icone:'📰',bncc:'EF12LP01',
+   slides:[{t:'Antes de responder, leia o texto inteiro com calma. Depois leia a pergunta.',v:'<div class="emo" style="font-size:56px">📖 ➡️ ❓</div>'},
+    {t:'A resposta quase sempre está escrita no texto. Volte e procure a parte que fala daquilo.',v:'<div class="emo" style="font-size:56px">🔍📄</div>'},
+    {t:'Às vezes, a resposta não está escrita, mas dá para descobrir pensando: por que aconteceu? Como o personagem se sentiu?',v:'<div class="emo" style="font-size:56px">🤔💡</div>'}],
+   practice:['textoA','textoA','textoA','textoA','textoA','textoA'],quiz:['textoA','textoA','textoA','textoA','textoA']},
+  {id:'textos2',titulo:'Bilhetes, convites e receitas',icone:'💌',bncc:'EF02LP12',
+   slides:[{t:'Existem textos de vários tipos. A história conta o que aconteceu. A receita ensina a fazer. O convite chama para uma festa. O bilhete dá um recado.',v:'<div class="emo" style="font-size:48px">📚 🍳 🎉 📝</div>'},
+    {t:'Num convite, procure: que festa é, o dia, a hora e o lugar. Numa história: quem, onde, quando e o que aconteceu.',v:'<div class="emo" style="font-size:48px">❓ quem · onde · quando</div>'}],
+   practice:['textoB','textoB','textoB','textoB','textoB','textoB'],quiz:['textoB','textoB','textoB','textoB','textoB']},
+);
+
+/* ---- Ciências: plantas e o Sol (EF02CI05/06/07/08) ---- */
+Object.assign(GEN,{
+  plantas:bk('Plantas','confundiu as partes da planta',[
+    ['Do que a planta precisa para viver?','Água, luz e ar',['Só escuridão','Só doce'],'🌱','A planta precisa de água, luz do Sol, ar e de um solo bom.'],
+    ['Qual parte da planta fica embaixo da terra?','A raiz',['A flor','A folha'],'🥕','A raiz fica embaixo da terra.'],
+    ['Para que serve a raiz?','Para pegar água e segurar a planta',['Para enfeitar','Para fazer barulho'],'🌳','A raiz puxa a água da terra e segura a planta no chão.'],
+    ['Para que serve o caule?','Para sustentar a planta e levar a água',['Para guardar ovos','Para fazer a planta dormir'],'🌿','O caule segura a planta em pé e leva a água até as folhas.'],
+    ['Qual parte da planta vira fruto?','A flor',['A raiz','O caule'],'🌸','Depois de visitada pelas abelhas, a flor se transforma em fruto.'],
+    ['Onde ficam as sementes?','Dentro do fruto',['Na raiz','Nas folhas'],'🍉','As sementes ficam dentro do fruto, como na melancia.'],
+    ['O que acontece com uma planta sem água?','Ela murcha',['Ela cresce mais','Ela vira flor'],'🥀','Sem água, a planta murcha e pode morrer.'],
+    ['Uma planta ficou dias num armário escuro. Como ela fica?','Fraca e amarelada',['Mais verde','Cheia de flores'],'🌑','Sem luz a planta não consegue fazer seu alimento e fica fraca.'],
+    ['De onde nasce uma nova planta?','De uma semente',['De uma pedra','Do vento'],'🌰','A semente plantada na terra úmida germina e vira planta.'],
+    ['Qual destes alimentos é uma raiz?','Cenoura',['Banana','Alface'],'🥕','A cenoura é a raiz da planta.'],
+    ['Qual destes alimentos é uma folha?','Alface',['Feijão','Laranja'],'🥬','A alface é feita de folhas.'],
+    ['Qual destes alimentos é um fruto?','Maçã',['Alface','Cenoura'],'🍎','A maçã é um fruto e tem sementes dentro.'],
+    ['Que animal ajuda as flores a virarem frutos?','A abelha',['O peixe','A minhoca'],'🐝','A abelha leva o pólen de flor em flor.'],
+    ['O tronco da árvore é um tipo de...','Caule',['Raiz','Folha'],'🌲','O tronco é o caule grosso das árvores.'],
+    ['Na maioria das plantas, as folhas são de que cor?','Verdes',['Azuis','Pretas'],'🍃','As folhas costumam ser verdes.']]),
+  sol:bk('Sol, luz e sombra','confundiu dia, noite e sombra',[
+    ['O que ilumina o dia?','O Sol',['A Lua','As nuvens'],'☀️','O Sol ilumina e esquenta a Terra durante o dia.'],
+    ['O que costumamos ver no céu à noite?','A Lua e as estrelas',['O arco-íris','O Sol forte'],'🌙','À noite vemos a Lua e as estrelas.'],
+    ['Quando o Sol aparece no céu, começa o...','Dia',['Noite','Inverno'],'🌅','O Sol nascendo marca o começo do dia.'],
+    ['A sombra aparece quando algo bloqueia a...','Luz',['Água','Comida'],'🌳','O corpo para a luz, e atrás dele fica a sombra.'],
+    ['Ao meio-dia, com o Sol bem em cima, a sombra fica...','Bem curtinha',['Bem comprida','Colorida'],'🕛','Com o Sol lá no alto, a sombra fica pequena.'],
+    ['No fim da tarde, com o Sol baixinho, a sombra fica...','Comprida',['Sumida','Quadrada'],'🌇','Quando o Sol está baixo, a sombra fica longa.'],
+    ['Para que serve o protetor solar?','Para proteger a pele do Sol',['Para ficar cheiroso','Para matar a fome'],'🧴','O protetor evita queimaduras na pele.'],
+    ['Qual horário tem o Sol mais forte?','Perto do meio-dia',['De manhã cedinho','À noite'],'🕛','Perto do meio-dia o Sol está mais forte: é melhor ficar na sombra.'],
+    ['O que acontece com uma poça de água no sol?','Ela seca',['Ela congela','Ela fica maior'],'💧','O calor do Sol faz a água evaporar.'],
+    ['Num dia de sol, qual lugar fica mais quente?','A calçada no sol',['A sombra da árvore','Dentro da geladeira'],'🔥','O que fica no sol esquenta mais.'],
+    ['Qual camiseta esquenta mais no sol?','A preta',['A branca','A amarela clara'],'👕','Cores escuras esquentam mais no sol.'],
+    ['Nunca devemos olhar direto para o...','Sol',['Livro','Desenho'],'😎','Olhar para o Sol machuca os olhos.'],
+    ['Para fazer sombra com a mão, precisamos de...','Uma luz, como a lanterna',['Água','Silêncio'],'🔦','Sem luz não tem sombra.'],
+    ['Quantas vezes o Sol nasce em um dia?','Uma vez',['Duas vezes','Nenhuma'],'🌄','O Sol nasce uma vez por dia, de manhã.'],
+    ['O que fazemos normalmente à noite?','Dormir e descansar',['Tomar sol','Secar roupa no varal'],'😴','A noite é hora de descansar.']]),
+});
+CIE_LESSONS.push(
+  {id:'plantas',titulo:'Plantas',icone:'🌻',bncc:'EF02CI05/06',
+   slides:[{t:'A planta tem partes: a raiz embaixo da terra, o caule, as folhas, as flores e os frutos com as sementes.',v:'<div class="emo" style="font-size:44px">🌸 flor<br>🍃 folha<br>🌿 caule<br>🥕 raiz</div>'},
+    {t:'Para viver, a planta precisa de água, luz do Sol, ar e terra boa.',v:'<div class="emo" style="font-size:56px">💧 ☀️ 🌬️ 🟫</div>'}],
+   practice:['plantas','plantas','plantas','plantas','plantas','plantas'],quiz:['plantas','plantas','plantas','plantas','plantas']},
+  {id:'sol',titulo:'Sol, dia e noite, sombra',icone:'☀️',bncc:'EF02CI07/08',
+   slides:[{t:'De dia, o Sol ilumina e esquenta tudo. À noite, vemos a Lua e as estrelas.',v:'<div class="emo" style="font-size:56px">☀️ 🌍 🌙</div>'},
+    {t:'A sombra aparece quando algo fica na frente da luz. Ela muda de tamanho conforme o Sol anda no céu.',v:'<div class="emo" style="font-size:56px">🔦 🧍 ⬛</div>'},
+    {t:'O Sol é forte: use protetor, boné e beba água. E nunca olhe direto para ele!',v:'<div class="emo" style="font-size:56px">🧴 🧢 💧</div>'}],
+   practice:['sol','sol','sol','sol','sol','sol'],quiz:['sol','sol','sol','sol','sol']},
+);
+
+/* ---- História (EF02HI01/04/06/07) ---- */
+Object.assign(GEN,{
+  tempo:bk('Passado, presente e futuro','confundiu passado, presente e futuro',[
+    ['Ontem já passou. Ontem é...','Passado',['Presente','Futuro'],'⏪','O que já aconteceu é passado.'],
+    ['Amanhã ainda vai chegar. Amanhã é...','Futuro',['Passado','Presente'],'⏩','O que ainda vai acontecer é futuro.'],
+    ['O que está acontecendo agora é o...','Presente',['Passado','Futuro'],'⏺️','Agora é o presente.'],
+    ['Quando você era bebê, isso foi no...','Passado',['Futuro','Presente'],'👶','Você já foi bebê: é passado.'],
+    ['Quando você crescer e for adulto, isso será no...','Futuro',['Passado','Presente'],'🧑','Ser adulto ainda vai acontecer: é futuro.'],
+    ['O que usamos para saber o dia, o mês e o ano?','Calendário',['Régua','Balança'],'📅','O calendário marca os dias, os meses e o ano.'],
+    ['O que usamos para ver as horas?','Relógio',['Termômetro','Calendário'],'⏰','O relógio mostra as horas.'],
+    ['O que aconteceu primeiro na sua vida?','Aprender a andar',['Aprender a ler','Ir para o 2º ano'],'🚶','Primeiro aprendemos a andar, bem pequenos. Ler vem depois.'],
+    ['Qual vem primeiro na vida?','Ser bebê',['Ser criança','Ser adulto'],'🍼','Primeiro bebê, depois criança, depois adulto.'],
+    ['Uma foto de quando você tinha 2 anos mostra o seu...','Passado',['Futuro','Presente'],'🖼️','A foto mostra algo que já aconteceu.'],
+    ['Onde ficam guardadas as lembranças da família?','Em fotos, objetos e histórias dos avós',['Só na televisão','Em lugar nenhum'],'📷','Fotos, objetos e as histórias contadas guardam o passado da família.'],
+    ['Qual documento tem seu nome e o dia em que você nasceu?','Certidão de nascimento',['Conta de luz','Receita de bolo'],'📄','A certidão de nascimento registra o nome e a data em que nascemos.'],
+    ['Manhã, tarde e...','Noite',['Semana','Ano'],'🌙','O dia tem manhã, tarde e noite.'],
+    ['Uma linha do tempo mostra...','Os acontecimentos em ordem',['As cores do arco-íris','Os animais da fazenda'],'➡️','A linha do tempo coloca os fatos na ordem em que aconteceram.'],
+    ['Seu aniversário é a cada...','Ano',['Dia','Semana'],'🎂','Fazemos aniversário uma vez por ano.']]),
+  antigamente:bk('Antigamente e hoje','confundiu antigamente com hoje',[
+    ['Antigamente, sem celular, como as pessoas mandavam notícias para longe?','Por carta',['Por mensagem no celular','Por e-mail'],'✉️','Antes do celular, as notícias iam por carta, pelo correio.'],
+    ['Qual destas brincadeiras é bem antiga e brincada até hoje?','Amarelinha',['Jogo no tablet','Videogame'],'🦶','A amarelinha é brincada há muito tempo.'],
+    ['Antes da luz elétrica, as casas eram iluminadas com...','Velas e lampiões',['Lâmpadas de LED','Lanterna de celular'],'🕯️','Sem luz elétrica, usavam velas e lampiões.'],
+    ['Antes da máquina de lavar, a roupa era lavada...','À mão, no tanque ou no rio',['Por um robô','Pelo celular'],'🧺','Lavavam a roupa à mão.'],
+    ['Como era o telefone antigo?','Preso na parede ou na mesa, com fio',['Pequeno e no bolso','No relógio de pulso'],'☎️','O telefone antigo tinha fio e ficava num lugar só.'],
+    ['Qual destes objetos é o mais antigo?','Máquina de escrever',['Computador','Tablet'],'⌨️','A máquina de escrever veio muito antes do computador.'],
+    ['A peteca é uma brincadeira que veio dos...','Povos indígenas',['Robôs','Astronautas'],'🏸','A peteca foi criada pelos povos indígenas do Brasil.'],
+    ['Para saber do que os avós brincavam, o melhor é...','Perguntar para eles',['Adivinhar','Ver um desenho animado'],'👵','Os avós contam as histórias do tempo deles.'],
+    ['Qual é uma brincadeira de roda bem antiga?','Ciranda',['Videogame','Desenho no tablet'],'⭕','A ciranda é uma roda cantada muito antiga.'],
+    ['Antes da geladeira, como se guardava a carne?','Com sal, secando ao sol',['No freezer','No micro-ondas'],'🥩','Salgar e secar a carne fazia ela durar mais.'],
+    ['O que muda com o passar do tempo?','Os objetos e os costumes',['Nada muda','Só o tamanho do Sol'],'🔄','Os objetos e o jeito de viver mudam com o tempo.'],
+    ['O que continua igual de antigamente até hoje?','As crianças gostam de brincar',['As crianças não brincam mais','Ninguém usa brinquedos'],'🧒','Em todas as épocas, as crianças brincam.'],
+    ['Que brinquedo dá para fazer com duas latas e um barbante?','Telefone de lata',['Tablet','Videogame'],'🥫','Com latas e barbante se faz um telefone de brinquedo.'],
+    ['Bolinha de gude, pião e pipa são brinquedos...','Antigos que ainda existem',['Que só existem no celular','Inventados ontem'],'🪀','São brinquedos antigos que as crianças ainda adoram.'],
+    ['Antigamente, como se ouvia música em casa?','No rádio ou na vitrola',['No celular','No tablet'],'📻','Antes do celular, a música vinha do rádio e dos discos na vitrola.']]),
+});
+const HIS_LESSONS=[
+  {id:'tempo',titulo:'Eu e o tempo',icone:'⏳',bncc:'EF02HI01/06/07',
+   slides:[{t:'Passado é o que já aconteceu. Presente é agora. Futuro é o que ainda vai acontecer.',v:'<div class="emo" style="font-size:48px">⏪ ontem · ⏺️ hoje · ⏩ amanhã</div>'},
+    {t:'Nossa vida também tem uma ordem: primeiro bebê, depois criança, depois adulto.',v:'<div class="emo" style="font-size:56px">👶 ➡️ 🧒 ➡️ 🧑</div>'},
+    {t:'Usamos o relógio para as horas e o calendário para os dias, os meses e os anos.',v:'<div class="emo" style="font-size:56px">⏰ 📅</div>'}],
+   practice:['tempo','tempo','tempo','tempo','tempo','tempo'],quiz:['tempo','tempo','tempo','tempo','tempo']},
+  {id:'antigamente',titulo:'Antigamente e hoje',icone:'📻',bncc:'EF02HI04',
+   slides:[{t:'Antigamente, muitas coisas eram diferentes: não tinha celular, e a luz era de vela.',v:'<div class="emo" style="font-size:56px">🕯️ ✉️ ☎️</div>'},
+    {t:'Algumas coisas continuam: as crianças sempre brincaram de pipa, pião, amarelinha e ciranda.',v:'<div class="emo" style="font-size:56px">🪁 🪀 🦶</div>'},
+    {t:'Para conhecer o passado, pergunte aos avós e veja fotos antigas da família.',v:'<div class="emo" style="font-size:56px">👴👵 📷</div>'}],
+   practice:['antigamente','antigamente','antigamente','antigamente','antigamente','antigamente'],quiz:['antigamente','antigamente','antigamente','antigamente','antigamente']},
+];
+
+/* ---- Geografia (EF02GE01/03/04/10) ---- */
+const LUG=[['🐶','o','cachorro'],['🐱','o','gato'],['🌳','a','árvore'],['🏠','a','casa'],['🚗','o','carro'],['⚽','a','bola'],['🐦','o','passarinho'],['🌻','a','flor'],['🚲','a','bicicleta'],['🐰','o','coelho']];
+Object.assign(GEN,{
+  lado(){const row=shuffle(LUG.slice()).slice(0,4),t=pick(['direita','esquerda','direita','esquerda','ponta']),nm=r=>`${r[0]} ${cap1(r[2])}`,de=r=>(r[1]==='o'?'do ':'da ')+r[2];let i,ans,text,expl;
+    if(t==='ponta'){const lado=pick(['esquerda','direita']);ans=lado==='esquerda'?0:3;text=`Quem está na ponta da ${lado}?`;expl=`Na ponta da ${lado} está ${row[ans][1]} ${row[ans][2]}.`}
+    else{i=t==='direita'?rnd(0,2):rnd(1,3);ans=t==='direita'?i+1:i-1;text=`Quem está logo à ${t} ${de(row[i])}?`;expl=`Logo à ${t} ${de(row[i])} está ${row[ans][1]} ${row[ans][2]}.`}
+    const oposto=t==='ponta'?3-ans:(t==='direita'?i-1:i+1);
+    const ops=row.map((r,j)=>({j,r})).filter(x=>x.j!==i).map(({j,r})=>({v:r[2],label:nm(r),ok:j===ans,type:j===ans?null:j===oposto?'confundiu direita com esquerda':'não olhou o vizinho do lado'}));
+    return{skill:'Direita e esquerda',text,visual:`<div class="emo" style="font-size:52px;letter-spacing:10px">${row.map(r=>r[0]).join(' ')}</div><div style="display:flex;justify-content:space-between;gap:40px;font-weight:700;color:var(--muted);width:340px;max-width:90vw;margin:6px auto 0"><span>⬅️ esquerda</span><span>direita ➡️</span></div>`,
+      desc:`${t} ${row.map(r=>r[2]).join(',')} ${i??ans}`,optClass:'txt',options:shuffle(ops),hint:'A esquerda fica do lado da seta ⬅️. A direita, do lado da seta ➡️.',explain:expl}},
+  transportes:bk('Transportes e comunicação','confundiu os meios de transporte',[
+    ['Qual meio de transporte anda nos trilhos?','Trem',['Barco','Avião'],'🚆','O trem anda sobre trilhos.'],
+    ['Qual meio de transporte anda na água?','Barco',['Ônibus','Bicicleta'],'⛵','O barco é um transporte aquático.'],
+    ['Qual meio de transporte voa?','Avião',['Carro','Trem'],'✈️','O avião é um transporte aéreo.'],
+    ['Qual transporte não solta fumaça e ainda faz exercício?','Bicicleta',['Carro','Moto'],'🚲','A bicicleta não polui e faz bem para a saúde.'],
+    ['Qual transporte leva muitas pessoas pela cidade?','Ônibus',['Bicicleta','Patinete'],'🚌','O ônibus leva muitas pessoas de uma vez.'],
+    ['Onde é mais seguro atravessar a rua?','Na faixa de pedestres',['No meio dos carros','Correndo sem olhar'],'🚸','Atravesse na faixa, olhando para os dois lados e de mão dada com um adulto.'],
+    ['O sinal vermelho para os carros quer dizer...','Parar',['Acelerar','Buzinar'],'🚦','Vermelho é parar.'],
+    ['Qual destes é um meio de comunicação?','Telefone',['Bicicleta','Panela'],'📞','O telefone serve para conversar com quem está longe.'],
+    ['Para mandar uma carta, usamos o...','Correio',['Mercado','Hospital'],'📮','O correio leva as cartas.'],
+    ['Para saber as notícias, usamos...','Televisão, rádio ou internet',['Geladeira','Fogão'],'📺','TV, rádio e internet trazem as notícias.'],
+    ['Qual destes é um transporte terrestre?','Carro',['Navio','Helicóptero'],'🚗','O carro anda na terra, pelas ruas.'],
+    ['Quando devemos usar o cinto de segurança?','Sempre que andar de carro',['Só em viagem longa','Nunca'],'🔒','O cinto protege em qualquer viagem, curta ou longa.'],
+    ['Onde a criança deve ir no carro?','No banco de trás, na cadeirinha ou no assento',['No colo do motorista','No banco da frente sem cinto'],'💺','Criança vai atrás, presa na cadeirinha ou no assento.'],
+    ['Qual transporte é puxado por cavalos?','Carroça',['Metrô','Avião'],'🐴','A carroça é puxada por cavalos.'],
+    ['Qual meio de comunicação existe há mais tempo?','Carta',['Celular','Internet'],'✉️','As cartas existem há muito mais tempo que o celular.']]),
+  lugares:bk('Lugares e paisagens','confundiu os lugares',[
+    ['Onde as crianças estudam?','Na escola',['No hospital','Na padaria'],'🏫','A escola é o lugar de aprender.'],
+    ['Onde compramos pão?','Na padaria',['Na farmácia','No correio'],'🥖','O pão é vendido na padaria.'],
+    ['Onde cuidamos da saúde?','No posto de saúde ou hospital',['No supermercado','Na praça'],'🏥','Médicos e enfermeiros trabalham no posto e no hospital.'],
+    ['Onde pegamos livros emprestados?','Na biblioteca',['Na padaria','No banco'],'📚','A biblioteca empresta livros.'],
+    ['Quem apaga incêndios?','Os bombeiros',['Os padeiros','Os carteiros'],'🚒','Os bombeiros apagam o fogo e salvam pessoas.'],
+    ['Qual paisagem foi pouco mudada pelas pessoas?','Uma mata',['Uma rua com prédios','Um shopping'],'🌳','A mata é uma paisagem natural.'],
+    ['Qual paisagem foi construída pelas pessoas?','Uma cidade com prédios e ruas',['Uma floresta','Uma cachoeira na mata'],'🏙️','Prédios e ruas foram feitos pelas pessoas: é uma paisagem modificada.'],
+    ['As casas e ruas perto da sua casa formam o...','Bairro',['Planeta','Oceano'],'🏘️','O bairro é a parte da cidade onde moramos.'],
+    ['Londrina fica em qual estado?','Paraná',['São Paulo','Bahia'],'📍','Londrina é uma cidade do Paraná.'],
+    ['Qual é a capital do Paraná?','Curitiba',['Londrina','Rio de Janeiro'],'🏛️','A capital do Paraná é Curitiba.'],
+    ['Em qual país nós moramos?','Brasil',['Portugal','Japão'],'🇧🇷','Nós moramos no Brasil.'],
+    ['Onde deve ir o lixo?','Na lixeira',['Na rua','No rio'],'🗑️','Lixo na lixeira deixa o bairro limpo e o rio saudável.'],
+    ['Um mapa mostra os lugares vistos de...','Cima',['Baixo','Dentro'],'🗺️','O mapa desenha os lugares como um passarinho vê lá de cima.'],
+    ['Qual destes é um lugar de brincar no bairro?','A praça',['O posto de gasolina','A farmácia'],'🛝','A praça é um lugar de lazer.'],
+    ['No campo, o que é comum ter?','Plantações e animais de criação',['Muitos prédios altos','Metrô'],'🐄','O campo tem plantações, sítios e fazendas.']]),
+});
+const GEO_LESSONS=[
+  {id:'lado',titulo:'Direita e esquerda',icone:'↔️',bncc:'EF02GE10',
+   slides:[{t:'Levante a mão que você usa para escrever. Agora olhe as setas: ⬅️ é a esquerda e ➡️ é a direita.',v:'<div class="emo" style="font-size:56px">⬅️ ✋ ➡️</div>'},
+    {t:'Numa fila, o vizinho da direita é quem está logo do lado da seta ➡️. O da esquerda, do lado da seta ⬅️.',v:'<div class="emo" style="font-size:52px;letter-spacing:10px">🐶 🐱 🌳</div><div class="muted">O gato está à direita do cachorro.</div>'}],
+   practice:['lado','lado','lado','lado','lado','lado'],quiz:['lado','lado','lado','lado','lado']},
+  {id:'lugares',titulo:'Meu bairro e minha cidade',icone:'🏘️',bncc:'EF02GE01/04',
+   slides:[{t:'No bairro tem casas, escola, padaria, posto de saúde e praça. Cada lugar tem uma função.',v:'<div class="emo" style="font-size:52px">🏠 🏫 🥖 🏥 🛝</div>'},
+    {t:'Algumas paisagens são naturais, como a mata. Outras foram construídas pelas pessoas, como a cidade.',v:'<div class="emo" style="font-size:52px">🌳🏞️ &nbsp; 🏙️🛣️</div>'},
+    {t:'Nós moramos em Londrina, uma cidade do estado do Paraná, no Brasil.',v:'<div class="emo" style="font-size:52px">🏘️ ➡️ 📍 ➡️ 🇧🇷</div>'}],
+   practice:['lugares','lugares','lugares','lugares','lugares','lugares'],quiz:['lugares','lugares','lugares','lugares','lugares']},
+  {id:'transportes',titulo:'Transportes e comunicação',icone:'🚌',bncc:'EF02GE03',
+   slides:[{t:'Os transportes podem andar na terra, na água ou no ar.',v:'<div class="emo" style="font-size:52px">🚗 🚆 &nbsp; ⛵ &nbsp; ✈️</div>'},
+    {t:'Os meios de comunicação levam mensagens: carta, telefone, rádio, televisão e internet.',v:'<div class="emo" style="font-size:52px">✉️ 📞 📻 📺</div>'},
+    {t:'No trânsito: cinto sempre, criança no banco de trás e atravessar na faixa de mão dada.',v:'<div class="emo" style="font-size:52px">🔒 💺 🚸</div>'}],
+   practice:['transportes','transportes','transportes','transportes','transportes','transportes'],quiz:['transportes','transportes','transportes','transportes','transportes']},
+];
+MISSOES.push(
+  {icone:'🕐',materia:'Matemática',texto:'Durante um dia, olhe o relógio 3 vezes e diga a hora em voz alta para alguém conferir.'},
+  {icone:'📊',materia:'Matemática',texto:'Pergunte a 5 pessoas qual a fruta preferida delas e desenhe um gráfico com quadradinhos.'},
+  {icone:'↔️',materia:'Geografia',texto:'Brinque de "siga o mestre" com direita e esquerda: alguém dá os comandos e você obedece.'},
+);
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
@@ -725,12 +1148,13 @@ function buildMemoria(rows){
   return lessons;
 }
 
-MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');EMO_LESSONS.forEach(l=>l.subject='Emoções');
+MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');EMO_LESSONS.forEach(l=>l.subject='Emoções');HIS_LESSONS.forEach(l=>l.subject='História');GEO_LESSONS.forEach(l=>l.subject='Geografia');
 SUBJECTS[0].lessons=MAT_LESSONS;Object.assign(SUBJECTS[1],{lessons:POR_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS[2],{lessons:CIE_LESSONS,ready:true,ano:'2º ano'});
+Object.assign(SUBJECTS.find(x=>x.id==='his'),{lessons:HIS_LESSONS,ready:true,ano:'2º ano'});Object.assign(SUBJECTS.find(x=>x.id==='geo'),{lessons:GEO_LESSONS,ready:true,ano:'2º ano'});
 SUBJECTS.splice(SUBJECTS.findIndex(x=>x.id==='mem'),0,
   {id:'fin',nome:'Dinheiro',ic:'🪙',ano:'2º ano',ready:true,lessons:FIN_LESSONS},
   {id:'log',nome:'Lógica',ic:'🧩',ano:'2º ano',ready:true,lessons:LOG_LESSONS},
   {id:'emo',nome:'Emoções',ic:'💛',ano:'2º ano',ready:true,lessons:EMO_LESSONS});
-const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS,...FIN_LESSONS,...LOG_LESSONS,...EMO_LESSONS];
+const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS,...FIN_LESSONS,...LOG_LESSONS,...EMO_LESSONS,...HIS_LESSONS,...GEO_LESSONS];
 const PRAISE=['Muito bem!','Isso aí!','Arrasou!','Perfeito!','Você acertou!'];
