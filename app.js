@@ -21,8 +21,14 @@ function enqueue(action,payload,key){outbox=outbox.filter(x=>x.key!==key);outbox
 async function flushOutbox(){
   if(sending||!API.url||!outbox.length||!navigator.onLine)return;
   sending=true;
-  try{while(outbox.length){const it=outbox[0];await api(it.action,it.payload);outbox.shift();LS.set('outbox',outbox)}}
-  catch(e){console.warn('envio adiado',e)}
+  try{
+    // um registro recusado pelo servidor não trava os outros: vai para o fim da fila e os demais seguem
+    for(const it of outbox.slice()){
+      try{await api(it.action,it.payload);outbox=outbox.filter(x=>x!==it)}
+      catch(e){if(!e||!e.code)throw e;it.erro=e.code;it.tent=(it.tent||0)+1;console.warn('servidor recusou',it.action,e.code)}
+      LS.set('outbox',outbox);
+    }
+  }catch(e){console.warn('envio adiado (sem conexão)',e)}
   finally{sending=false}
 }
 setInterval(flushOutbox,30000);window.addEventListener('online',flushOutbox);
@@ -515,7 +521,7 @@ function renderParent(){
   const maxMs=Math.max(goal*60000,...st.days.map(d=>d.ms));
   app.innerHTML=`
   <div class="top"><h1 style="font-size:32px">Acompanhamento${S.config.childName?' · '+esc(S.config.childName):''}</h1><div class="spacer"></div><button class="btn ghost small" data-act="home">Sair</button></div>
-  ${!API.url?'<div class="note">A planilha ainda não está conectada neste aparelho. Os dados estão salvos só aqui. Configure em Conexão, no fim da página.</div>':(outbox.length?`<div class="note">${outbox.length} registro(s) aguardando internet para ir para a planilha.</div>`:'')}
+  ${!API.url?'<div class="note">A planilha ainda não está conectada neste aparelho. Os dados estão salvos só aqui. Configure em Conexão, no fim da página.</div>':(outbox.length?`<div class="note">${outbox.length} registro(s) ainda não foram para a planilha.${outbox.some(x=>x.erro==='acao_desconhecida')?' O servidor está numa versão antiga: no Apps Script, vá em Implantar → Gerenciar implantações → ✏️ → Nova versão → Implantar.':outbox.some(x=>x.erro)?' Erro do servidor: '+esc(outbox.find(x=>x.erro).erro)+'.':' Eles serão enviados quando houver internet.'}</div>`:'')}
   <div class="pgrid">
     <div class="tile"><span class="l">Hoje</span><span class="v">${mins(tm)} min</span><span><span class="pill ${studied?(mins(tm)>=goal?'ok':'mid'):'no'}">${studied?(mins(tm)>=goal?'Meta cumprida':'Estudou, abaixo da meta'):'Ainda não estudou'}</span></span></div>
     <div class="tile"><span class="l">Últimos 7 dias</span><span class="v">${mins(st.weekMs)} min</span><span class="l">${st.studiedDays} de 7 dias com estudo</span></div>
