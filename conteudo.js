@@ -268,7 +268,7 @@ Object.assign(GEN,{
     options:shuffle(['NH','LH','CH'].map(v=>({v,label:v,ok:v===d,type:v===d?null:`trocou ${d} por ${v}`}))),
     hint:'Fale a palavra devagar e preste atenção no som do meio.',explain:`${w} se escreve com ${d}.`}},
   temDigrafo(){const d=pick(['NH','LH','CH']),cert=pick(DIGRAFOS.filter(x=>x[2]===d)),outros=shuffle(DIGRAFOS.filter(x=>x[2]!==d)).filter((x,i,arr)=>arr.findIndex(y=>y[2]===x[2])===i).slice(0,2);
-    return{skill:'NH, LH e CH',text:`Qual palavra tem ${d}?`,visual:'',desc:`palavra com ${d}`,optClass:'txt',
+    return{skill:'NH, LH e CH',text:`Qual palavra tem ${d}?`,visual:'',desc:`palavra com ${d}: ${[cert,...outros].map(x=>x[0]).sort().join(', ')}`,optClass:'txt',
     options:shuffle([cert,...outros].map(x=>({v:x[0],label:`${x[1]} ${x[0]}`,ok:x[2]===d,type:x[2]===d?null:`confundiu ${d} com ${x[2]}`}))),
     hint:`Procure as letras ${d.split('').join(' e ')} juntinhas.`,explain:`${cert[0]} tem ${d}.`}},
   letraDepois(){const i=rnd(0,24),l=ALFABETO[i],r=ALFABETO[i+1];
@@ -297,9 +297,9 @@ POR_LESSONS.push(
 );
 
 /* ---- Ciências: banco de perguntas ---- */
-function bankGen(skill,bank){let fila=[];return function(){if(!fila.length)fila=shuffle(bank.slice());const it=fila.pop();
+function bankGen(skill,bank){let fila=[];const f=function(){if(!fila.length)fila=shuffle(bank.slice());const it=fila.pop();
   const ops=shuffle([{v:it.a,label:it.a,ok:true,type:null},...it.w.map(x=>({v:x,label:x,ok:false,type:it.erro||'confundiu o conceito'}))]);
-  return{skill,text:it.q,visual:it.e?`<div class="emo" style="font-size:72px">${it.e}</div>`:'',desc:it.q,optClass:ops.some(o=>o.label.length>12)?'sent':'txt',options:ops,hint:it.h||'Pense no que você faz no dia a dia.',explain:it.x}}}
+  return{skill,text:it.q,visual:it.e?`<div class="emo" style="font-size:72px">${it.e}</div>`:'',desc:it.q,optClass:ops.some(o=>o.label.length>12)?'sent':'txt',options:ops,hint:it.h||'Pense no que você faz no dia a dia.',explain:it.x}};f.banco=bank;return f}
 Object.assign(GEN,{
   corpo:bankGen('Corpo humano e higiene',[
     {q:'Para que servem os olhos?',a:'Para ver',w:['Para ouvir','Para sentir cheiro'],e:'👀',x:'Os olhos servem para ver.'},
@@ -396,7 +396,7 @@ const PADROES={AB:[0,1],AAB:[0,0,1],ABB:[0,1,1],ABC:[0,1,2],AABB:[0,0,1,1]};
 const SETAS={'⬆️':[0,-1],'➡️':[1,0],'⬇️':[0,1],'⬅️':[-1,0]};
 Object.assign(GEN,{
   padrao(){const sim=pick(SIMBOLOS),[nome,pp]=pick(Object.entries(PADROES)),len=pp.length*2+rnd(0,pp.length-1),seq=Array.from({length:len},(_,i)=>sim[pp[i%pp.length]]),r=sim[pp[len%pp.length]];
-    return{skill:'Padrões',text:'Qual vem depois na sequência?',visual:`<div class="emo" style="font-size:40px;letter-spacing:6px">${seq.join('')}❓</div>`,desc:`padrão ${nome}`,optClass:'txt',
+    return{skill:'Padrões',text:'Qual vem depois na sequência?',visual:`<div class="emo" style="font-size:40px;letter-spacing:6px">${seq.join('')}❓</div>`,desc:`padrão ${nome}: ${seq.join('')}`,optClass:'txt',
     options:shuffle(sim.map(v=>({v,label:v,ok:v===r,type:v===r?null:'não percebeu a repetição'}))),
     hint:'Procure o pedaço que se repete e continue a repetição.',explain:`O pedaço que se repete é ${pp.map(i=>sim[i]).join('')}. Depois vem ${r}.`}},
   setas(){const N=4;let x,y,cam,ex,ey;
@@ -406,7 +406,7 @@ Object.assign(GEN,{
     const livres=[];for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(!(i===ex&&j===ey)&&!(i===x&&j===y))livres.push([i,j]);
     const [o1,o2]=shuffle(livres),obj={[`${ex},${ey}`]:'🍎',[`${o1[0]},${o1[1]}`]:'⭐',[`${o2[0]},${o2[1]}`]:'🏠'};
     let g='<div class="grade">';for(let j=0;j<N;j++)for(let i=0;i<N;i++)g+=`<span>${i===x&&j===y?'🤖':(obj[`${i},${j}`]||'')}</span>`;g+='</div>';
-    return{skill:'Seguir comandos',text:'O robô segue as setas. Onde ele chega?',visual:g+`<div class="emo" style="font-size:36px">${cam.join(' ')}</div>`,desc:cam.join(' '),optClass:'txt',
+    return{skill:'Seguir comandos',text:'O robô segue as setas. Onde ele chega?',visual:g+`<div class="emo" style="font-size:36px">${cam.join(' ')}</div>`,desc:`${cam.join(' ')} a partir de ${x},${y}`,optClass:'txt',
     options:shuffle(['🍎','⭐','🏠'].map(v=>({v,label:v,ok:v==='🍎',type:v==='🍎'?null:'errou a direção de uma seta'}))),
     hint:'Coloque o dedo no robô e ande um quadradinho para cada seta, na ordem.',explain:`Seguindo ${cam.join(' ')} a partir do robô, ele chega na 🍎.`}},
   passos:bankGen('Passo a passo',[
@@ -497,6 +497,181 @@ const MISSOES=[
 ];
 const LEIT_PERGUNTAS=['O que você acha que vai acontecer agora?','Como o personagem está se sentindo? Por quê?','O que você faria no lugar dele?','Qual foi a parte mais legal até agora?','Tem alguma palavra que você não conhecia?','Onde e quando essa história acontece?','Quem é o personagem principal?','Por que você acha que ele fez isso?','Essa história parece com algo que já aconteceu com você?','Como você acha que a história vai terminar?','Se pudesse mudar o final, como seria?','O que o desenho dessa página mostra?','Qual personagem você mais gostou? Por quê?','O que aconteceu primeiro, depois e por último?','Você daria outro nome para o livro? Qual?'];
 
+/* ================= LOTE 3 · 17/11/2026 · mais variedade, níveis e reforços ================= */
+/* Níveis de dificuldade: o app calcula NIVEL[habilidade] (1 a 3) pelo desempenho dela. */
+const NIVEL={};const nv=sk=>NIVEL[sk]||1;const LIM={1:30,2:60,3:99};
+const comoNum=g=>()=>{const q=g();q.num=true;q.answer=q.options.find(o=>o.ok).v;return q};
+function addBanco(k,itens,erro){const b=GEN[k].banco;itens.forEach(([q,a,w,e,x])=>b.push({q,a,w,e,x,erro}))}
+Object.assign(GEN,{
+  depois:comoNum(()=>{const L=LIM[nv('Antes e depois')],n=Math.random()<.4?rnd(1,Math.floor(L/10))*10-1:rnd(1,L-1),a=n+1;return{skill:'Antes e depois',text:`Qual número vem logo depois do ${n}?`,visual:numline([n,'?']),desc:`depois de ${n}`,
+    options:opts(a,[{v:n-1,type:'confundiu antes com depois'},{v:n+10,type:'pulou uma dezena'},{v:n+2,type:'errou por 1'}]),hint:'Depois é um a mais. Conte mais um.',explain:n%10===9?`Depois do ${n} a dezena muda: vem o ${a}.`:`Um a mais que ${n} é ${a}.`}}),
+  antes:comoNum(()=>{const L=LIM[nv('Antes e depois')],n=Math.random()<.4?rnd(1,Math.floor(L/10))*10:rnd(2,L),a=n-1;return{skill:'Antes e depois',text:`Qual número vem logo antes do ${n}?`,visual:numline(['?',n]),desc:`antes de ${n}`,
+    options:opts(a,[{v:n+1,type:'confundiu antes com depois'},{v:n-10,type:'pulou uma dezena'},{v:n-2,type:'errou por 1'}]),hint:'Antes é um a menos. Conte para trás.',explain:n%10===0?`Antes do ${n} vem o ${a}: a dezena anterior termina no 9.`:`Um a menos que ${n} é ${a}.`}}),
+  seq:comoNum(()=>{const L=LIM[nv('Antes e depois')],a=rnd(1,L-3),r=a+3;return{skill:'Antes e depois',text:'Qual número completa a fila?',visual:numline([a,a+1,a+2,'?']),desc:`sequência ${a}, ${a+1}, ${a+2}, ?`,
+    options:opts(r,[{v:a+2,type:'repetiu o último'},{v:a+4,type:'errou por 1'},{v:a+13,type:'pulou uma dezena'}]),hint:'Cada número é um a mais que o anterior.',explain:`Depois do ${a+2} vem o ${r}.`}}),
+  retaFalta:comoNum(()=>{const L=LIM[nv('Reta numérica')],a=rnd(0,L-4),pos=rnd(1,4),arr=[a,a+1,a+2,a+3,a+4],r=arr[pos];arr[pos]='?';return{skill:'Reta numérica',text:'Qual número está escondido na reta?',visual:numline(arr),desc:`reta ${a} a ${a+4}, falta ${r}`,
+    options:opts(r,[{v:r+1,type:'contou um a mais'},{v:r-1,type:'contou um a menos'},{v:r+10,type:'confundiu a dezena'}]),hint:'Os números da reta crescem de 1 em 1. Olhe o vizinho da esquerda e some 1.',explain:`O vizinho da esquerda é ${r-1}. Um a mais dá ${r}.`}}),
+  vizinhos(){const L=LIM[nv('Reta numérica')],n=rnd(2,L-1);return{skill:'Reta numérica',text:`Quem são os vizinhos do ${n}?`,visual:numline(['?',n,'?'],1),desc:`vizinhos de ${n}`,optClass:'txt',
+    options:shuffle([{v:'ok',label:`${n-1} e ${n+1}`,ok:true,type:null},{v:'a',label:`${n} e ${n+2}`,ok:false,type:'errou o vizinho de trás'},{v:'b',label:`${n-10} e ${n+10}`,ok:false,type:'confundiu vizinho com dezena'}]),
+    hint:'O vizinho de trás é um a menos. O da frente é um a mais.',explain:`Um a menos que ${n} é ${n-1}. Um a mais é ${n+1}.`}},
+  pular:comoNum(()=>{const l=nv('Contar pulando'),st=l===1?pick([10,2]):pick([2,5,10]),max=l===1?(st===10?50:20):l===2?60:100,a=st*rnd(0,Math.max(0,Math.floor(max/st)-3)),seq=[a,a+st,a+2*st],r=a+3*st;
+    return{skill:'Contar pulando',text:`Contando de ${st} em ${st}, qual número vem depois?`,visual:numline([...seq,'?']),desc:`de ${st} em ${st}: ${seq.join(', ')}, ?`,
+    options:opts(r,[{v:a+2*st+1,type:'contou de 1 em 1'},{v:r+st,type:'pulou um número'},{v:r-1,type:'errou a soma do pulo'}]),hint:`Some ${st} ao último número. Pode usar os dedos!`,explain:`${a+2*st} mais ${st} dá ${r}.`}}),
+  pularFalta:comoNum(()=>{const l=nv('Contar pulando'),st=l===1?pick([10,2]):pick([2,5,10]),max=l===1?(st===10?50:20):l===2?60:100,a=st*rnd(1,Math.max(1,Math.floor(max/st)-2)),r=a+st;
+    return{skill:'Contar pulando',text:'Qual número está faltando na fila?',visual:numline([a-st,a,'?',a+2*st]),desc:`de ${st} em ${st}: ${a-st}, ${a}, ?, ${a+2*st}`,
+    options:opts(r,[{v:a+1,type:'contou de 1 em 1'},{v:a+2*st,type:'repetiu o próximo'},{v:r+1,type:'errou a soma do pulo'}]),hint:'Descubra de quanto em quanto a fila pula.',explain:`A fila pula de ${st} em ${st}. Depois do ${a} vem ${r}.`}}),
+  soma2:comoNum(()=>{const l=nv('Somar dezenas e unidades');let a1,b1,a0,b0;if(l===1){a1=rnd(1,3);b1=0;a0=rnd(0,7);b0=rnd(1,9-a0)}else if(l===2){a1=rnd(1,5);b1=rnd(1,8-a1>4?4:8-a1);a0=rnd(0,8);b0=rnd(0,9-a0)}else{a1=rnd(1,7);b1=rnd(1,8-a1);a0=rnd(0,8);b0=rnd(0,9-a0)}
+    const a=a1*10+a0,b=b1*10+b0,s=a+b;return{skill:'Somar dezenas e unidades',text:`Quanto é ${a} mais ${b}?`,visual:cols(a,b,'+'),desc:`${a} + ${b}`,
+    options:opts(s,[{v:s+10,type:'errou nas dezenas'},{v:s-10,type:'errou nas dezenas'},{v:s+1,type:'errou nas unidades'},{v:a-b,type:'subtraiu em vez de somar'}]),
+    hint:'Some primeiro as unidades. Depois some as dezenas.',explain:`Unidades: ${a0} mais ${b0} dá ${a0+b0}. Dezenas: ${a1} mais ${b1} dá ${a1+b1}. Resultado: ${s}.`}}),
+  sub2:comoNum(()=>{const l=nv('Subtrair dezenas e unidades');let a1,b1,a0,b0;if(l===1){a1=rnd(1,3);b1=0;a0=rnd(2,9);b0=rnd(1,a0)}else if(l===2){a1=rnd(2,5);b1=rnd(1,a1-1);a0=rnd(1,9);b0=rnd(0,a0)}else{a1=rnd(2,9);b1=rnd(1,a1-1);a0=rnd(1,9);b0=rnd(0,a0)}
+    const a=a1*10+a0,b=b1*10+b0,r=a-b;return{skill:'Subtrair dezenas e unidades',text:`Quanto é ${a} menos ${b}?`,visual:cols(a,b,'−'),desc:`${a} − ${b}`,
+    options:opts(r,[{v:a+b,type:'somou em vez de subtrair'},{v:r+10,type:'errou nas dezenas'},{v:r-1,type:'errou nas unidades'},{v:r+1,type:'errou nas unidades'}]),
+    hint:'Tire primeiro as unidades. Depois tire as dezenas.',explain:`Unidades: ${a0} menos ${b0} dá ${a0-b0}. Dezenas: ${a1} menos ${b1} dá ${a1-b1}. Resultado: ${r}.`}}),
+  blocks(){const L=LIM[nv('Ler números com blocos')],t=rnd(1,Math.min(8,Math.floor(L/10))),u=rnd(0,9),n=t*10+u;return{skill:'Ler números com blocos',text:'Que número os blocos mostram?',visual:blocksHTML(t,u),desc:`${t} dezenas e ${u} unidades`,
+    options:opts(n,[{v:u*10+t,type:'trocou dezena com unidade'},{v:n+10,type:'contou dezenas errado'},{v:n-1,type:'contou unidades errado'},{v:n+1,type:'contou unidades errado'}]),
+    hint:'Conte as barras de 10 em 10. Depois continue contando os cubinhos soltos.',explain:`São ${t} dezenas, que dão ${t*10}, e mais ${u} unidades. ${t*10} mais ${u} é ${n}.`}},
+  letraAntes(){const i=rnd(1,25),l=ALFABETO[i],r=ALFABETO[i-1],c=[ALFABETO[i+1],ALFABETO[i-2],ALFABETO[i+2]].filter(x=>x&&x!==r).slice(0,2);
+    return{skill:'Ordem alfabética',text:`Qual letra vem logo antes do ${l}?`,speak:`Qual letra vem logo antes do ${l.toLowerCase()}?`,visual:`<div class="big">? → ${l}</div>`,desc:`antes de ${l}`,optClass:'txt',
+    options:shuffle([r,...c].map(v=>({v,label:v,ok:v===r,type:v===r?null:(v===ALFABETO[i+1]?'confundiu antes com depois':'errou a sequência do alfabeto')}))),hint:'Cante o alfabeto até chegar nessa letra. Qual cantou logo antes?',explain:`No alfabeto, antes do ${l} vem o ${r}.`}},
+  alfaApoio(){const pool=shuffle(PALAVRAS.map(p=>wordOf(p[0]))),ws=[];for(const w of pool){if(!ws.some(x=>x[0]===w[0]))ws.push(w);if(ws.length===3)break}
+    const first=[...ws].sort((a,b)=>ALFABETO.indexOf(a[0])-ALFABETO.indexOf(b[0]))[0],ini=ws.map(w=>w[0]);
+    return{skill:'Ordem alfabética',text:'Qual palavra vem primeiro na ordem alfabética? Use o alfabeto para ajudar!',speak:'Qual palavra vem primeiro na ordem alfabética? Olhe a primeira letra de cada uma no alfabeto.',
+    visual:`<div class="alfa">${ALFABETO.split('').map(c=>`<span class="${ini.includes(c)?'hi':''}">${c}</span>`).join('')}</div>`,desc:ws.join(', ')+' (com apoio)',optClass:'txt',
+    options:shuffle(ws.map(v=>({v,label:v,ok:v===first,type:v===first?null:'não comparou a primeira letra'}))),hint:'As letras amarelas são as primeiras de cada palavra. Qual amarela aparece primeiro no alfabeto?',explain:`${first} começa com ${first[0]}, que aparece antes no alfabeto.`}},
+});
+/* mais palavras para os geradores de Português */
+PALAVRAS.push(['PI-PO-CA','🍿'],['LÁ-PIS','✏️'],['BO-NÉ','🧢'],['CA-DEI-RA','🪑'],['GI-RA-FA','🦒'],['ZE-BRA','🦓'],['LE-ÃO','🦁'],['BA-LEI-A','🐋'],['FO-GUE-TE','🚀'],
+  ['TE-LE-FO-NE','📞'],['RE-LÓ-GIO','⏰'],['CA-NE-TA','🖊️'],['LI-VRO','📖'],['ES-CO-VA','🪥'],['PEN-TE','🪮'],['CO-E-LHO','🐰'],['CA-CHOR-RO','🐶'],['MO-RAN-GO','🍓'],
+  ['LA-RAN-JA','🍊'],['PIZ-ZA','🍕'],['QUEI-JO','🧀'],['SOR-VE-TE','🍦'],['BI-CI-CLE-TA','🚲'],['Ô-NI-BUS','🚌'],['A-VI-ÃO','✈️'],['NA-VI-O','🚢'],['ES-TRE-LA','⭐'],
+  ['NU-VEM','☁️'],['TREM','🚆'],['JA-CA-RÉ','🐊'],['CA-RAN-GUE-JO','🦀'],['Ó-CU-LOS','👓'],['CO-RU-JA','🦉']);
+RIMAS.push(['CAMA','LAMA'],['FOCA','BOCA'],['SAPO','TRAPO'],['BALEIA','SEREIA'],['LEÃO','FEIJÃO'],['COELHO','JOELHO'],['GALINHA','FARINHA'],['MARTELO','CHINELO'],
+  ['NAVIO','RIO'],['PIPOCA','MINHOCA'],['BOLO','COLO'],['GIRAFA','GARRAFA'],['SORVETE','FOGUETE'],['QUEIJO','BEIJO'],['LUA','RUA'],['FITA','BONITA']);
+FRASES.push(['A gata','bebe','água'],['O vovô','planta','uma árvore'],['A menina','pula','corda'],['O menino','come','uma banana'],['A Duda','lê','um gibi'],['O Theo','monta','um quebra-cabeça'],
+  ['A abelha','faz','o mel'],['A professora','escreve','uma frase'],['A mamãe','prepara','o almoço'],['O cavalo','come','capim'],['A Malu','desenha','uma flor'],['O macaco','pega','a banana'],
+  ['O Davi','empina','uma pipa'],['A vaca','dá','leite'],['O bombeiro','apaga','o fogo'],['O vovô','lê','o jornal'],['A Lara','pinta','um quadro'],['O padeiro','faz','o pão']);
+DIGRAFOS.push(['BANHO','🛁','NH'],['SONHO','💭','NH'],['GOLFINHO','🐬','NH'],['CAMINHÃO','🚚','NH'],['PINHEIRO','🌲','NH'],['RAINHA','👑','NH'],
+  ['MILHO','🌽','LH'],['PALHAÇO','🤡','LH'],['ESPELHO','🪞','LH'],['AGULHA','🪡','LH'],['GALHO','🌳','LH'],['FILHOTE','🐣','LH'],
+  ['CHÁ','🍵','CH'],['CACHORRO','🐶','CH'],['MOCHILA','🎒','CH'],['BOLACHA','🍪','CH'],['FLECHA','🏹','CH'],['CHAMA','🔥','CH']);
+/* bancos maiores */
+addBanco('corpo',[
+ ['Qual órgão bombeia o sangue pelo corpo?','O coração',['O pulmão','O estômago'],'❤️','O coração bate e empurra o sangue para o corpo todo.'],
+ ['Com qual parte do corpo respiramos o ar?','Os pulmões',['O estômago','O coração'],'🫁','O ar entra pelo nariz e vai para os pulmões.'],
+ ['Para onde vai a comida que engolimos?','Para o estômago',['Para os pulmões','Para o coração'],'🍽️','A comida desce até o estômago, onde é digerida.'],
+ ['O que protege o nosso cérebro?','Os ossos da cabeça',['O cabelo','As orelhas'],'🧠','O crânio, os ossos da cabeça, protege o cérebro.'],
+ ['Quantos sentidos nós temos?','5',['3','7'],'🖐️','Visão, audição, olfato, paladar e tato: 5 sentidos.'],
+ ['O que acontece quando corremos muito?','O coração bate mais rápido',['O coração para','Ficamos mais baixos'],'🏃','Correndo, o corpo precisa de mais sangue, e o coração acelera.'],
+ ['Por que devemos beber água?','O corpo precisa de água para funcionar',['Para ficar com sono','Só para matar a fome'],'💧','Quase tudo no nosso corpo precisa de água.'],
+ ['Qual destes lanches é mais saudável?','Uma fruta',['Um refrigerante','Um pacote de balas'],'🍎','A fruta tem vitaminas e faz bem ao corpo.'],
+ ['Quanto tempo devemos esfregar as mãos ao lavar?','Uns 20 segundos',['1 segundo','Só molhar e pronto'],'🧼','Esfregar bem, por uns 20 segundos, tira os germes.'],
+ ['Por que dormimos à noite?','Para o corpo descansar e crescer',['Para ficar com fome','Porque o sol manda'],'😴','Dormindo, o corpo descansa e cresce.'],
+ ['O que segura o nosso corpo em pé?','Os ossos e os músculos',['A pele','O cabelo'],'🦴','Os ossos são a estrutura, e os músculos fazem o corpo se mexer.'],
+ ['Qual sentido usamos para ouvir uma música?','Audição',['Paladar','Olfato'],'🎵','Ouvimos com a audição, pelas orelhas.'],
+ ['Qual sentido nos avisa que uma panela está quente?','Tato',['Audição','Paladar'],'♨️','O tato, pela pele, sente o quente e o frio. Cuidado com o fogão!'],
+ ['Para que servem os dentes?','Para mastigar a comida',['Para ouvir','Para respirar'],'🦷','Os dentes cortam e mastigam a comida.'],
+ ['Por que usamos protetor solar?','Para proteger a pele do sol',['Para ficar com frio','Para crescer o cabelo'],'🧴','O sol forte pode queimar a pele.'],
+ ['Quando estamos doentes, o que é certo?','Avisar um adulto e descansar',['Esconder de todo mundo','Tomar remédio sozinha'],'🤒','Remédio, só com um adulto. Avisar e descansar ajuda a sarar.'],
+ ['Onde fica o joelho?','Na perna',['No braço','Na cabeça'],'🦵','O joelho fica no meio da perna e deixa a perna dobrar.'],
+ ['O que ajuda os dentes a não terem cárie?','Escovar e comer pouco doce',['Comer muito doce','Escovar só no domingo'],'🪥','Escovar sempre e comer menos doce protege os dentes.'],
+ ['Qual parte do corpo nos ajuda a pegar as coisas?','As mãos',['Os joelhos','As orelhas'],'✋','Pegamos as coisas com as mãos.'],
+ ['Por que devemos cortar as unhas?','Para não juntar sujeira e germes',['Para crescerem mais rápido','Para ouvir melhor'],'💅','Unha grande junta sujeira e germes.']],'confundiu o conceito');
+addBanco('animais',[
+ ['Qual destes animais vive no mar?','Polvo',['Coelho','Galinha'],'🐙','O polvo vive no mar e tem oito braços.'],
+ ['Quantas patas tem uma aranha?','8',['4','6'],'🕷️','A aranha tem 8 patas. Os insetos têm 6.'],
+ ['Quantas patas tem um inseto, como a formiga?','6',['4','8'],'🐜','Todo inseto tem 6 patas.'],
+ ['Qual animal faz o mel?','Abelha',['Formiga','Borboleta'],'🍯','A abelha faz o mel com o néctar das flores.'],
+ ['Qual destes é um mamífero, que mama quando é filhote?','Gato',['Galinha','Sapo'],'🐱','O gatinho mama o leite da mãe: é mamífero.'],
+ ['Onde o passarinho coloca seus ovos?','No ninho',['Na água','No formigueiro'],'🪺','Os pássaros fazem ninhos para os ovos.'],
+ ['O sapo começa a vida como...','Girino, na água',['Ovo de galinha','Lagarta'],'🐸','O sapo nasce como girino, que vive na água e depois vira sapo.'],
+ ['Qual animal muda de cor para se esconder?','Camaleão',['Cachorro','Vaca'],'🦎','O camaleão muda de cor para se camuflar.'],
+ ['Qual destes animais só come plantas?','Girafa',['Leão','Tubarão'],'🦒','A girafa é herbívora: come folhas das árvores.'],
+ ['O que a baleia faz para respirar?','Sobe até a superfície',['Respira debaixo d’água como o peixe','Fica na areia'],'🐋','A baleia é mamífero e respira ar, por isso sobe à superfície.'],
+ ['Qual animal tem um casco duro nas costas?','Tartaruga',['Coelho','Pato'],'🐢','A tartaruga tem um casco que a protege.'],
+ ['Por que o urso polar tem pelo grosso?','Para aguentar o frio',['Para nadar mais rápido','Para enxergar melhor'],'🐻‍❄️','O pelo grosso aquece o urso no gelo.'],
+ ['Qual animal vive no formigueiro?','Formiga',['Abelha','Minhoca'],'🐜','As formigas vivem juntas no formigueiro.'],
+ ['Qual animal anda devagar e carrega a casa nas costas?','Caracol',['Coelho','Cavalo'],'🐌','O caracol carrega a concha, sua casinha.'],
+ ['O pinguim vive onde é...','Muito frio',['Muito quente','Seco como o deserto'],'🐧','O pinguim vive em lugares gelados.'],
+ ['Qual destes animais voa e é mamífero?','Morcego',['Galinha','Borboleta'],'🦇','O morcego voa, mas mama quando é filhote: é mamífero.'],
+ ['Qual animal tem tromba?','Elefante',['Girafa','Zebra'],'🐘','O elefante usa a tromba para pegar comida e água.'],
+ ['O que a minhoca faz pela terra?','Deixa a terra fofa e boa para as plantas',['Deixa a terra seca','Come as flores'],'🪱','A minhoca cava túneis e deixa a terra boa.'],
+ ['Qual animal tem listras pretas e brancas?','Zebra',['Leão','Girafa'],'🦓','A zebra tem listras pretas e brancas.'],
+ ['Como o peixe respira?','Pelas brânquias',['Pelo nariz, como nós','Ele não respira'],'🐠','O peixe respira pelas brânquias, que tiram o ar da água.']],'confundiu o conceito');
+addBanco('passos',[
+ ['Para fazer um bolo, o que vem primeiro?','Misturar os ingredientes',['Comer o bolo','Tirar do forno'],'🎂','Primeiro mistura, depois assa, e só então come.'],
+ ['Depois de colocar a semente na terra, o que fazemos?','Cobrir com terra e regar',['Colher a fruta','Cavar o buraco'],'🌱','O buraco vem antes. Depois da semente, cobrimos e regamos.'],
+ ['Para mandar uma carta, o que fazemos por último?','Colocar no correio',['Escrever','Fechar o envelope'],'✉️','Escrever, fechar o envelope e por último colocar no correio.'],
+ ['Para lavar a louça, o que vem primeiro?','Tirar os restos de comida',['Secar o prato','Guardar no armário'],'🍽️','Primeiro tiramos os restos, depois lavamos, secamos e guardamos.'],
+ ['O que fazemos antes de sair para a escola?','Arrumar a mochila',['Voltar para casa','Assistir à aula'],'🎒','A mochila é arrumada antes de sair.'],
+ ['Para fazer suco, o que vem depois de cortar as laranjas?','Espremer',['Beber','Comprar as laranjas'],'🍊','Comprar, cortar, espremer e só então beber.'],
+ ['Para montar um quebra-cabeça, o que é bom fazer primeiro?','Montar a borda',['Guardar a caixa','Mostrar pronto'],'🧩','Começar pela borda ajuda a montar o resto.'],
+ ['O robô anda 1 passo para frente, 3 vezes. Quantos passos ele andou?','3',['1','6'],'🤖','Repetir 3 vezes 1 passo dá 3 passos.'],
+ ['Repita 2 vezes: bater palma. Quantas palmas?','2',['1','4'],'👏','Repetir 2 vezes uma palma dá 2 palmas.'],
+ ['Repita 3 vezes: pular. Quantos pulos?','3',['2','6'],'🦘','Repetir 3 vezes um pulo dá 3 pulos.'],
+ ['Se chover, levo guarda-chuva. Está chovendo. O que levo?','Guarda-chuva',['Óculos de sol','Boia'],'☔','A condição aconteceu: está chovendo, então levo o guarda-chuva.'],
+ ['Se a luz estiver vermelha, paramos. A luz está vermelha. O que fazemos?','Paramos',['Atravessamos correndo','Fechamos os olhos'],'🚦','Luz vermelha: paramos.'],
+ ['Se estiver frio, vista o casaco. Está calor. Precisa do casaco?','Não',['Sim','Dois casacos'],'🧥','Só vestimos o casaco se estiver frio. Está calor, então não.'],
+ ['Se a terra estiver seca, regue. A terra está molhada. Precisa regar?','Não, já está molhada',['Sim, regue muito','Regue com suco'],'🪴','Só regamos se estiver seca.'],
+ ['Para tomar sopa quente, o que fazemos antes?','Esperar esfriar um pouco',['Lavar o prato','Guardar a colher'],'🥣','Esperar esfriar evita queimar a boca.'],
+ ['Para escrever no caderno, o que vem primeiro?','Abrir o caderno',['Fechar o caderno','Guardar o lápis'],'📓','Primeiro abrimos o caderno.'],
+ ['Para pintar com tinta, o que fazemos no final?','Lavar o pincel',['Molhar o pincel na tinta','Pintar o desenho'],'🖌️','No final, lavamos o pincel.'],
+ ['Para ver um filme no cinema, o que vem primeiro?','Comprar o ingresso',['Sair da sala','Ver o final do filme'],'🎬','Primeiro o ingresso, depois o filme.'],
+ ['Para andar de bicicleta com segurança, o que vem primeiro?','Colocar o capacete',['Pedalar rápido','Guardar a bicicleta'],'🚲','O capacete vem antes de pedalar.'],
+ ['Para guardar os brinquedos, o que fazemos por último?','Fechar a caixa',['Pegar os brinquedos do chão','Colocar na caixa'],'🧸','Pegar, colocar na caixa e por último fechar.']],'errou a ordem dos passos');
+addBanco('sentir',[
+ ['Você caiu na frente dos colegas e todos riram. Como pode se sentir?','😳 Envergonhada',['😄 Feliz','🤩 Animada'],'😳','Quando riem de nós, podemos sentir vergonha.'],
+ ['Seu irmãozinho ganhou todo o colo da mamãe hoje. Como pode se sentir?','😒 Com ciúme',['😄 Feliz','😨 Com medo'],'🤱','Querer a atenção só para nós é ciúme. Dá para conversar sobre isso.'],
+ ['Você tentou montar a torre e ela caiu três vezes. Como pode se sentir?','😣 Frustrada',['🤩 Animada','😮 Surpresa'],'🧱','Quando tentamos e não dá certo, ficamos frustrados. Respire e tente de novo.'],
+ ['Você está deitada ouvindo uma música suave. Como se sente?','😌 Calma',['😠 Com raiva','😨 Com medo'],'🎶','Uma música suave deixa a gente calma.'],
+ ['Amanhã é seu aniversário e vai ter festa! Como se sente?','🤩 Animada',['😢 Triste','😣 Frustrada'],'🎉','Esperar algo legal deixa a gente animada.'],
+ ['Você vai apresentar um trabalho para a turma toda. Como pode se sentir?','😬 Nervosa',['😴 Com sono','😒 Com ciúme'],'🎤','Falar em público pode deixar nervosa. Isso é normal.'],
+ ['Você ajudou a vovó a carregar as sacolas. Como se sente?','😊 Orgulhosa',['😠 Com raiva','😳 Envergonhada'],'🛍️','Ajudar alguém dá orgulho.'],
+ ['Abriu a porta e todos gritaram: surpresa! Como se sente?','😮 Surpresa',['😢 Triste','😌 Calma'],'🎊','Algo inesperado dá surpresa.'],
+ ['Sua amiga não quis brincar com você hoje. Como pode se sentir?','😢 Triste',['🤩 Animada','😊 Orgulhosa'],'🧸','Ser deixada de lado pode deixar triste.'],
+ ['Alguém furou a fila na sua frente. Como pode se sentir?','😠 Com raiva',['😌 Calma','😮 Surpresa'],'🚶','Quando algo não é justo, sentimos raiva.'],
+ ['Você ouviu um barulho estranho no escuro. Como pode se sentir?','😨 Com medo',['😊 Orgulhosa','🤩 Animada'],'🌑','Barulhos no escuro podem dar medo. Chame um adulto.'],
+ ['Você aprendeu a andar de bicicleta sem rodinhas! Como se sente?','😊 Orgulhosa',['😢 Triste','😨 Com medo'],'🚲','Conseguir algo novo dá orgulho.'],
+ ['Seu sorvete caiu no chão. Como pode se sentir?','😢 Triste',['😌 Calma','😊 Orgulhosa'],'🍦','Perder algo que queríamos deixa triste.'],
+ ['Esqueceu a fala na peça da escola e todos olharam. Como pode se sentir?','😳 Envergonhada',['🤩 Animada','😒 Com ciúme'],'🎭','Errar na frente de todos dá vergonha. Acontece com todo mundo.'],
+ ['Perdeu o jogo depois de treinar muito. Como pode se sentir?','😣 Frustrada',['😄 Feliz','😌 Calma'],'⚽','Quando o esforço não deu resultado, ficamos frustrados.'],
+ ['Quando estamos com raiva, o corpo pode...','Ficar quente e com o coração rápido',['Ficar com sono','Ficar com fome'],'😤','A raiva acelera o coração. Respirar fundo ajuda a acalmar.'],
+ ['Quando sentimos medo, o que ajuda?','Contar para um adulto de confiança',['Guardar segredo','Fingir que não sentiu'],'🫂','Contar para um adulto de confiança ajuda com o medo.'],
+ ['Seu amigo está chorando. Como ele provavelmente se sente?','😢 Triste',['😄 Feliz','🤩 Animado'],'😭','Chorar costuma mostrar tristeza.'],
+ ['Seu primo sorri e pula quando vê você. Como ele se sente?','😄 Feliz',['😠 Com raiva','😨 Com medo'],'😃','Sorrir e pular mostra alegria.'],
+ ['Tudo bem sentir raiva?','Sim, mas sem machucar ninguém',['Não, nunca podemos sentir raiva','Sim, e podemos bater'],'💬','Todo sentimento é normal. O que importa é o que fazemos com ele.']],'confundiu as emoções');
+addBanco('conviver',[
+ ['Você quer o brinquedo que o colega está usando. O que fazer?','Pedir e esperar a vez',['Pegar da mão dele','Chorar até ele dar'],'🧸','Pedir e esperar a vez é respeitar o colega.'],
+ ['Um colega novo chegou na turma. O que é gentil?','Dizer oi e se apresentar',['Ignorar','Rir dele'],'👋','Receber bem quem chegou é ser gentil.'],
+ ['Você recebeu um presente. O que dizer?','Obrigada!',['Só isso?','Não dizer nada'],'🎁','Agradecer mostra carinho com quem deu.'],
+ ['Seu irmão está dormindo. O que fazer?','Brincar em silêncio',['Gritar','Ligar a TV bem alta'],'🤫','Respeitar o sono do outro é fazer silêncio.'],
+ ['Um amigo caiu no recreio. O que fazer?','Ajudar e chamar um adulto',['Rir','Continuar correndo'],'🤕','Ajudar quem se machucou é o certo.'],
+ ['Você e sua amiga querem brincadeiras diferentes. O que é justo?','Brincar um pouco de cada uma',['Só a sua','Ir embora brava'],'🤝','Revezar as brincadeiras é justo para as duas.'],
+ ['A professora está falando. O que fazer?','Ouvir com atenção',['Conversar com o colega','Levantar e sair'],'👩‍🏫','Ouvir com atenção é respeito e ajuda a aprender.'],
+ ['Você quebrou um copo sem querer. O que fazer?','Contar para um adulto e pedir desculpas',['Esconder os cacos','Culpar o irmão'],'🥛','Assumir o erro é coragem, e o adulto ajuda a limpar com segurança.'],
+ ['Alguém pediu desculpas para você. O que é bom fazer?','Aceitar e continuar amigos',['Ficar brava para sempre','Rir da pessoa'],'🙏','Aceitar as desculpas faz a amizade continuar.'],
+ ['Um colega está com dificuldade na tarefa. O que você pode fazer?','Oferecer ajuda',['Rir dele','Esconder seu caderno'],'✏️','Ajudar quem tem dificuldade é ser bom colega.'],
+ ['Um adulto desconhecido oferece doce no parque. O que fazer?','Não aceitar e avisar o papai',['Aceitar e ir com ele','Guardar segredo'],'🍬','Nunca aceite nada de estranhos. Sempre avise um adulto da família.'],
+ ['Você ganhou o jogo. O que fazer?','Comemorar sem zombar do outro',['Rir de quem perdeu','Dizer que o outro é ruim'],'🏅','Ganhar com respeito é tão importante quanto ganhar.'],
+ ['Alguém pede para você guardar um segredo que te deixa triste ou com medo. O que fazer?','Contar para um adulto de confiança',['Guardar para sempre','Esquecer'],'🤐','Segredo que deixa triste ou com medo deve ser contado a um adulto de confiança.'],
+ ['Seu colega esqueceu o lanche. O que você pode fazer?','Dividir um pouco do seu',['Comer na frente dele rindo','Fingir que não viu'],'🥪','Dividir é um jeito de cuidar do outro.'],
+ ['Você está muito brava com sua amiga. O que fazer primeiro?','Respirar e se acalmar antes de falar',['Gritar com ela','Empurrar'],'🌬️','Primeiro acalmar, depois conversar.'],
+ ['Na fila do escorregador, o que é certo?','Esperar a sua vez',['Furar a fila','Empurrar quem está na frente'],'🛝','Esperar a vez é justo com todos.'],
+ ['Um amigo fez um desenho bonito. O que dizer?','Que bonito, parabéns!',['O meu é melhor','Que feio'],'🖍️','Elogiar o outro deixa todos felizes.'],
+ ['Você precisa usar o lápis do colega. O que fazer?','Pedir emprestado',['Pegar sem pedir','Esconder o lápis dele'],'✏️','Pedir antes de pegar é respeito.'],
+ ['Seu time perdeu. O que é bom dizer?','Foi divertido, vamos treinar mais',['A culpa é sua','Não jogo nunca mais'],'⚽','Perder faz parte. Culpar os outros não ajuda.'],
+ ['Duas amigas estão brigando. O que você pode fazer?','Chamar um adulto para ajudar',['Torcer para uma delas','Brigar junto'],'👭','Um adulto pode ajudar a resolver a briga.']],'escolheu uma atitude que não ajuda');
+/* lições de reforço */
+MAT_LESSONS.splice(MAT_LESSONS.findIndex(l=>l.id==='vizinhos')+1,0,
+  {id:'reta',titulo:'Reta numérica',icone:'📏',bncc:'EF02MA01',
+   slides:[{t:'Na reta numérica, os números andam em fila, de 1 em 1. Cada número é um a mais que o da esquerda.',v:numline([20,21,22,23,24],2)},
+    {t:'Todo número tem dois vizinhos: o de trás, que é um a menos, e o da frente, que é um a mais. Os vizinhos do 35 são 34 e 36.',v:numline([34,35,36],1)},
+    {t:'Quando chega no 9, a dezena muda: 28, 29, 30, 31. Depois do 29 vem o 30!',v:numline([28,29,30,31],2)}],
+   practice:['retaFalta','vizinhos','retaFalta','depois','retaFalta','antes'],quiz:['retaFalta','vizinhos','depois','antes','retaFalta']});
+POR_LESSONS.splice(POR_LESSONS.findIndex(l=>l.id==='alfabeto')+1,0,
+  {id:'alfabeto-treino',titulo:'Ordem alfabética: treino',icone:'🔡',bncc:'EF02LP07',
+   slides:[{t:'Para saber qual palavra vem primeiro, olhe só a primeira letra de cada uma e procure no alfabeto.',v:`<div class="alfa">${ALFABETO.split('').map(c=>`<span class="${'BG'.includes(c)?'hi':''}">${c}</span>`).join('')}</div><div class="big" style="font-size:36px"><b style="color:var(--pri)">B</b>OLA → <b style="color:var(--pri)">G</b>ATO</div>`},
+    {t:'O B aparece antes do G no alfabeto. Por isso BOLA vem antes de GATO.',v:'<div class="emo" style="font-size:56px">⚽ → 🐱</div>'}],
+   practice:['alfaApoio','letraAntes','alfaApoio','letraDepois','alfaApoio','letraAntes'],quiz:['alfaApoio','primeiraAlf','letraAntes','primeiraAlf','alfaApoio']});
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
@@ -526,7 +701,7 @@ function buildMemoria(rows){
     const shown=ws.map((w,k)=>k===i?w.replace(memClean(w),'_____'):w).join(' ');
     return{skill:skillOf(r),text:'Complete a frase:',speak:'Complete a frase.',optClass:'txt',
       visual:`<span class="pill mid">${esc(r.materia)} · semana ${r.semana}</span><div class="cap" style="font-size:24px;color:var(--ink);max-width:620px;line-height:1.4">${esc(shown)}</div>`,
-      desc:`${r.materia}, semana ${r.semana} (completar)`,options:shuffle([{v:ans,label:ans,ok:true,type:null},...ds.map(d=>({v:d,label:d,ok:false,type:'trocou a palavra da memória'}))]),
+      desc:`${r.materia}, semana ${r.semana} (completar: ${ans})`,options:shuffle([{v:ans,label:ans,ok:true,type:null},...ds.map(d=>({v:d,label:d,ok:false,type:'trocou a palavra da memória'}))]),
       hint:'Leia a frase inteira e lembre da música.',explain:`A frase completa é: ${r.texto}`};
   }
   const anyQ=(pool,pCloze)=>()=>{const r=pick(pool);return (Math.random()<pCloze?clozeQ(r):orderQ(r))||orderQ(r)};

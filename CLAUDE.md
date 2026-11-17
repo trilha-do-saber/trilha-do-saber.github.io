@@ -25,6 +25,13 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - Nada de personagens, músicas ou textos protegidos por direitos autorais. Na trilha Memória, só letras originais ou cantigas de domínio público.
 - Nunca colocar nome, escola ou dados pessoais dela no repositório, que é público.
 
+## Variedade e níveis (quem escreve as perguntas é o Claude)
+- O Gemini não cria perguntas. O Claude escreve e amplia os bancos toda semana, nos lotes de `conteudo.js`.
+- **Sem repetição:** `gerarItens` (app.js) não repete questão na mesma lição e evita as vistas nos últimos 5 dias (chave = habilidade + `desc`). Por isso o `desc` de cada questão precisa identificar a pergunta de forma única.
+- **Níveis:** `NIVEL[habilidade]` vai de 1 a 3 (números até 30, 60 e 99), calculado no app pelas primeiras tentativas (sobe com 7 acertos nas últimas 8, desce com 3 ou menos nas últimas 6). Geradores numéricos novos devem usar `nv(skill)` e `LIM`, e entrar em `HAB_NIVEL` (app.js) se forem de nível.
+- **Ampliar bancos:** use `addBanco(chave, [...])` num lote novo. Toda semana, olhe na aba `Respostas` as habilidades em que ela já viu boa parte do banco e acrescente pelo menos 10 itens novos nelas.
+- O teste confere a variedade nos níveis 1 e 3: cada gerador precisa ter mais perguntas diferentes do que as usadas numa lição.
+
 ## Memória CC
 A trilha Memória é montada em tempo real por `buildMemoria()` (em `conteudo.js`), a partir da aba privada `MemoriaCC` da planilha, com as colunas ciclo, semana, materia e texto. O Pedro cadastra cada semana na área dos pais, tirando foto da página do livro Foundations, que a família possui. O Gemini lê a foto pelo Apps Script (`lerFotoCC`), ele confere e salva (`salvarMemoria`); também dá para digitar à mão. Enquanto ela não abre uma semana nova, o ícone da Memória CC pisca com o selo NOVO. **Nunca copie essas frases para o repositório nem para mensagens de commit.** Elas são material protegido do Classical Conversations. A rotina pode ler a aba só para avaliar o desempenho (habilidades "Memória · ...") e pode melhorar o código das atividades.
 

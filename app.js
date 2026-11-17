@@ -67,7 +67,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, mostra o botão.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v15';
+const APP_VERSAO='trilha-v16';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -394,11 +394,40 @@ function renderLearn(){
 }
 function beginPhase(phase){
   R.phase=phase;R.qi=0;R.results=[];
-  R.items=R.lesson[phase].map(k=>GEN[k]());
+  calcNiveis();R.items=gerarItens(R.lesson[phase],R.usados=R.usados||new Set());
   S.session.phaseReached=phase;queueSave();renderQ();
 }
+/* ---- Variedade: nada repetido na lição e o mínimo de repetição entre os dias ---- */
+const qid=q=>q.skill+'|'+(q.desc||q.text);
+function gerarItens(keys,usados){
+  const vistos=LS.get('vistos',{}),lim=Date.now()-5*864e5,out=[];
+  for(const k of keys){
+    let melhor=null;
+    for(let t=0;t<30;t++){const q=GEN[k]();const id=qid(q);if(usados.has(id))continue;if(!melhor)melhor=q;if(!(vistos[id]>lim)){melhor=q;break}}
+    if(!melhor)melhor=GEN[k]();
+    usados.add(qid(melhor));out.push(melhor);
+  }
+  return out;
+}
+let vistosCache=null,vistosT=null;
+function marcarVista(q){
+  if(!vistosCache)vistosCache=LS.get('vistos',{});
+  vistosCache[qid(q)]=Date.now();
+  clearTimeout(vistosT);vistosT=setTimeout(()=>{const lim=Date.now()-14*864e5,m={};let n=0;
+    Object.entries(vistosCache).sort((a,b)=>b[1]-a[1]).forEach(([k,t])=>{if(t>lim&&n<4000){m[k]=t;n++}});vistosCache=m;LS.set('vistos',m)},1500);
+}
+/* ---- Níveis: sobe com 7 acertos em 8 respostas; desce com 3 ou menos em 6 (só primeira tentativa) ---- */
+const HAB_NIVEL=['Antes e depois','Reta numérica','Contar pulando','Somar dezenas e unidades','Subtrair dezenas e unidades','Ler números com blocos'];
+function calcNiveis(){
+  const ans=S.sessions.flatMap(x=>(x.answers||[])).filter(a=>HAB_NIVEL.includes(a.skill)&&(a.attempt||1)===1).sort((a,b)=>a.ts-b.ts);
+  const est={};HAB_NIVEL.forEach(h=>est[h]={n:1,j:[]});
+  ans.forEach(a=>{const e=est[a.skill];e.j.push(!!a.ok);const u8=e.j.slice(-8),u6=e.j.slice(-6);
+    if(u8.length>=8&&u8.filter(Boolean).length>=7&&e.n<3){e.n++;e.j=[]}
+    else if(u6.length>=6&&u6.filter(Boolean).length<=3&&e.n>1){e.n--;e.j=[]}});
+  HAB_NIVEL.forEach(h=>NIVEL[h]=est[h].n);
+}
 function renderQ(){
-  const q=R.q=R.items[R.qi];R.tries=0;R.qStart=Date.now();
+  const q=R.q=R.items[R.qi];R.tries=0;R.qStart=Date.now();marcarVista(q);
   const steps=R.items.map((_,i)=>`<i class="${i<R.results.length?(R.results[i]?'okd':'bad'):(i===R.qi?'on':'')}"></i>`).join('');
   const label=R.lesson.id==='aquecimento'?'Aquecimento':R.phase==='practice'?'Praticar':'Desafio';
   let body='';
@@ -551,6 +580,7 @@ const fmtDT=ts=>{const d=new Date(ts);return d.toLocaleDateString('pt-BR',{day:'
 function meter(p){const c=p>=80?'var(--ok)':p>=60?'var(--sun)':'var(--bad)';return `<span class="meter"><i style="width:${p}%;background:${c}"></i></span>${p}%`}
 function renderParent(){
   S.view='parent';
+  calcNiveis();
   const st=stats(),tm=todayMs(),studied=tm>=60000,goal=S.config.goal;
   const lts=leituras(),lim7=Date.now()-7*864e5,lt7=lts.filter(r=>r.ts>=lim7),diasLeit=new Set(lt7.map(r=>r.data)).size,leitDia=new Set(lts.map(r=>r.data)),mis=missaoAtual(),misF=missaoFeita(),pt=potes()||{};
   const maxMs=Math.max(goal*60000,...st.days.map(d=>d.ms));
@@ -595,8 +625,8 @@ function renderParent(){
   ${potesParentHTML()}
   <div class="sec"><h2>Análise com IA</h2>
     <div class="row"><button class="btn small" data-act="aianalyze">Gerar análise da semana</button><span class="muted" style="font-size:14px">Envia só números e erros, sem o nome dela.</span></div><div id="aianalysis"></div></div>
-  <div class="sec"><h2>Desempenho por habilidade</h2><div class="card tbl">${st.skills.length?`<table><thead><tr><th>Habilidade</th><th>Acerto</th><th class="n">Respostas</th><th class="n">Tempo médio</th></tr></thead><tbody>
-    ${st.skills.map(s=>`<tr><td>${esc(s.k)}</td><td>${meter(s.pct)}</td><td class="n">${s.n}</td><td class="n">${s.avg} s</td></tr>`).join('')}</tbody></table>`:'<p class="muted">Ainda sem respostas. Os dados aparecem depois da primeira lição.</p>'}</div></div>
+  <div class="sec"><h2>Desempenho por habilidade</h2><div class="card tbl">${st.skills.length?`<table><thead><tr><th>Habilidade</th><th>Acerto</th><th>Nível</th><th class="n">Respostas</th><th class="n">Tempo médio</th></tr></thead><tbody>
+    ${st.skills.map(s=>`<tr><td>${esc(s.k)}</td><td>${meter(s.pct)}</td><td>${HAB_NIVEL.includes(s.k)?['','🟢 1 (até 30)','🟡 2 (até 60)','🔵 3 (até 100)'][NIVEL[s.k]||1]:'—'}</td><td class="n">${s.n}</td><td class="n">${s.avg} s</td></tr>`).join('')}</tbody></table>`:'<p class="muted">Ainda sem respostas. Os dados aparecem depois da primeira lição.</p>'}</div></div>
   <div class="sec"><h2>Lições</h2><div class="card tbl"><table><thead><tr><th>Lição</th><th>BNCC</th><th>Estrelas</th><th class="n">Tentativas</th><th class="n">Melhor desafio</th></tr></thead><tbody>
     ${LESSONS.map(l=>{const p=S.progress[l.id]||{};return `<tr><td>${esc(l.subject)} · ${esc(l.titulo)}</td><td>${l.bncc}</td><td>${starHTML(p.stars||0)}</td><td class="n">${p.tries||0}</td><td class="n">${p.tries?`${p.best}/${l.quiz.length}`:'—'}</td></tr>`}).join('')}</tbody></table></div></div>
   <div class="sec"><h2>Erros mais frequentes</h2><div class="card">${st.errs.length?st.errs.slice(0,6).map(([t,n])=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid #E3E9F5"><span>${esc(t)}</span><span class="pill no">${n}×</span></div>`).join(''):'<p class="muted">Nenhum erro registrado.</p>'}</div></div>

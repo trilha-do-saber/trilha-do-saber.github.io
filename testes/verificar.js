@@ -2,7 +2,7 @@
    Falha (código 1) se alguma questão tiver resposta errada, opções repetidas ou lição quebrada. */
 const fs=require('fs'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'..','conteudo.js'),'utf8');
-const ctx={};new Function('ctx',src+';ctx.GEN=GEN;ctx.LESSONS=LESSONS;ctx.SUBJECTS=SUBJECTS;')(ctx);
+const ctx={};new Function('ctx',src+';ctx.GEN=GEN;ctx.LESSONS=LESSONS;ctx.SUBJECTS=SUBJECTS;ctx.NIVEL=NIVEL;')(ctx);
 const {GEN,LESSONS,SUBJECTS}=ctx;const erros=[];
 /* Memória: testa o construtor com frases de exemplo inventadas (as reais ficam só na planilha da família) */
 const EXEMPLO=[{ciclo:'1',semana:1,materia:'História',texto:'Pedro Álvares Cabral chegou ao Brasil em 1500.'},{ciclo:'1',semana:1,materia:'Ciências',texto:'As plantas precisam de luz, água e ar.'},
@@ -39,6 +39,13 @@ const versaoSw=(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8').match(
   versaoApp=(fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8').match(/APP_VERSAO='([^']+)'/)||[])[1],
   versaoJson=JSON.parse(fs.readFileSync(path.join(__dirname,'..','versao.json'),'utf8')).versao;
 if(!(versaoSw&&versaoSw===versaoApp&&versaoApp===versaoJson))erros.push(`versões diferentes: sw.js=${versaoSw} app.js=${versaoApp} versao.json=${versaoJson} (devem ser iguais)`);
+/* variedade: cada gerador precisa render pelo menos tantas perguntas diferentes quanto é usado na lição (níveis 1 e 3) */
+for(const nivel of [1,3]){
+  for(const h of ['Antes e depois','Reta numérica','Contar pulando','Somar dezenas e unidades','Subtrair dezenas e unidades','Ler números com blocos'])ctx.NIVEL[h]=nivel;
+  for(const l of LESSONS){const uso={};[...l.practice,...l.quiz].forEach(k=>uso[k]=(uso[k]||0)+1);
+    for(const [k,n] of Object.entries(uso)){if(!GEN[k])continue;const ids=new Set();for(let i=0;i<800;i++){const q=GEN[k]();ids.add(q.skill+'|'+(q.desc||q.text))}
+      if(ids.size<n)erros.push(`pouca variedade: ${k} gera ${ids.size} perguntas diferentes, mas ${l.id} usa ${n} (nível ${nivel})`)}}
+}
 const prontas=SUBJECTS.filter(s=>s.ready).map(s=>`${s.nome}: ${s.lessons.length}`).join(' · ');
 if(erros.length){console.error('FALHOU\n'+[...new Set(erros)].join('\n'));process.exit(1)}
 console.log(`OK · ${LESSONS.length} lições · ${Object.keys(GEN).length} geradores · ${prontas}`);
