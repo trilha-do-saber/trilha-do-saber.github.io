@@ -65,9 +65,9 @@ function trimSessions(map){const arr=Object.values(map).sort((a,b)=>b.start-a.st
 const aiOn=()=>!!(API.url&&API.aiReady);
 
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
-   (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, mostra o botão.
+   (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v17';
+const APP_VERSAO='trilha-v18';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -78,22 +78,23 @@ function atualizarSePuder(){
   if(!novaVersao)return;
   if(R||S.view==='parent'||S.view==='pin')return;           // no meio de lição ou na área dos pais: espera
   const t=LS.get('updTent',{});
-  if(t.v===novaVersao&&Date.now()-t.ts<120000){mostrarAtualizacao();return} // já tentou há pouco: oferece o botão
+  if(t.v===novaVersao&&Date.now()-t.ts<90000){setTimeout(atualizarSePuder,90000);return} // tentou há pouco: tenta de novo sozinho, sem botão
   LS.set('updTent',{v:novaVersao,ts:Date.now()});
   toast('Atualizando o app…');atualizarApp();
 }
-function mostrarAtualizacao(){
-  if(document.getElementById('upd'))return;
-  const d=document.createElement('div');d.id='upd';d.className='upd';
-  d.innerHTML='<span>✨ Tem versão nova do app!</span><button class="btn small okb" data-act="atualizar">Atualizar agora</button>';
-  document.body.appendChild(d);
-}
+function mostrarAtualizacao(){}
+const ARQ_APP=['./','index.html','app.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
 async function atualizarApp(){
   const b=document.querySelector('[data-act=atualizar]');if(b){b.disabled=true;b.textContent='Atualizando…'}
   try{flushSession&&flushSession()}catch(e){}
-  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg){await reg.update();if(reg.waiting)reg.waiting.postMessage('pular')}}catch(e){}
+  /* força o navegador a buscar os arquivos novos (o GitHub Pages deixa uma cópia de 10 minutos no cache) */
+  try{await Promise.all(ARQ_APP.map(u=>fetch(u,{cache:'reload'}).catch(()=>{})))}catch(e){}
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg){await reg.update();const w=reg.installing||reg.waiting;
+      if(w){await new Promise(ok=>{const fim=()=>ok();navigator.serviceWorker.addEventListener('controllerchange',fim,{once:true});if(reg.waiting)reg.waiting.postMessage('pular');
+        w.addEventListener('statechange',()=>{if(w.state==='installed')w.postMessage('pular');if(w.state==='activated'||w.state==='redundant')fim()});setTimeout(fim,6000)})}}}catch(e){}
   try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
-  setTimeout(()=>location.reload(),400);
+  setTimeout(()=>location.reload(),300);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checarVersao()});
 setInterval(checarVersao,10*60*1000);
