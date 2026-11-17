@@ -2,7 +2,7 @@
 
 Objetivo: cobrir Matemática, Português, Ciências, História, Geografia e Memória (estilo Classical Conversations) do 2º ao 5º ano do Ensino Fundamental, alinhado à BNCC, sempre um pouco à frente da escola.
 
-Cada lote semanal entra de 4 a 6 lições novas, mais reforço do que ela errou na semana (veja a planilha).
+Ritmo pelo domínio: só entram lições novas de uma matéria quando ela tiver pelo menos 1 estrela em quase todas as lições já publicadas dessa matéria (no máximo 1 lição pendente). Cada lote tem de 1 a 5 lições, mais reforço do que ela errou na semana (veja a planilha).
 
 Legenda: [x] publicada · [ ] a fazer
 
@@ -60,6 +60,38 @@ Legenda: [x] publicada · [ ] a fazer
 - [ ] Paisagens e mudanças (EF02GE04)
 - [ ] Meios de transporte e comunicação (EF02GE03)
 - [ ] Londrina e o Paraná (EF02GE01)
+
+### Dinheiro (educação financeira)
+- [x] Moedas e cédulas (EF02MA20)
+- [x] Comprar e troco (EF02MA20)
+- [x] Precisar, querer e guardar
+- [ ] Os 3 potes: gastar, guardar e doar
+- [ ] De onde vem o dinheiro: trabalho e esforço
+- [ ] Comparar preços e escolher
+- [ ] Planejar uma compra (meta e semanas)
+
+### Lógica e pensamento computacional
+- [x] Padrões e sequências (EF02MA10)
+- [x] Programe o robô (comandos com setas)
+- [x] Passo a passo (algoritmos do dia a dia)
+- [ ] Repetição: o robô com "repita 3 vezes"
+- [ ] Classificar por cor, forma e tamanho
+- [ ] Se... então... (condições simples)
+
+### Emoções e convivência
+- [x] O que eu sinto
+- [x] Resolver conflitos
+- [ ] Empatia: como o outro se sente
+- [ ] Lidar com a frustração e tentar de novo
+- [ ] Gentileza e gratidão
+
+### Segurança (uma lição de vez em quando)
+- [ ] Atravessar a rua e segurança no trânsito
+- [ ] Telefone e nome completo dos pais; se me perder
+- [ ] Cuidados na internet
+
+### Memória CC
+Montada a partir da aba privada `MemoriaCC` da planilha (veja o CLAUDE.md). Não entra conteúdo do CC no repositório.
 
 ### Memória (estilo CC, letras originais)
 - [ ] Contar de 2, 5 e 10 em ritmo

@@ -339,6 +339,163 @@ const CIE_LESSONS=[
 ];
 
 
+/* ================= LOTE 2 · 17/11/2026 ================= */
+/* ---- Dinheiro (educação financeira) ---- */
+const COR_NOTA={2:'#6FA8DC',5:'#B58BD9',10:'#E06666',20:'#F6C342',50:'#E69138'};
+function dinheiroHTML(vals){return '<div class="dinheiro">'+vals.map(v=>v===1?'<span class="moeda">R$ 1</span>':`<span class="nota" style="background:${COR_NOTA[v]||'#9BC59D'}">R$ ${v}</span>`).join('')+'</div>'}
+function trocoEm(v){const r=[];for(const n of [10,5,2,1])while(v>=n){r.push(n);v-=n}return r}
+const ITENS_LOJA=[['🧸','um ursinho'],['⚽','uma bola'],['🪁','uma pipa'],['🖍️','um giz de cera'],['🧃','um suco'],['🍦','um sorvete'],['📒','um caderno'],['🎈','um balão'],['🍫','um chocolate'],['🪀','um ioiô']];
+Object.assign(GEN,{
+  contarDinheiro(){let vals,t;do{vals=Array.from({length:rnd(2,4)},()=>pick([1,1,2,2,5,10])).sort((a,b)=>b-a);t=vals.reduce((a,b)=>a+b,0)}while(t>30);
+    return{skill:'Contar dinheiro',text:'Quanto dinheiro tem aqui, em reais?',visual:dinheiroHTML(vals),desc:vals.map(v=>'R$ '+v).join(' + '),
+    options:opts(t,[{v:vals.length,type:'contou as notas em vez dos valores'},{v:t+1,type:'errou a soma'},{v:t-1,type:'errou a soma'}]),
+    hint:'Comece pela nota maior e vá somando as outras.',explain:`${vals.join(' + ')} = ${t}. São ${t} reais.`}},
+  podeComprar(){const tenho=rnd(4,15),its=shuffle(ITENS_LOJA.slice()).slice(0,3),precos=[rnd(1,tenho),rnd(tenho+1,tenho+8),rnd(tenho+1,tenho+8)];
+    return{skill:'Comprar com o que tem',text:`Você tem R$ ${tenho}. O que dá para comprar?`,speak:`Você tem ${tenho} reais. O que dá para comprar?`,visual:dinheiroHTML(trocoEm(tenho)),desc:`tem R$ ${tenho}`,optClass:'txt',
+    options:shuffle(its.map((it,i)=>({v:it[1],label:`${it[0]} R$ ${precos[i]}`,ok:i===0,type:i===0?null:'escolheu algo mais caro que o dinheiro'}))),
+    hint:'Compare o preço com o dinheiro que você tem. O preço precisa ser igual ou menor.',explain:`${cap1(its[0][1])} custa R$ ${precos[0]}, e você tem R$ ${tenho}. Dá para comprar! Os outros custam mais do que você tem.`}},
+  troco(){const pago=pick([5,10,10,20]),preco=rnd(1,pago-1),r=pago-preco,it=pick(ITENS_LOJA);
+    return{skill:'Troco',text:`${cap1(it[1])} custa R$ ${preco}. Você pagou com R$ ${pago}. Quanto recebe de troco?`,speak:`${it[1]} custa ${preco} reais. Você pagou com ${pago} reais. Quanto recebe de troco?`,visual:`<div class="emo" style="font-size:56px">${it[0]}</div>`+dinheiroHTML([pago]),desc:`${pago} − ${preco}`,
+    options:opts(r,[{v:preco,type:'respondeu o preço'},{v:pago+preco,type:'somou em vez de subtrair'},{v:r+1,type:'errou a conta'}]),
+    hint:'Troco é o que sobra: o dinheiro que você deu menos o preço.',explain:`${pago} menos ${preco} dá ${r}. O troco é R$ ${r}.`}},
+  guardarMeta(){const g=pick([1,2,5]),k=rnd(2,6),m=g*k,it=pick(ITENS_LOJA);
+    return{skill:'Guardar para um objetivo',text:`Você guarda R$ ${g} por semana. Em quantas semanas junta R$ ${m} para comprar ${it[1]}?`,speak:`Você guarda ${g} reais por semana. Em quantas semanas junta ${m} reais?`,visual:`<div class="emo" style="font-size:56px">🐷 → ${it[0]}</div>`,desc:`${m} ÷ ${g}`,
+    options:opts(k,[{v:m,type:'respondeu o preço'},{v:k+1,type:'contou uma semana a mais'},{v:k-1,type:'contou uma semana a menos'}]),
+    hint:`Conte de ${g} em ${g} até chegar em ${m}. Quantos pulos?`,explain:`Contando de ${g} em ${g}: ${Array.from({length:k},(_,i)=>g*(i+1)).join(', ')}. São ${k} semanas.`}},
+  precisarQuerer:(()=>{const P=[['🍞','Comida para o almoço'],['💊','Remédio quando está doente'],['🪥','Escova de dentes'],['🧥','Casaco no frio'],['✏️','Lápis para a escola'],['👟','Sapato que serve no pé'],['💧','Água para beber']],
+      Q=[['🧸','Um brinquedo novo'],['🍬','Bala na saída da escola'],['🎮','Videogame'],['🃏','Mais figurinhas'],['🍦','Sorvete'],['✨','Tênis que acende luz'],['🎀','Mais um laço de cabelo']];
+    return()=>{const pr=Math.random()<.5,it=pick(pr?P:Q),c=pr?'Precisar':'Querer';
+      return{skill:'Precisar ou querer',text:`${it[1]}: é precisar ou querer?`,visual:`<div class="emo" style="font-size:72px">${it[0]}</div>`,desc:it[1],optClass:'txt',
+      options:['Precisar','Querer'].map(v=>({v,label:v==='Precisar'?'✅ Precisar':'💭 Querer',ok:v===c,type:v===c?null:'confundiu precisar com querer'})),
+      hint:'Precisar é o que faz falta para viver bem e com saúde. Querer é o que seria legal ter, mas dá para esperar.',
+      explain:pr?`${it[1]} é precisar: faz falta para a saúde e o dia a dia.`:`${it[1]} é querer: é legal, mas dá para viver sem e esperar.`}}})(),
+});
+const FIN_LESSONS=[
+  {id:'dinheiro',titulo:'Moedas e cédulas',icone:'🪙',bncc:'EF02MA20',
+   slides:[
+    {t:'No Brasil, o nosso dinheiro se chama real. Tem moedas e tem notas, que também se chamam cédulas.',v:dinheiroHTML([1,2,5,10,20])},
+    {t:'Para saber quanto dinheiro temos, somamos o valor de cada nota e moeda. Uma nota de 5 e uma de 2 dão 7 reais.',v:dinheiroHTML([5,2])+'<div class="big">= R$ 7</div>'}],
+   practice:['contarDinheiro','contarDinheiro','podeComprar','contarDinheiro','podeComprar','contarDinheiro'],quiz:['contarDinheiro','podeComprar','contarDinheiro','podeComprar','contarDinheiro']},
+  {id:'troco',titulo:'Comprar e troco',icone:'🛒',bncc:'EF02MA20',
+   slides:[
+    {t:'Quando pagamos com mais dinheiro do que o preço, recebemos troco. Troco é o que sobra.',v:'<div class="emo" style="font-size:56px">🧃</div>'+dinheiroHTML([10])},
+    {t:'O suco custa 3 reais e você pagou com 10. 10 menos 3 dá 7. O troco é 7 reais.',v:'<div class="big">10 − 3 = 7</div>'}],
+   practice:['troco','troco','podeComprar','troco','troco','podeComprar'],quiz:['troco','troco','podeComprar','troco','troco']},
+  {id:'precisar',titulo:'Precisar, querer e guardar',icone:'🐷',bncc:'Ed. financeira',
+   slides:[
+    {t:'Algumas coisas a gente precisa, como comida e remédio. Outras a gente quer, como um brinquedo novo. O que a gente quer pode esperar.',v:'<div class="emo" style="font-size:56px">🍞 💊 &nbsp;|&nbsp; 🧸 🎮</div>'},
+    {t:'Para comprar algo que queremos, podemos guardar um pouco de dinheiro toda semana no cofrinho até juntar.',v:'<div class="emo" style="font-size:64px">🐷💰</div>'},
+    {t:'Uma boa ideia é ter três potes: um para gastar, um para guardar e um para doar.',v:'<div class="potes"><span>🛍️<b>Gastar</b></span><span>🐷<b>Guardar</b></span><span>💝<b>Doar</b></span></div>'}],
+   practice:['precisarQuerer','precisarQuerer','guardarMeta','precisarQuerer','guardarMeta','precisarQuerer'],quiz:['precisarQuerer','guardarMeta','precisarQuerer','guardarMeta','precisarQuerer']},
+];
+
+/* ---- Lógica ---- */
+const SIMBOLOS=[['🔴','🔵','🟡'],['🍎','🍌','🍇'],['⭐','🌙','☀️'],['🐶','🐱','🐭'],['🟥','🟩','🟦']];
+const PADROES={AB:[0,1],AAB:[0,0,1],ABB:[0,1,1],ABC:[0,1,2],AABB:[0,0,1,1]};
+const SETAS={'⬆️':[0,-1],'➡️':[1,0],'⬇️':[0,1],'⬅️':[-1,0]};
+Object.assign(GEN,{
+  padrao(){const sim=pick(SIMBOLOS),[nome,pp]=pick(Object.entries(PADROES)),len=pp.length*2+rnd(0,pp.length-1),seq=Array.from({length:len},(_,i)=>sim[pp[i%pp.length]]),r=sim[pp[len%pp.length]];
+    return{skill:'Padrões',text:'Qual vem depois na sequência?',visual:`<div class="emo" style="font-size:40px;letter-spacing:6px">${seq.join('')}❓</div>`,desc:`padrão ${nome}`,optClass:'txt',
+    options:shuffle(sim.map(v=>({v,label:v,ok:v===r,type:v===r?null:'não percebeu a repetição'}))),
+    hint:'Procure o pedaço que se repete e continue a repetição.',explain:`O pedaço que se repete é ${pp.map(i=>sim[i]).join('')}. Depois vem ${r}.`}},
+  setas(){const N=4;let x,y,cam,ex,ey;
+    for(;;){x=rnd(0,N-1);y=rnd(0,N-1);cam=[];let cx=x,cy=y;const n=rnd(2,4);
+      for(let i=0;i<n;i++){const ops=Object.entries(SETAS).filter(([k,[dx,dy]])=>cx+dx>=0&&cx+dx<N&&cy+dy>=0&&cy+dy<N);const [k,[dx,dy]]=pick(ops);cam.push(k);cx+=dx;cy+=dy}
+      if(cx!==x||cy!==y){ex=cx;ey=cy;break}}
+    const livres=[];for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(!(i===ex&&j===ey)&&!(i===x&&j===y))livres.push([i,j]);
+    const [o1,o2]=shuffle(livres),obj={[`${ex},${ey}`]:'🍎',[`${o1[0]},${o1[1]}`]:'⭐',[`${o2[0]},${o2[1]}`]:'🏠'};
+    let g='<div class="grade">';for(let j=0;j<N;j++)for(let i=0;i<N;i++)g+=`<span>${i===x&&j===y?'🤖':(obj[`${i},${j}`]||'')}</span>`;g+='</div>';
+    return{skill:'Seguir comandos',text:'O robô segue as setas. Onde ele chega?',visual:g+`<div class="emo" style="font-size:36px">${cam.join(' ')}</div>`,desc:cam.join(' '),optClass:'txt',
+    options:shuffle(['🍎','⭐','🏠'].map(v=>({v,label:v,ok:v==='🍎',type:v==='🍎'?null:'errou a direção de uma seta'}))),
+    hint:'Coloque o dedo no robô e ande um quadradinho para cada seta, na ordem.',explain:`Seguindo ${cam.join(' ')} a partir do robô, ele chega na 🍎.`}},
+  passos:bankGen('Passo a passo',[
+    {q:'Para escovar os dentes, o que fazemos primeiro?',a:'Colocar pasta na escova',w:['Enxaguar a boca','Guardar a escova'],e:'🪥',x:'Primeiro a pasta na escova, depois escovar, depois enxaguar.'},
+    {q:'Para plantar uma semente, o que vem primeiro?',a:'Fazer um buraquinho na terra',w:['Regar a planta grande','Colher a flor'],e:'🌱',x:'Primeiro o buraquinho, depois a semente, terra por cima e água.'},
+    {q:'Para tomar banho, o que fazemos por último?',a:'Secar com a toalha',w:['Abrir o chuveiro','Passar sabonete'],e:'🛁',x:'O último passo é secar com a toalha.'},
+    {q:'Para fazer um sanduíche, o que vem primeiro?',a:'Pegar o pão',w:['Comer o sanduíche','Lavar o prato'],e:'🥪',x:'Primeiro o pão, depois o recheio, e só então comer.'},
+    {q:'Para atravessar a rua, o que fazemos primeiro?',a:'Parar e olhar para os dois lados',w:['Correr','Fechar os olhos'],e:'🚦',x:'Primeiro paramos e olhamos para os dois lados, de mãos dadas com um adulto.'},
+    {q:'Para calçar o tênis, o que vem antes?',a:'Colocar a meia',w:['Amarrar o cadarço','Sair para brincar'],e:'👟',x:'A meia vem antes do tênis, e o cadarço depois.'},
+    {q:'Para fazer um desenho colorido, o que vem primeiro?',a:'Desenhar o contorno',w:['Mostrar para a mamãe','Guardar os lápis'],e:'🎨',x:'Primeiro desenhamos, depois pintamos e por fim guardamos o material.'},
+    {q:'De manhã, o que fazemos antes de ir para a escola?',a:'Tomar café da manhã',w:['Jantar','Dormir'],e:'🌅',x:'De manhã tomamos café antes de ir para a escola.'},
+    {q:'Para lavar as mãos, o que vem depois de molhar?',a:'Passar sabonete',w:['Secar','Abrir a torneira'],e:'🧼',x:'Molhar, ensaboar, esfregar, enxaguar e secar.'},
+    {q:'Para ler um livro, o que fazemos primeiro?',a:'Abrir na primeira página',w:['Ler a última página','Fechar o livro'],e:'📖',x:'Começamos pela primeira página e seguimos em ordem.'}]),
+});
+const LOG_LESSONS=[
+  {id:'padroes',titulo:'Padrões e sequências',icone:'🔁',bncc:'EF02MA10',
+   slides:[{t:'Um padrão é algo que se repete sempre do mesmo jeito. Vermelho, azul, vermelho, azul...',v:'<div class="emo" style="font-size:44px">🔴🔵🔴🔵🔴🔵</div>'},
+    {t:'Para descobrir o que vem depois, ache o pedaço que se repete e continue.',v:'<div class="emo" style="font-size:44px">🍎🍎🍌 🍎🍎🍌 🍎🍎❓</div>'}],
+   practice:['padrao','padrao','padrao','padrao','padrao','padrao'],quiz:['padrao','padrao','padrao','padrao','padrao']},
+  {id:'robo',titulo:'Programe o robô',icone:'🤖',bncc:'Computação',
+   slides:[{t:'O robô só faz o que as setas mandam. Cada seta é um passo de um quadradinho.',v:'<div class="emo" style="font-size:44px">⬆️ ➡️ ⬇️ ⬅️</div>'},
+    {t:'Ele segue as setas na ordem, uma de cada vez. Use o dedo para ajudar!',v:'<div class="emo" style="font-size:44px">🤖 ➡️ ➡️ 🍎</div>'}],
+   practice:['setas','setas','setas','setas','setas','setas'],quiz:['setas','setas','setas','setas','setas']},
+  {id:'passos',titulo:'Passo a passo',icone:'🪜',bncc:'Computação',
+   slides:[{t:'Quase tudo que fazemos tem uma ordem de passos. Se trocar a ordem, não dá certo!',v:'<div class="emo" style="font-size:48px">1️⃣ 2️⃣ 3️⃣</div>'},
+    {t:'Calçar o tênis antes da meia não funciona. Primeiro a meia, depois o tênis.',v:'<div class="emo" style="font-size:56px">🧦 → 👟</div>'}],
+   practice:['passos','passos','passos','passos','passos','passos'],quiz:['passos','passos','passos','passos','passos']},
+];
+
+/* ---- Emoções e convivência ---- */
+Object.assign(GEN,{
+  sentir:bankGen('Nomear emoções',[
+    {q:'Você ganhou um presente de aniversário. Como se sente?',a:'😄 Feliz',w:['😢 Triste','😠 Com raiva'],e:'🎁',x:'Ganhar um presente deixa a gente feliz.',erro:'confundiu as emoções'},
+    {q:'Seu cachorrinho ficou doente. Como você se sente?',a:'😢 Triste',w:['😄 Feliz','😮 Surpresa'],e:'🐶',x:'Quando alguém que amamos está mal, ficamos tristes. Tudo bem sentir isso.',erro:'confundiu as emoções'},
+    {q:'Um colega pegou seu brinquedo sem pedir. Como você se sente?',a:'😠 Com raiva',w:['😄 Feliz','😴 Com sono'],e:'🧸',x:'É normal sentir raiva. O importante é o que fazemos com ela.',erro:'confundiu as emoções'},
+    {q:'Ouviu um trovão muito forte de noite. Como pode se sentir?',a:'😨 Com medo',w:['😄 Feliz','😠 Com raiva'],e:'⛈️',x:'Barulho forte no escuro pode dar medo. Dá para chamar um adulto.',erro:'confundiu as emoções'},
+    {q:'Achou um bilhete de carinho na mochila que não esperava. Como se sente?',a:'😮 Surpresa',w:['😢 Triste','😨 Com medo'],e:'💌',x:'Quando algo bom acontece sem esperar, sentimos surpresa.',erro:'confundiu as emoções'},
+    {q:'Você terminou um quebra-cabeça difícil sozinha. Como se sente?',a:'😊 Orgulhosa',w:['😢 Triste','😨 Com medo'],e:'🧩',x:'Quando conseguimos algo difícil, sentimos orgulho.',erro:'confundiu as emoções'},
+    {q:'Seu melhor amigo mudou de cidade. Como você pode se sentir?',a:'😢 Triste',w:['😄 Feliz','😠 Com raiva'],e:'🚚',x:'Sentir saudade de quem gostamos dá tristeza.',erro:'confundiu as emoções'},
+    {q:'Vai começar o primeiro dia numa escola nova. Como pode se sentir?',a:'😬 Nervosa',w:['😴 Com sono','😠 Com raiva'],e:'🏫',x:'Coisas novas podem deixar a gente nervosa. Isso passa com o tempo.',erro:'confundiu as emoções'},
+    {q:'Seu irmão rasgou seu desenho de propósito. Como pode se sentir?',a:'😠 Com raiva',w:['😄 Feliz','😮 Surpresa'],e:'📄',x:'Ficamos com raiva quando estragam algo nosso. Conversar ajuda.',erro:'confundiu as emoções'},
+    {q:'A família toda vai ao parque no domingo. Como você se sente?',a:'🤩 Animada',w:['😢 Triste','😨 Com medo'],e:'🎡',x:'Esperar algo legal deixa a gente animada.',erro:'confundiu as emoções'}]),
+  conviver:bankGen('Resolver conflitos',[
+    {q:'Um colega empurrou você na fila. O que é melhor fazer?',a:'Dizer que não gostou e avisar a professora',w:['Empurrar de volta','Gritar com ele'],e:'🧍',x:'Falar com calma e pedir ajuda a um adulto resolve sem machucar ninguém.',erro:'escolheu revidar'},
+    {q:'Você perdeu no jogo. O que é melhor fazer?',a:'Respirar fundo e jogar de novo',w:['Jogar as peças no chão','Dizer que o outro roubou'],e:'🎲',x:'Perder faz parte. Respirar fundo e tentar de novo é o melhor.',erro:'não lidou bem com a frustração'},
+    {q:'Duas crianças querem o mesmo balanço. O que é justo?',a:'Combinar e revezar',w:['Puxar a outra criança','Chorar até ganhar'],e:'🛝',x:'Revezar é justo: cada um brinca um pouco.',erro:'escolheu brigar'},
+    {q:'Você está com muita raiva. O que pode ajudar?',a:'Respirar fundo e contar até 10',w:['Bater em alguém','Quebrar um brinquedo'],e:'😤',x:'Respirar e contar acalma o corpo, e depois dá para conversar.',erro:'escolheu revidar'},
+    {q:'Uma colega está sozinha e triste no recreio. O que você pode fazer?',a:'Convidar para brincar',w:['Rir dela','Fingir que não viu'],e:'🤝',x:'Convidar alguém para brincar é ser gentil e faz a pessoa se sentir melhor.',erro:'não percebeu o outro'},
+    {q:'Sem querer, você derrubou o lanche do amigo. O que fazer?',a:'Pedir desculpas e ajudar a limpar',w:['Sair correndo','Dizer que foi outra pessoa'],e:'🥤',x:'Pedir desculpas e ajudar mostra respeito.',erro:'não assumiu o erro'},
+    {q:'Um amigo pediu seu lápis emprestado. O que é gentil?',a:'Emprestar e pedir para devolver depois',w:['Esconder o lápis','Dizer que não tem'],e:'✏️',x:'Emprestar e combinar a devolução é ser gentil e cuidadoso.',erro:'escolheu não compartilhar'},
+    {q:'Alguém está falando mal de um colega. O que fazer?',a:'Não participar e defender o colega',w:['Rir junto','Contar para todo mundo'],e:'🗣️',x:'Não participar de maldade e defender o colega é coragem.',erro:'acompanhou a maldade'},
+    {q:'Você não entendeu a lição. O que fazer?',a:'Pedir ajuda à professora ou ao papai',w:['Desistir','Ficar brava consigo mesma'],e:'🙋',x:'Pedir ajuda é inteligente. Todo mundo aprende assim.',erro:'desistiu'},
+    {q:'Seu amigo ganhou o jogo de você. O que dizer?',a:'Parabéns, jogou bem!',w:['Não brinco mais com você','Foi sorte!'],e:'🏆',x:'Dar parabéns mostra que sabemos perder e ganhar com respeito.',erro:'não lidou bem com a frustração'}]),
+});
+const EMO_LESSONS=[
+  {id:'sentimentos',titulo:'O que eu sinto',icone:'😊',bncc:'Competência 8',
+   slides:[{t:'Todo mundo sente coisas diferentes: alegria, tristeza, raiva, medo e surpresa. Todos esses sentimentos são normais.',v:'<div class="emo" style="font-size:52px">😄 😢 😠 😨 😮</div>'},
+    {t:'Dar nome ao que sentimos ajuda a entender e a pedir ajuda. Por exemplo: estou triste porque meu amigo foi embora.',v:'<div class="emo" style="font-size:64px">💬</div>'}],
+   practice:['sentir','sentir','sentir','sentir','sentir','sentir'],quiz:['sentir','sentir','sentir','sentir','sentir']},
+  {id:'conviver',titulo:'Resolver conflitos',icone:'🤝',bncc:'Competência 9',
+   slides:[{t:'Quando alguém faz algo que não gostamos, dá vontade de revidar. Mas revidar só piora.',v:'<div class="emo" style="font-size:56px">😤 ➡️ 🌬️ ➡️ 🙂</div>'},
+    {t:'O melhor é respirar fundo, falar com calma o que sentimos e, se precisar, chamar um adulto.',v:'<div class="emo" style="font-size:56px">🗣️ 🤝 🙋</div>'}],
+   practice:['conviver','conviver','conviver','conviver','conviver','conviver'],quiz:['conviver','conviver','conviver','conviver','conviver']},
+];
+
+/* ---- Contas com resposta digitada (evita chute) ---- */
+['somaPequena','soma2','somaHist','subPequena','sub2','subHist','somaReserva','somaReservaHist','subReserva','subReservaHist','pular','pularFalta','depois','antes','seq','contarDinheiro','troco','guardarMeta'].forEach(k=>{
+  const g=GEN[k];GEN[k]=()=>{const q=g();q.num=true;q.answer=q.options.find(o=>o.ok).v;return q}});
+
+/* ---- Missões fora da tela (uma por semana) ---- */
+const MISSOES=[
+  {icone:'✏️',materia:'Português',texto:'Copie no caderno, com letra caprichada, uma frase do livro que vocês leram esta semana.'},
+  {icone:'🗣️',materia:'Leitura',texto:'Depois de uma leitura, conte a história para alguém da família com as suas palavras.'},
+  {icone:'📏',materia:'Matemática',texto:'Com uma régua ou fita métrica, meça 3 objetos da casa e anote quantos centímetros cada um tem.'},
+  {icone:'🐷',materia:'Dinheiro',texto:'Separe três potes: Gastar, Guardar e Doar. Divida o dinheirinho da semana entre eles.'},
+  {icone:'🛒',materia:'Dinheiro',texto:'No mercado, ajude a encontrar o mais barato entre dois produtos iguais.'},
+  {icone:'🌱',materia:'Ciências',texto:'Plante um feijão no algodão molhado e desenhe como ele está a cada 2 dias.'},
+  {icone:'🧩',materia:'Lógica',texto:'Monte um caminho no chão e dê comandos (frente, vira à direita) para alguém chegar até o final.'},
+  {icone:'🔢',materia:'Matemática',texto:'Conte de 2 em 2 usando tampinhas ou feijões até chegar em 30.'},
+  {icone:'💛',materia:'Emoções',texto:'Desenhe uma carinha para o sentimento de cada dia da semana e conte por que se sentiu assim.'},
+  {icone:'🗺️',materia:'Geografia',texto:'Desenhe o caminho da sua casa até a escola, com as coisas que você vê no meio.'},
+  {icone:'🏛️',materia:'História',texto:'Pergunte a um avô ou avó do que eles brincavam quando eram crianças e faça um desenho.'},
+  {icone:'🧼',materia:'Ciências',texto:'Ensine para a família o jeito certo de lavar as mãos, contando até 20.'},
+  {icone:'🕐',materia:'Matemática',texto:'Olhe o relógio na hora do almoço e do jantar e desenhe onde estavam os ponteiros.'},
+  {icone:'📚',materia:'Leitura',texto:'Escolha um livro novo na biblioteca ou na estante de casa e leiam juntos.'},
+  {icone:'🎁',materia:'Emoções',texto:'Faça um desenho ou um bilhete de carinho para alguém da família.'},
+  {icone:'🔤',materia:'Português',texto:'Encontre em casa 5 coisas que começam com a letra B e escreva os nomes.'},
+];
+const LEIT_PERGUNTAS=['O que você acha que vai acontecer agora?','Como o personagem está se sentindo? Por quê?','O que você faria no lugar dele?','Qual foi a parte mais legal até agora?','Tem alguma palavra que você não conhecia?','Onde e quando essa história acontece?','Quem é o personagem principal?','Por que você acha que ele fez isso?','Essa história parece com algo que já aconteceu com você?','Como você acha que a história vai terminar?','Se pudesse mudar o final, como seria?','O que o desenho dessa página mostra?','Qual personagem você mais gostou? Por quê?','O que aconteceu primeiro, depois e por último?','Você daria outro nome para o livro? Qual?'];
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
@@ -392,8 +549,12 @@ function buildMemoria(rows){
   return lessons;
 }
 
-MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');
+MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');EMO_LESSONS.forEach(l=>l.subject='Emoções');
 SUBJECTS[0].lessons=MAT_LESSONS;Object.assign(SUBJECTS[1],{lessons:POR_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS[2],{lessons:CIE_LESSONS,ready:true,ano:'2º ano'});
-const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS];
+SUBJECTS.splice(SUBJECTS.findIndex(x=>x.id==='mem'),0,
+  {id:'fin',nome:'Dinheiro',ic:'🪙',ano:'2º ano',ready:true,lessons:FIN_LESSONS},
+  {id:'log',nome:'Lógica',ic:'🧩',ano:'2º ano',ready:true,lessons:LOG_LESSONS},
+  {id:'emo',nome:'Emoções',ic:'💛',ano:'2º ano',ready:true,lessons:EMO_LESSONS});
+const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS,...FIN_LESSONS,...LOG_LESSONS,...EMO_LESSONS];
 const PRAISE=['Muito bem!','Isso aí!','Arrasou!','Perfeito!','Você acertou!'];

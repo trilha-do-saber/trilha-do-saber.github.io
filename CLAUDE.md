@@ -10,6 +10,12 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - `PLANO.md`: roteiro de lições. Marque `[x]` no que publicar.
 - `testes/verificar.js`: rode `node testes/verificar.js` antes de cada publicação. Se falhar, corrija ou não publique.
 
+## Recursos do app (não remover)
+- **Aquecimento do dia:** 5 questões sorteadas das lições com estrela, com peso maior para as habilidades com erro nos últimos 14 dias (`warmupKeys` em `app.js`).
+- **Resposta digitada:** os geradores listados no bloco "Contas com resposta digitada" de `conteudo.js` viram teclado numérico (`q.num`). Geradores numéricos novos de contas devem entrar nessa lista.
+- **Missão da semana:** `MISSOES` em `conteudo.js`, uma por semana, feita fora da tela. O Pedro marca na área dos pais. Pode acrescentar missões novas ligadas às lições recentes.
+- **Leitura do dia, estante e potes:** são registrados pelo Pedro na área dos pais e salvos na aba `Diario` da planilha (coluna E = JSON, tipos `leitura`, `missao` e `potes`). As perguntas de leitura ficam em `LEIT_PERGUNTAS`.
+
 ## Regras do conteúdo
 - Criança de 7 anos: frases curtas, palavras simples, tudo em português do Brasil. A explicação (`explain`) diz o porquê da resposta.
 - Cada questão tem exatamente uma resposta certa. O `type` dos distratores descreve o erro provável, porque aparece no painel dos pais.
@@ -22,4 +28,4 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 A trilha Memória é montada em tempo real por `buildMemoria()` (em `conteudo.js`), a partir da aba privada `MemoriaCC` da planilha, com as colunas ciclo, semana, materia e texto. O Pedro digita ali as frases do livro Foundations, que a família possui. **Nunca copie essas frases para o repositório nem para mensagens de commit.** Elas são material protegido do Classical Conversations. A rotina pode ler a aba só para avaliar o desempenho (habilidades "Memória · ...") e pode melhorar o código das atividades.
 
 ## Dados de desempenho
-Planilha "Trilha do Saber - Dados", ID `1lqJ3i7vUyY1xGPtDd9xEvWAtQ17XABTrS9iMZT2_z1E`, lida pelo conector Google Sheets. Aba `Sessoes`: colunas A a M, com o JSON da sessão na coluna N. Aba `Respostas`: habilidade, pergunta, respondeu, certo, acertou, tempoSeg e tipoErro.
+Planilha "Trilha do Saber - Dados", ID `1lqJ3i7vUyY1xGPtDd9xEvWAtQ17XABTrS9iMZT2_z1E`, lida pelo conector Google Sheets. Aba `Sessoes`: colunas A a M, com o JSON da sessão na coluna N. Aba `Respostas`: habilidade, pergunta, respondeu, certo, acertou, tempoSeg e tipoErro. Aba `Diario`: leitura, missão e potes (JSON na coluna E). Progresso das lições: aba `Estado`, chave `progress` (JSON com `lessons[id].stars`).

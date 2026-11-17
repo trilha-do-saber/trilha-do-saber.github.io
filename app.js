@@ -39,6 +39,7 @@ const store={
         for(const id in srv){const a=loc[id]||{},b=srv[id];loc[id]={...b,...a,stars:Math.max(a.stars||0,b.stars||0),best:Math.max(a.best||0,b.best||0),tries:Math.max(a.tries||0,b.tries||0)}}
         LS.set('progress',{lessons:loc})}
       if(Array.isArray(d.memoria))LS.set('memoria',d.memoria);
+      if(Array.isArray(d.diario)){const m=LS.get('diario',{});d.diario.forEach(r=>{if(r&&r.id&&!pending('d:'+r.id))m[r.id]=r});LS.set('diario',m)}
       if(Array.isArray(d.sessions)){const map=LS.get('sessions',{});d.sessions.forEach(s=>s&&s.id&&mergeSession(map,s));LS.set('sessions',trimSessions(map))}
       API.aiReady=!!d.aiReady;LS.set('aiReady',API.aiReady);this.synced=true;
     }catch(e){console.warn('sem sincronizar',e)}
@@ -50,7 +51,9 @@ const store={
     else if(p==='progress/main'){LS.set('progress',d);enqueue('saveProgress',d,'progress')}
     else if(p==='config/main'){LS.set('config',d);enqueue('saveConfig',d,'config')}
   },
-  async sessions(){return Object.values(LS.get('sessions',{})).sort((a,b)=>b.start-a.start)}
+  async sessions(){return Object.values(LS.get('sessions',{})).sort((a,b)=>b.start-a.start)},
+  diario(){return Object.values(LS.get('diario',{}))},
+  setDiario(rec){const m=LS.get('diario',{});m[rec.id]=rec;LS.set('diario',m);enqueue('saveDiario',rec,'d:'+rec.id)}
 };
 function trimSessions(map){const arr=Object.values(map).sort((a,b)=>b.start-a.start).slice(0,300);const o={};arr.forEach(s=>o[s.id]=s);return o}
 const aiOn=()=>!!(API.url&&API.aiReady);
@@ -93,7 +96,7 @@ document.addEventListener('input',e=>{if(e.target.id==='cf-rate'){const r=docume
 /* =========================================================
    ESTADO
    ========================================================= */
-const S={config:{childName:'',pin:'1234',goal:20,ai:true,autoRead:true,unlockAll:false},progress:{},sessions:[],session:null,lastAct:Date.now(),view:'map',subject:(()=>{try{return localStorage.getItem('ts:subject')||'mat'}catch(e){return 'mat'}})()};
+const S={config:{childName:'',pin:'1234',goal:20,ai:true,autoRead:true,unlockAll:false,fundo:true},progress:{},sessions:[],session:null,lastAct:Date.now(),view:'map',subject:(()=>{try{return localStorage.getItem('ts:subject')||'mat'}catch(e){return 'mat'}})()};
 let R=null; // lição em andamento
 const app=document.getElementById('app');
 const today=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -129,6 +132,33 @@ function starHTML(n){return '<span class="stars">'+[1,2,3].map(i=>`<span class="
 const curSubj=()=>SUBJECTS.find(s=>s.id===S.subject)||SUBJECTS[0];
 const curLessons=()=>curSubj().lessons;
 function unlocked(i){const L=curLessons();return S.config.unlockAll||i===0||((S.progress[L[i-1].id]||{}).stars||0)>=1}
+/* ---- missão, aquecimento, leitura, potes ---- */
+const weekIdx=()=>Math.floor((Date.now()-new Date(2026,0,5).getTime())/6048e5);
+const missaoAtual=()=>MISSOES[((weekIdx()%MISSOES.length)+MISSOES.length)%MISSOES.length];
+const missaoFeita=()=>store.diario().find(r=>r.id==='missao-'+weekIdx());
+const leituras=()=>store.diario().filter(r=>r.tipo==='leitura').sort((a,b)=>b.ts-a.ts);
+const livrosLidos=()=>[...new Set(leituras().map(r=>r.livro))];
+const potes=()=>store.diario().find(r=>r.id==='potes');
+function perguntasHoje(){const d=Math.floor(Date.now()/864e5),n=LEIT_PERGUNTAS.length;return [0,1,2].map(i=>LEIT_PERGUNTAS[(d*3+i)%n])}
+function applyFundo(){document.documentElement.classList.toggle('fundo',S.config.fundo!==false)}
+function warmupKeys(){
+  const done=LESSONS.filter(l=>((S.progress[l.id]||{}).stars||0)>=1&&l.subject!=='Memória');
+  const keys=[...new Set(done.flatMap(l=>l.quiz))].filter(k=>GEN[k]);
+  if(!keys.length)return [];
+  const lim=Date.now()-14*864e5,err={};
+  S.sessions.filter(x=>x.start>=lim).forEach(x=>(x.answers||[]).forEach(a=>{if(!a.ok)err[a.skill]=(err[a.skill]||0)+1}));
+  const w=keys.map(k=>{let sk='';try{sk=GEN[k]().skill}catch(e){}return 1+3*Math.min(3,err[sk]||0)});
+  const tot=w.reduce((a,b)=>a+b,0),out=[];
+  for(let i=0;i<5;i++){let r=Math.random()*tot,ch=keys[keys.length-1];for(let j=0;j<keys.length;j++){r-=w[j];if(r<=0){ch=keys[j];break}}out.push(ch)}
+  return out;
+}
+const warmupDone=()=>S.sessions.some(x=>x.lessonId==='aquecimento'&&x.date===today()&&x.phaseReached==='done');
+function startWarmup(){const keys=warmupKeys();if(!keys.length){toast('Complete uma lição primeiro.');return}
+  startLessonObj({id:'aquecimento',titulo:'Aquecimento do dia',icone:'🔥',subject:'Revisão',slides:[],practice:[],quiz:keys},-1,'Revisão',true)}
+function potesHTML(){const p=potes();if(!p)return '<div class="mini"><span class="ic">🐷</span><span><b>Meus potes</b><small>Peça para o papai cadastrar seus potes de Gastar, Guardar e Doar.</small></span></div>';
+  const pct=p.metaValor?Math.min(100,Math.round((p.guardar||0)/p.metaValor*100)):0;
+  return `<div class="card col" style="margin-bottom:14px"><div class="potes"><span>🛍️<b>Gastar</b>R$ ${p.gastar||0}</span><span>🐷<b>Guardar</b>R$ ${p.guardar||0}</span><span>💝<b>Doar</b>R$ ${p.doar||0}</span></div>
+    ${p.metaNome?`<div><div class="row" style="justify-content:space-between"><span>Meta: ${esc(p.metaNome)}</span><span>R$ ${p.guardar||0} de R$ ${p.metaValor}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`:''}</div>`}
 function renderMap(){
   S.view='map';
   const goalMs=S.config.goal*60000,tm=todayMs(),pct=Math.min(100,Math.round(tm/goalMs*100));
@@ -138,18 +168,23 @@ function renderMap(){
     <div class="goal card" style="padding:12px 16px"><div class="row" style="justify-content:space-between"><span>Meta de hoje</span><span>${mins(tm)} de ${S.config.goal} min</span></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
   ${!API.url?'<div class="note" style="margin-bottom:12px">Os dados estão salvos só neste aparelho até a planilha ser conectada na área dos pais.</div>':''}
   <div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'}" data-act="subj" data-arg="${s.id}"><span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
+  ${(()=>{const wk=warmupKeys().length,m=missaoAtual(),f=missaoFeita(),lv=livrosLidos();return `<div class="cards2">
+    ${wk?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
+    <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
+    <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
   <h2 style="font-size:26px;margin-bottom:12px">Trilha de ${curSubj().nome}</h2>
+  ${S.subject==='fin'?potesHTML():''}
   <div class="path">${curLessons().map((l,i)=>{const p=S.progress[l.id]||{},ok=unlocked(i);
     return `<button class="node ${p.stars?'done':''} ${ok?'':'locked'}" data-act="${ok?'open':'locked'}" data-arg="${i}">
       <span class="badge">${ok?l.icone:'🔒'}</span><span class="col" style="gap:4px"><h3>${esc(l.titulo)}</h3>${starHTML(p.stars||0)}</span></button>`}).join('')}</div>
   <div class="parentlink"><button data-act="parent">Área dos pais</button></div>`;
 }
-function startLesson(i){
-  const l=curLessons()[i];
-  R={idx:i,lesson:l,phase:'learn',slide:0,items:[],qi:0,q:null,tries:0,qStart:0,quizOk:0,aiUsed:0,results:[]};
+function startLesson(i){startLessonObj(curLessons()[i],i,curSubj().nome)}
+function startLessonObj(l,i,subj,direto){
+  R={idx:i,lesson:l,subjName:subj,phase:'learn',slide:0,items:[],qi:0,q:null,tries:0,qStart:0,quizOk:0,aiUsed:0,results:[]};
   S.session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:today(),start:Date.now(),end:Date.now(),activeMs:0,
-    lessonId:l.id,lessonTitle:l.titulo,subject:curSubj().nome,phaseReached:'learn',answers:[],quizScore:null,quizTotal:l.quiz.length,stars:null};
-  flushSession(); renderLearn();
+    lessonId:l.id,lessonTitle:l.titulo,subject:subj,phaseReached:'learn',answers:[],quizScore:null,quizTotal:l.quiz.length,stars:null};
+  flushSession(); if(direto){R.quizOk=0;beginPhase('quiz')}else renderLearn();
 }
 function lessonTop(stepsHTML){return `<div class="lesson-top"><button class="btn ghost small" data-act="home" aria-label="Voltar para a trilha">✕</button><div class="steps">${stepsHTML}</div><span class="timer" id="timer">⏱ ${mins(todayMs())} min hoje</span></div>`}
 function renderLearn(){
@@ -169,7 +204,7 @@ function beginPhase(phase){
 function renderQ(){
   const q=R.q=R.items[R.qi];R.tries=0;R.qStart=Date.now();
   const steps=R.items.map((_,i)=>`<i class="${i<R.results.length?(R.results[i]?'okd':'bad'):(i===R.qi?'on':'')}"></i>`).join('');
-  const label=R.phase==='practice'?'Praticar':'Desafio';
+  const label=R.lesson.id==='aquecimento'?'Aquecimento':R.phase==='practice'?'Praticar':'Desafio';
   let body='';
   if(q.kind==='build'){
     R.build={t:0,u:0};
@@ -181,6 +216,9 @@ function renderQ(){
     body=`<div class="buildarea" id="sa" style="min-height:96px"></div>
       <div class="buildbtns" id="stiles"></div>
       <div class="buildbtns"><button class="btn ghost" data-act="sylDel">Apagar</button><button class="btn okb" data-act="sylCheck">Pronto!</button></div>`;
+  }else if(q.num){
+    R.numVal='';
+    body=`<div class="numdisp" id="nd">?</div><div class="keys numkeys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-act="nk" data-arg="${n}">${n}</button>`).join('')}<button data-act="nk" data-arg="del" aria-label="Apagar">⌫</button><button data-act="nk" data-arg="0">0</button><button data-act="nk" data-arg="ok" class="nkok" aria-label="Confirmar">✓</button></div>`;
   }else{
     body=`<div class="opts ${q.optClass||''}" id="opts">${q.options.map((o,i)=>`<button class="opt" data-act="ans" data-arg="${i}">${esc(o.label)}</button>`).join('')}</div>`;
   }
@@ -236,7 +274,8 @@ function handleAnswer(ok,given,type,optEl){
   showFb('bad',`<b>Essa foi difícil. Veja como é:</b><span>${esc(R.q.explain)}</span>${R.phase==='practice'?aiBtn():''}${nextBtn()}`);
   speak(R.q.explain);
 }
-function lockBuild(){document.querySelectorAll('[data-act=addT],[data-act=addU],[data-act=undoB],[data-act=checkB],[data-act=sylPick],[data-act=sylDel],[data-act=sylCheck]').forEach(b=>b.disabled=true)}
+function drawNum(){const e=document.getElementById('nd');if(e)e.textContent=R.numVal||'?'}
+function lockBuild(){document.querySelectorAll('[data-act=addT],[data-act=addU],[data-act=undoB],[data-act=checkB],[data-act=sylPick],[data-act=sylDel],[data-act=sylCheck],[data-act=nk]').forEach(b=>b.disabled=true)}
 async function aiExplain(btn){
   const out=document.getElementById('aiout');if(!out)return;
   btn.disabled=true;out.innerHTML='<div class="ai">Pensando…</div>';
@@ -259,9 +298,9 @@ Regras: no máximo 2 frases curtas; palavras simples; português do Brasil; use 
 }
 function finishLesson(){
   const total=R.items.length,ok=R.quizOk,stars=ok>=total?3:ok>=total-1?2:ok>=total-2?1:0;
-  const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
-  p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();
-  S.progress[R.lesson.id]=p;saveProgress();
+  if(R.lesson.id!=='aquecimento'){const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
+    p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();
+    S.progress[R.lesson.id]=p;saveProgress();}
   S.session.quizScore=ok;S.session.stars=stars;S.session.phaseReached='done';
   const done=S.session;flushSession().then(()=>{S.sessions=[done,...S.sessions.filter(s=>s.id!==done.id)]});
   S.sessions=[JSON.parse(JSON.stringify(done)),...S.sessions.filter(s=>s.id!==done.id)];S.session=null;
@@ -317,6 +356,7 @@ function meter(p){const c=p>=80?'var(--ok)':p>=60?'var(--sun)':'var(--bad)';retu
 function renderParent(){
   S.view='parent';
   const st=stats(),tm=todayMs(),studied=tm>=60000,goal=S.config.goal;
+  const lts=leituras(),lim7=Date.now()-7*864e5,lt7=lts.filter(r=>r.ts>=lim7),diasLeit=new Set(lt7.map(r=>r.data)).size,leitDia=new Set(lts.map(r=>r.data)),mis=missaoAtual(),misF=missaoFeita(),pt=potes()||{};
   const maxMs=Math.max(goal*60000,...st.days.map(d=>d.ms));
   app.innerHTML=`
   <div class="top"><h1 style="font-size:32px">Acompanhamento${S.config.childName?' · '+esc(S.config.childName):''}</h1><div class="spacer"></div><button class="btn ghost small" data-act="home">Sair</button></div>
@@ -326,11 +366,42 @@ function renderParent(){
     <div class="tile"><span class="l">Últimos 7 dias</span><span class="v">${mins(st.weekMs)} min</span><span class="l">${st.studiedDays} de 7 dias com estudo</span></div>
     <div class="tile"><span class="l">Acerto geral</span><span class="v">${st.pct==null?'—':st.pct+'%'}</span><span class="l">${st.total} respostas registradas</span></div>
     <div class="tile"><span class="l">Lições concluídas</span><span class="v">${LESSONS.filter(l=>(S.progress[l.id]||{}).stars).length} de ${LESSONS.length}</span><span class="l">Ajudas da IA usadas: ${st.aiHelps}</span></div>
+    <div class="tile"><span class="l">Leitura (7 dias)</span><span class="v">${diasLeit} dia${diasLeit===1?'':'s'}</span><span class="l">${lt7.reduce((a,r)=>a+(r.minutos||0),0)} min · ${new Set(lt7.map(r=>r.livro)).size} livro(s)</span></div>
+    <div class="tile"><span class="l">Missão da semana</span><span class="v">${misF?'✅ Feita':'⏳'}</span><span class="l">${mis.icone} ${esc(mis.materia)}</span></div>
   </div>
   <div class="sec"><h2>Tempo de estudo por dia</h2><div class="card">
     <div class="chart">${st.days.map(d=>`<div title="${d.k}"><span>${d.ms?mins(d.ms):''}</span><b class="${mins(d.ms)>=goal?'goalhit':''}" style="height:${Math.round(d.ms/maxMs*100)}%"></b></div>`).join('')}</div>
-    <div class="chartx">${st.days.map(d=>`<span>${d.label}<br>${d.dow}</span>`).join('')}</div>
+    <div class="chartx">${st.days.map(d=>`<span>${d.label}<br>${d.dow}${leitDia.has(d.k)?'<br>📖':''}</span>`).join('')}</div>
     <p class="muted" style="font-size:14px;margin:10px 0 0">Minutos de tempo ativo. Verde = meta de ${goal} min cumprida. O tempo pausa quando ela fica 2 minutos sem tocar na tela ou sai do app.</p></div></div>
+  <div class="sec"><h2>📖 Leitura do dia</h2><div class="card col">
+    <div class="note" style="background:var(--pri-soft);color:var(--ink)"><b>Perguntas para fazer durante a leitura de hoje:</b><ul style="margin:6px 0 0;padding-left:20px">${perguntasHoje().map(q=>`<li>${esc(q)}</li>`).join('')}</ul>
+      <div style="margin-top:6px">No final, peça: <i>"Me conta o que aconteceu na história."</i></div></div>
+    <div class="form">
+      <label for="lt-livro">Livro<input id="lt-livro" type="text" list="lt-livros" maxlength="80" placeholder="Nome do livro"></label>
+      <datalist id="lt-livros">${livrosLidos().map(b=>`<option value="${esc(b)}">`).join('')}</datalist>
+      <label for="lt-min">Minutos<input id="lt-min" type="number" min="1" max="180" value="15"></label>
+      <label for="lt-quem">Quem leu<select id="lt-quem" class="sel"><option>Papai leu</option><option>Lemos juntos</option><option>Ela leu</option></select></label>
+      <label for="lt-gostou">Ela gostou?<select id="lt-gostou" class="sel">${[5,4,3,2,1].map(n=>`<option value="${n}">${'⭐'.repeat(n)}</option>`).join('')}</select></label>
+      <label class="check" for="lt-reconto"><input id="lt-reconto" type="checkbox"> Ela recontou a história</label>
+    </div>
+    <div class="row"><button class="btn small okb" data-act="leitura">Registrar leitura</button></div>
+    ${lts.length?`<div class="tbl"><table><thead><tr><th>Data</th><th>Livro</th><th class="n">Min</th><th>Quem</th><th>Recontou</th><th>Gostou</th></tr></thead><tbody>${lts.slice(0,8).map(r=>`<tr><td>${fmtDT(r.ts)}</td><td>${esc(r.livro)}</td><td class="n">${r.minutos}</td><td>${esc(r.quem)}</td><td>${r.recontou?'sim':'não'}</td><td>${'⭐'.repeat(r.gostou||0)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Nenhuma leitura registrada ainda.</p>'}
+  </div></div>
+  <div class="sec"><h2>🎯 Missão da semana</h2><div class="card col">
+    <div class="row" style="flex-wrap:nowrap"><span style="font-size:40px">${mis.icone}</span><span>${esc(mis.texto)}</span></div>
+    <div class="row">${misF?`<span class="pill ok">Feita em ${new Date(misF.ts).toLocaleDateString('pt-BR')}</span>`:'<button class="btn small okb" data-act="missaook">Marcar como feita</button>'}<span class="muted" style="font-size:14px">A missão muda toda segunda-feira.</span></div>
+  </div></div>
+  <div class="sec"><h2>🐷 Potes de dinheiro</h2><div class="card col">
+    <p class="muted" style="margin:0;font-size:15px">Quanto ela tem em cada pote. A meta aparece para ela na trilha Dinheiro.</p>
+    <div class="form">
+      <label for="pt-g">🛍️ Gastar (R$)<input id="pt-g" type="number" min="0" step="0.5" value="${pt.gastar||0}"></label>
+      <label for="pt-u">🐷 Guardar (R$)<input id="pt-u" type="number" min="0" step="0.5" value="${pt.guardar||0}"></label>
+      <label for="pt-d">💝 Doar (R$)<input id="pt-d" type="number" min="0" step="0.5" value="${pt.doar||0}"></label>
+      <label for="pt-mn">Meta: o que ela quer comprar<input id="pt-mn" type="text" maxlength="40" value="${esc(pt.metaNome||'')}"></label>
+      <label for="pt-mv">Valor da meta (R$)<input id="pt-mv" type="number" min="0" step="0.5" value="${pt.metaValor||0}"></label>
+    </div>
+    <div class="row"><button class="btn small okb" data-act="potes">Salvar potes</button></div>
+  </div></div>
   <div class="sec"><h2>Análise com IA</h2>
     <div class="row"><button class="btn small" data-act="aianalyze">Gerar análise da semana</button><span class="muted" style="font-size:14px">Envia só números e erros, sem o nome dela.</span></div><div id="aianalysis"></div></div>
   <div class="sec"><h2>Desempenho por habilidade</h2><div class="card tbl">${st.skills.length?`<table><thead><tr><th>Habilidade</th><th>Acerto</th><th class="n">Respostas</th><th class="n">Tempo médio</th></tr></thead><tbody>
@@ -349,6 +420,7 @@ function renderParent(){
     <label class="check" for="cf-ai"><input id="cf-ai" type="checkbox" ${S.config.ai?'checked':''}> Botão de ajuda com IA para ela</label>
     <label class="check" for="cf-read"><input id="cf-read" type="checkbox" ${S.config.autoRead?'checked':''}> Ler textos em voz alta automaticamente</label>
     <label class="check" for="cf-unlock"><input id="cf-unlock" type="checkbox" ${S.config.unlockAll?'checked':''}> Liberar todas as lições</label>
+    <label class="check" for="cf-fundo"><input id="cf-fundo" type="checkbox" ${S.config.fundo!==false?'checked':''}> Imagem de fundo</label>
     </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button></div>
     <div id="voicebox">${voiceControls()}</div>
     </div></div>
@@ -366,8 +438,8 @@ async function aiAnalyze(btn){
   const summary={metaDiariaMin:S.config.goal,minutosPorDia14:st.days.map(d=>({dia:d.k,min:mins(d.ms)})),diasComEstudo7:st.studiedDays,
     acertoGeral:st.pct,habilidades:st.skills.map(s=>({habilidade:s.k,acerto:s.pct,respostas:s.n,tempoMedioSeg:s.avg})),
     licoes:LESSONS.map(l=>({licao:l.subject+' - '+l.titulo,estrelas:(S.progress[l.id]||{}).stars||0,tentativas:(S.progress[l.id]||{}).tries||0})),
-    errosFrequentes:st.errs.slice(0,8).map(([t,n])=>({tipo:t,vezes:n})),ultimosErros:st.recentErr.slice(0,8).map(a=>({pergunta:a.q,respondeu:a.given,certo:a.correct})),ajudasIA:st.aiHelps};
-  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço escolar (Matemática, Português e Ciências).
+    errosFrequentes:st.errs.slice(0,8).map(([t,n])=>({tipo:t,vezes:n})),ultimosErros:st.recentErr.slice(0,8).map(a=>({pergunta:a.q,respondeu:a.given,certo:a.correct})),ajudasIA:st.aiHelps,leitura7dias:{dias:new Set(leituras().filter(r=>r.ts>=Date.now()-7*864e5).map(r=>r.data)).size,recontou:leituras().filter(r=>r.ts>=Date.now()-7*864e5&&r.recontou).length},missaoDaSemanaFeita:!!missaoFeita()};
+  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço escolar (Matemática, Português, Ciências, Dinheiro, Lógica, Emoções e Memória do Classical Conversations). Os dados também trazem a leitura em família e a missão fora da tela da semana.
 Com base nos dados abaixo, escreva em português do Brasil, de forma direta e prática:
 **Resumo**: 2 ou 3 frases sobre frequência e tempo de estudo em relação à meta.
 **Pontos fortes**
@@ -392,8 +464,8 @@ async function saveCfg(){
   if(!/^\d{4}$/.test(pin)){toast('O PIN precisa ter 4 números.');return}
   const goal=Math.min(120,Math.max(5,parseInt(document.getElementById('cf-goal').value,10)||20));
   S.config={...S.config,childName:document.getElementById('cf-name').value.trim().slice(0,30),pin,goal,
-    ai:document.getElementById('cf-ai').checked,autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked};
-  try{await saveConfig();toast('Configurações salvas.');renderParent()}catch(e){toast('Não consegui salvar. Tente de novo.')}
+    ai:document.getElementById('cf-ai').checked,fundo:document.getElementById('cf-fundo').checked,autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked};
+  try{await saveConfig();applyFundo();toast('Configurações salvas.');renderParent()}catch(e){toast('Não consegui salvar. Tente de novo.')}
 }
 async function saveCon(){
   const url=document.getElementById('cf-url').value.trim(),tok=document.getElementById('cf-token').value.trim(),st=document.getElementById('constat');
@@ -435,7 +507,20 @@ const ACT={
     const ok=given===q.word,first=R.tries===0;handleAnswer(ok,given,ok?null:'trocou a ordem das sílabas',null);if(!ok&&R.phase==='practice'&&first){R.syl.picked=[];drawSyl()}},
   aiexp(_,el){aiExplain(el)},
   nextq(){if(R.qi<R.items.length-1){R.qi++;renderQ()}else if(R.phase==='practice'){R.quizOk=0;beginPhase('quiz')}else finishLesson()},
-  again(){startLesson(R.idx)},
+  again(){if(R.lesson.id==='aquecimento')startWarmup();else startLessonObj(R.lesson,R.idx,R.subjName)},
+  warmup(){startWarmup()},
+  saymissao(){speak('Missão da semana: '+missaoAtual().texto)},
+  nk(d){if(d==='ok'){if(!R.numVal){toast('Digite a resposta.');return}const v=+R.numVal,q=R.q,ok=v===q.answer,first=R.tries===0,o=q.options.find(x=>x.v===v);
+      handleAnswer(ok,v,ok?null:((o&&o.type)||'errou a conta'),null);if(!ok&&R.phase==='practice'&&first){R.numVal='';drawNum()}return}
+    if(d==='del')R.numVal=R.numVal.slice(0,-1);else if(R.numVal.length<3)R.numVal+=d;drawNum()},
+  missaook(){store.setDiario({id:'missao-'+weekIdx(),tipo:'missao',data:today(),ts:Date.now(),semana:weekIdx(),texto:missaoAtual().texto,feita:true});toast('Missão marcada como feita!');renderParent()},
+  leitura(){const livro=document.getElementById('lt-livro').value.trim();if(!livro){toast('Escreva o nome do livro.');return}
+    store.setDiario({id:'l-'+Date.now().toString(36),tipo:'leitura',data:today(),ts:Date.now(),livro:livro.slice(0,80),minutos:Math.max(1,Math.min(180,parseInt(document.getElementById('lt-min').value,10)||15)),
+      quem:document.getElementById('lt-quem').value,recontou:document.getElementById('lt-reconto').checked,gostou:+document.getElementById('lt-gostou').value});
+    toast('Leitura registrada!');renderParent()},
+  potes(){const n=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
+    store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),gastar:n('pt-g'),guardar:n('pt-u'),doar:n('pt-d'),metaNome:document.getElementById('pt-mn').value.trim().slice(0,40),metaValor:n('pt-mv')});
+    toast('Potes salvos!');renderParent()},
   parent(){renderPin()},
   pk(d){pinKey(d)},
   pdel(){pinKey('del')},
@@ -456,6 +541,7 @@ async function loadState(){
   if(prog&&prog.lessons)S.progress=prog.lessons;
   S.sessions=sess||[];
   applyMemoria(LS.get('memoria',[]));
+  applyFundo();
 }
 function applyMemoria(rows){
   const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;

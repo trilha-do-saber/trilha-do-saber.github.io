@@ -19,6 +19,7 @@ function configurar() {
   criarAba_(ss, 'Respostas', ['sessaoId', 'quando', 'materia', 'licao', 'etapa', 'habilidade', 'pergunta', 'respondeu', 'certo', 'acertou', 'tempoSeg', 'tipoErro', 'tentativa']);
   criarAba_(ss, 'Estado', ['chave', 'json', 'atualizado']);
   criarAba_(ss, 'MemoriaCC', ['ciclo', 'semana', 'materia', 'texto']);
+  criarAba_(ss, 'Diario', ['id', 'data', 'tipo', 'resumo', 'json']);
 
   if (!PROPS.getProperty('TOKEN')) PROPS.setProperty('TOKEN', Utilities.getUuid().replace(/-/g, ''));
   if (!PROPS.getProperty('HORA_ALERTA')) PROPS.setProperty('HORA_ALERTA', '19');
@@ -35,10 +36,13 @@ function configurar() {
   Logger.log('Alertas vão para: ' + PROPS.getProperty('EMAIL_ALERTA') + ' às ' + PROPS.getProperty('HORA_ALERTA') + 'h');
 }
 
-/** Rode uma vez para criar a aba MemoriaCC (sem mexer nos alertas). */
-function criarAbaMemoria() {
-  criarAba_(SpreadsheetApp.getActiveSpreadsheet(), 'MemoriaCC', ['ciclo', 'semana', 'materia', 'texto']);
+/** Rode uma vez para criar as abas novas (MemoriaCC e Diario) sem mexer nos alertas. */
+function criarAbasNovas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  criarAba_(ss, 'MemoriaCC', ['ciclo', 'semana', 'materia', 'texto']);
+  criarAba_(ss, 'Diario', ['id', 'data', 'tipo', 'resumo', 'json']);
 }
+function criarAbaMemoria() { criarAbasNovas(); }
 
 function lerMemoria_() {
   const sh = aba_('MemoriaCC');
@@ -77,6 +81,7 @@ function doPost(e) {
       case 'saveSession': res = comTrava_(() => salvarSessao_(p)); break;
       case 'saveProgress': res = comTrava_(() => salvarEstado_('progress', p)); break;
       case 'saveConfig': res = comTrava_(() => salvarEstado_('config', p)); break;
+      case 'saveDiario': res = comTrava_(() => salvarDiario_(p)); break;
       case 'ai': res = ia_(p); break;
       default: throw new Error('acao_desconhecida');
     }
@@ -127,6 +132,28 @@ function salvarSessao_(s) {
   return { saved: s.id };
 }
 
+function salvarDiario_(r) {
+  if (!r || !r.id) throw new Error('registro_invalido');
+  let sh = aba_('Diario');
+  if (!sh) { criarAbasNovas(); sh = aba_('Diario'); }
+  const resumo = r.tipo === 'leitura' ? (r.livro + ' · ' + r.minutos + ' min · ' + r.quem + (r.recontou ? ' · recontou' : ''))
+    : r.tipo === 'missao' ? ('Missão feita: ' + r.texto)
+    : r.tipo === 'potes' ? ('Gastar R$ ' + r.gastar + ' · Guardar R$ ' + r.guardar + ' · Doar R$ ' + r.doar + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
+  const linha = [r.id, r.data || '', r.tipo || '', resumo, JSON.stringify(r)];
+  const achado = sh.getRange('A:A').createTextFinder(String(r.id)).matchEntireCell(true).findNext();
+  if (achado) sh.getRange(achado.getRow(), 1, 1, linha.length).setValues([linha]);
+  else sh.appendRow(linha);
+  return { saved: r.id };
+}
+
+function lerDiario_() {
+  const sh = aba_('Diario');
+  if (!sh || sh.getLastRow() < 2) return [];
+  const ini = Math.max(2, sh.getLastRow() - 399);
+  return sh.getRange(ini, 5, sh.getLastRow() - ini + 1, 1).getValues()
+    .map(x => { try { return JSON.parse(x[0]); } catch (e) { return null; } }).filter(Boolean);
+}
+
 function salvarEstado_(chave, valor) {
   const sh = aba_('Estado');
   const achado = sh.getRange('A:A').createTextFinder(chave).matchEntireCell(true).findNext();
@@ -152,7 +179,7 @@ function getAll_() {
       .map(r => { try { return JSON.parse(r[0]); } catch (e) { return null; } })
       .filter(Boolean);
   }
-  return { config: lerEstado_('config'), progress: lerEstado_('progress'), sessions: sessoes, memoria: lerMemoria_(), aiReady: !!PROPS.getProperty('GEMINI_KEY') };
+  return { config: lerEstado_('config'), progress: lerEstado_('progress'), sessions: sessoes, memoria: lerMemoria_(), diario: lerDiario_(), aiReady: !!PROPS.getProperty('GEMINI_KEY') };
 }
 
 function dataHora_(ms) {
@@ -211,12 +238,13 @@ function alertaDiario() {
   const cfg = lerEstado_('config') || {};
   const meta = cfg.goal || 20;
   const min = Math.round(sessoesDesde_(1).filter(s => s.date === hoje).reduce((a, s) => a + (s.activeMs || 0), 0) / 60000);
-  if (min >= meta) return;
   const nome = cfg.childName || 'Ela';
-  const msg = min === 0
-    ? nome + ' ainda não estudou hoje na Trilha do Saber.'
-    : nome + ' estudou ' + min + ' min hoje (meta: ' + meta + ' min).';
-  avisar_('Trilha do Saber: estudo de hoje', msg);
+  const ontem = Utilities.formatDate(new Date(Date.now() - 86400000), FUSO, 'yyyy-MM-dd');
+  const leu = lerDiario_().some(r => r.tipo === 'leitura' && (r.data === hoje || r.data === ontem));
+  const avisos = [];
+  if (min < meta) avisos.push(min === 0 ? nome + ' ainda não estudou hoje na Trilha do Saber.' : nome + ' estudou ' + min + ' min hoje (meta: ' + meta + ' min).');
+  if (!leu) avisos.push('Não há leitura registrada ontem nem hoje. Que tal 15 minutos de leitura juntos antes de dormir?');
+  if (avisos.length) avisar_('Trilha do Saber: lembrete de hoje', avisos.join('\n\n'));
 }
 
 function relatorioSemanal() {
@@ -235,6 +263,11 @@ function relatorioSemanal() {
   txt += 'Tempo total: ' + Math.round(Object.values(porDia).reduce((a, b) => a + b, 0) / 60000) + ' min\n';
   txt += 'Respostas: ' + respostas.length + (respostas.length ? ' (' + Math.round(acertos / respostas.length * 100) + '% de acerto)' : '') + '\n';
   txt += 'Lições concluídas: ' + ss.filter(s => s.phaseReached === 'done').map(s => s.subject + ' · ' + s.lessonTitle + ' (' + s.stars + '★)').join(', ') + '\n';
+  const lim7 = Date.now() - 7 * 86400000, diario = lerDiario_();
+  const leit = diario.filter(r => r.tipo === 'leitura' && r.ts >= lim7);
+  txt += 'Leitura: ' + new Set(leit.map(r => r.data)).size + ' dias, ' + leit.reduce((a, r) => a + (r.minutos || 0), 0) + ' min'
+    + (leit.length ? ' (' + [...new Set(leit.map(r => r.livro))].join(', ') + ')' : '') + '\n';
+  txt += 'Missão da semana: ' + (diario.some(r => r.tipo === 'missao' && r.ts >= lim7) ? 'feita' : 'não registrada') + '\n';
   if (topErros.length) txt += '\nErros mais frequentes:\n' + topErros.map(([t, n]) => '- ' + t + ': ' + n + 'x').join('\n') + '\n';
 
   if (PROPS.getProperty('GEMINI_KEY') && respostas.length) {

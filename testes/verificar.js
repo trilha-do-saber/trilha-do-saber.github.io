@@ -28,6 +28,7 @@ for(const [k,g] of Object.entries(GEN)){
     if(!q.text||!q.skill||!q.explain){erros.push(`${k}: faltam campos`);break}
     if(q.kind==='build'){if(q.t*10+q.u!==q.target){erros.push(`${k}: montar inconsistente`);break}continue}
     if(q.kind==='syll'){if(q.parts.join('')!==q.word){erros.push(`${k}: sílabas inconsistentes`);break}continue}
+    if(q.num&&(typeof q.answer!=='number'||q.answer!==q.options.find(o=>o.ok).v)){erros.push(`${k}: resposta digitada inconsistente`);break}
     const ok=q.options.filter(o=>o.ok);
     if(ok.length!==1){erros.push(`${k}: ${ok.length} respostas certas em "${q.text}"`);break}
     if(new Set(q.options.map(o=>String(o.label))).size!==q.options.length){erros.push(`${k}: opções repetidas em "${q.text}" ${JSON.stringify(q.options.map(o=>o.label))}`);break}
