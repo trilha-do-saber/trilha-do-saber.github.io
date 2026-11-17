@@ -61,13 +61,30 @@ const store={
   diario(){return Object.values(LS.get('diario',{}))},
   setDiario(rec){const m=LS.get('diario',{});m[rec.id]=rec;LS.set('diario',m);enqueue('saveDiario',rec,'d:'+rec.id)}
 };
+/* SINCRONIZAÇÃO ENTRE APARELHOS: busca os dados novos da planilha ao abrir, ao voltar para o app,
+   ao entrar na área dos pais e a cada 45 s com a área dos pais ou a tela inicial abertas (nunca no meio de uma lição). */
+let syncing=false,lastSync=0;
+async function sincronizar(force){
+  if(!API.url||syncing||R||(!force&&Date.now()-lastSync<20000))return;
+  syncing=true;const ind=document.getElementById('syncinfo');if(ind)ind.textContent='Atualizando dados…';
+  try{await flushOutbox();await store.init();lastSync=Date.now();await loadState()}catch(e){console.warn(e)}
+  finally{syncing=false}
+  if(R)return;
+  const ae=document.activeElement,digitando=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName);
+  if(S.view==='parent'&&!digitando){const y=window.scrollY;renderParent();window.scrollTo(0,y)}
+  else if(S.view==='map')renderMap();
+  else{const i=document.getElementById('syncinfo');if(i)i.textContent=syncTxt()}
+}
+const syncTxt=()=>lastSync?'Dados atualizados às '+new Date(lastSync).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Dados deste aparelho';
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')sincronizar()});
+setInterval(()=>{if(document.visibilityState==='visible'&&(S.view==='parent'||S.view==='map'))sincronizar()},45000);
 function trimSessions(map){const arr=Object.values(map).sort((a,b)=>b.start-a.start).slice(0,300);const o={};arr.forEach(s=>o[s.id]=s);return o}
 const aiOn=()=>!!(API.url&&API.aiReady);
 
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v18';
+const APP_VERSAO='trilha-v19';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -562,7 +579,7 @@ function pinKey(d){
   if(d==='del')pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=d;
   document.querySelectorAll('#dots i').forEach((e,i)=>e.classList.toggle('f',i<pinBuf.length));
   if(pinBuf.length===4){
-    if(pinBuf===String(S.config.pin))setTimeout(renderParent,150);
+    if(pinBuf===String(S.config.pin))setTimeout(()=>{renderParent();sincronizar(true)},150);
     else{const d=document.getElementById('dots');d.classList.add('shake');setTimeout(()=>{pinBuf='';d.classList.remove('shake');document.querySelectorAll('#dots i').forEach(e=>e.classList.remove('f'))},400)}
   }
 }
@@ -586,7 +603,7 @@ function renderParent(){
   const lts=leituras(),lim7=Date.now()-7*864e5,lt7=lts.filter(r=>r.ts>=lim7),diasLeit=new Set(lt7.map(r=>r.data)).size,leitDia=new Set(lts.map(r=>r.data)),mis=missaoAtual(),misF=missaoFeita(),pt=potes()||{};
   const maxMs=Math.max(goal*60000,...st.days.map(d=>d.ms));
   app.innerHTML=`
-  <div class="top"><h1 style="font-size:32px">Acompanhamento${S.config.childName?' · '+esc(S.config.childName):''}</h1><div class="spacer"></div><button class="btn ghost small" data-act="home">Sair</button></div>
+  <div class="top"><h1 style="font-size:32px">Acompanhamento${S.config.childName?' · '+esc(S.config.childName):''}</h1><div class="spacer"></div>${API.url?`<span class="muted" id="syncinfo" style="font-size:14px">${syncing?'Atualizando dados…':syncTxt()}</span><button class="btn ghost small" data-act="sync">↻</button>`:''}<button class="btn ghost small" data-act="home">Sair</button></div>
   ${!API.url?'<div class="note">A planilha ainda não está conectada neste aparelho. Os dados estão salvos só aqui. Configure em Conexão, no fim da página.</div>':(outbox.length?`<div class="note">${outbox.length} registro(s) ainda não foram para a planilha.${outbox.some(x=>x.erro==='acao_desconhecida')?' O servidor está numa versão antiga: no Apps Script, vá em Implantar → Gerenciar implantações → ✏️ → Nova versão → Implantar.':outbox.some(x=>x.erro)?' Erro do servidor: '+esc(outbox.find(x=>x.erro).erro)+'.':' Eles serão enviados quando houver internet.'}</div>`:'')}
   <div class="pgrid">
     <div class="tile"><span class="l">Hoje</span><span class="v">${mins(tm)} min</span><span><span class="pill ${studied?(mins(tm)>=goal?'ok':'mid'):'no'}">${studied?(mins(tm)>=goal?'Meta cumprida':'Estudou, abaixo da meta'):'Ainda não estudou'}</span></span></div>
@@ -776,6 +793,7 @@ const ACT={
   export(){exportData()},
   savecon(){saveCon()},
   atualizar(){atualizarApp()},
+  sync(){sincronizar(true)},
   checarupd(_,el){el.disabled=true;checarVersao().then(r=>{el.disabled=false;if(r===false)toast('O app já está na versão mais nova.');else if(r===null)toast('Sem internet para verificar agora.')})},
   testvoice(){voiceWarned=false;speak('Olá! Vamos estudar juntos? Quantas dezenas tem o número quarenta e sete?')},
 };
@@ -801,7 +819,7 @@ function applyMemoria(rows){
 }
 (async function init(){
   await loadState();renderMap();           // abre na hora com os dados do aparelho
-  await store.init();await loadState();    // depois sincroniza com a planilha
+  await store.init();lastSync=Date.now();await loadState();    // depois sincroniza com a planilha
   if(S.view==='map'&&!R)renderMap();
 })();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
