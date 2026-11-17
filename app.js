@@ -65,8 +65,10 @@ try{if(hasWebSpeech()){speechSynthesis.getVoices();speechSynthesis.onvoiceschang
 function webSpeak(text){
   if(!hasWebSpeech())return false;
   try{const ss=window.speechSynthesis;ss.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=.95;
-    const v=chosenVoice();if(v){u.voice=v;u.lang=v.lang}u.rate=LS.get('voiceRate',.95);ss.speak(u);try{ss.resume()}catch(e){}return true}catch(e){return false}
+    const v=chosenVoice();if(v){u.voice=v;u.lang=v.lang}u.rate=LS.get('voiceRate',.95);u.onerror=e=>{if(e&&e.error!=='interrupted'&&e.error!=='canceled')vozFalhou(e.error)};ss.speak(u);try{ss.resume()}catch(e){}return true}catch(e){return false}
 }
+let vozAviso=false;
+function vozFalhou(motivo){console.warn('voz',motivo);if(vozAviso)return;vozAviso=true;toast('O tablet não conseguiu falar. Confira a voz do sistema em Configurações → Saída de texto para voz.')}
 function noVoice(){if(voiceWarned)return;voiceWarned=true;toast('Este navegador não tem voz. Use o Chrome ou o Safari.')}
 function speak(text){if(!text)return;speakTok++;if(!webSpeak(text))noVoice()}
 function stopSpeak(){speakTok++;try{hasWebSpeech()&&speechSynthesis.cancel()}catch(e){}}
