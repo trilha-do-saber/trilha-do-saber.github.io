@@ -98,7 +98,7 @@ document.addEventListener('input',e=>{if(e.target.id==='cf-rate'){const r=docume
 /* =========================================================
    ESTADO
    ========================================================= */
-const S={config:{childName:'',pin:'1234',goal:20,ai:true,autoRead:true,unlockAll:false,fundo:true},progress:{},sessions:[],session:null,lastAct:Date.now(),view:'map',subject:(()=>{try{return localStorage.getItem('ts:subject')||'mat'}catch(e){return 'mat'}})()};
+const S={config:{childName:'',pin:'1234',goal:20,ai:true,autoRead:true,unlockAll:false,fundo:true,roteiro:true,livreDepois:true,memDias:[1,3,5]},progress:{},sessions:[],session:null,lastAct:Date.now(),view:'map',subject:(()=>{try{return localStorage.getItem('ts:subject')||'mat'}catch(e){return 'mat'}})()};
 let R=null; // lição em andamento
 const app=document.getElementById('app');
 const today=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -215,24 +215,68 @@ async function ccSalvar(btn){
     toast(`Semana ${CCD.semana} salva! A Memória CC vai acender na tela dela.`);CCD=null;renderParent();
   }catch(e){btn.disabled=false;toast('Não consegui salvar: '+((e&&e.code)||'sem internet')+'. Tente de novo.')}
 }
+/* ---- Roteiro do dia ---- */
+const dayNum=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
+const mainSubj=()=>SUBJECTS.find(x=>x.id===(dayNum()%2===0?'mat':'por'));
+const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&&f(x));
+const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n).map(z=>z.start));
+function rotOpcoes(){
+  const memOk=(S.config.memDias||[1,3,5]).includes(new Date().getDay())||memNovas().length>0;
+  const pool=SUBJECTS.filter(x=>x.ready&&['cie','fin','log','emo','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
+  let ops=pool.slice(0,2).map(x=>x.id);
+  if(memNovas().length&&pool.some(x=>x.id==='mem')&&!ops.includes('mem'))ops=[ops[0],'mem'];
+  return ops;
+}
+function roteiro(){
+  const key='rot:'+today();let st=LS.get(key,null);
+  if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes()};LS.set(key,st)}
+  const main=mainSubj(),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
+  const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=doneToday(x=>x.subject===main.nome),s3=!ops.length||doneToday(x=>ops.some(o=>o.nome===x.subject));
+  return {main,ops,w,s1,s2,s3,done:s1&&s2&&s3,total:(w?1:0)+1+(ops.length?1:0),feitos:(w&&s1?1:0)+(s2?1:0)+(ops.length&&s3?1:0)};
+}
+function nextLessonOf(subj){
+  const L=subj.lessons||[];
+  if(subj.id==='mem'){const nv=memNovas()[0];if(nv)return {l:nv,i:L.indexOf(nv)}}
+  for(let i=0;i<L.length;i++){if(!(((S.progress[L[i].id]||{}).stars||0)>=1))return {l:L[i],i}}
+  let bi=0;L.forEach((l,i)=>{if(((S.progress[l.id]||{}).stars||0)<((S.progress[L[bi].id]||{}).stars||0))bi=i});return {l:L[bi],i:bi,rev:true};
+}
+function startSubjNext(id){const sb=SUBJECTS.find(x=>x.id===id);if(!sb||!sb.ready||!(sb.lessons||[]).length)return;S.subject=id;const n=nextLessonOf(sb);startLessonObj(n.l,n.i,sb.nome)}
+function roteiroHTML(r){
+  const nx=nextLessonOf(r.main);
+  const passo=(act,arg,ic,tit,sub,feito,ativo)=>`<button class="passo ${feito?'feito':''} ${ativo&&!feito?'ativo':''}" data-act="${act}" ${arg?`data-arg="${arg}"`:''} ${feito||!ativo?'disabled':''}><span class="ic">${ic}</span><span class="col" style="gap:2px;flex:1"><b>${tit}</b><small>${sub}</small></span><span class="st">${feito?'✅':ativo?'▶️':'🔒'}</span></button>`;
+  let h=`<div class="card col roteiro"><div class="row"><h2 style="font-size:26px">🗺️ Roteiro de hoje</h2><span class="spacer"></span><span class="pill ${r.done?'ok':'mid'}">${r.feitos} de ${r.total}</span></div>`;
+  if(r.w)h+=passo('rot1','','🔥','Aquecimento','5 questões de revisão',r.s1,true);
+  h+=passo('rot2','',r.main.ic,r.main.nome,(nx.rev?'Revisão: ':'')+esc(nx.l.titulo),r.s2,r.s1);
+  if(r.ops.length){
+    if(r.s3)h+=passo('rot3','','🎲','Matéria do dia','Feita!',true,true);
+    else if(r.s1&&r.s2)h+=`<div class="passo ativo" style="flex-wrap:wrap"><span class="ic">🎲</span><span class="col" style="gap:2px;flex:1"><b>Matéria do dia</b><small>Escolha uma:</small></span><span class="row" style="gap:10px">${r.ops.map(o=>`<button class="btn small" data-act="rot3" data-arg="${o.id}">${o.ic} ${esc(o.nome)}${o.id==='mem'&&memNovas().length?' ✨':''}</button>`).join('')}</span></div>`;
+    else h+=passo('rot3','','🎲','Matéria do dia',`Você vai escolher: ${r.ops.map(o=>o.ic+' '+esc(o.nome)).join(' ou ')}`,false,false);
+  }
+  if(r.done)h+=`<div class="note" style="background:var(--ok-soft);color:#11603B;text-align:center;font-size:18px">🎉 Roteiro completo! Agora é tempo livre: escolha o que quiser.</div>`;
+  else if(S.config.livreDepois!==false)h+=`<p class="muted" style="margin:0;font-size:14px;text-align:center">Termine o roteiro para liberar o tempo livre.</p>`;
+  return h+'</div>';
+}
 function renderMap(){
   S.view='map';
+  const rotOn=S.config.roteiro!==false,rot=rotOn?roteiro():null,livre=!rotOn||rot.done||S.config.livreDepois===false;
+  if(rot&&rot.done&&!LS.get('rotCel:'+today(),false)){LS.set('rotCel:'+today(),true);setTimeout(()=>{confetti();speak('Roteiro completo! Agora é tempo livre.')},300)}
   const goalMs=S.config.goal*60000,tm=todayMs(),pct=Math.min(100,Math.round(tm/goalMs*100));
   const name=S.config.childName?`, ${esc(S.config.childName)}`:'';
   app.innerHTML=`
   <div class="top"><h1 class="hello">Olá${name}! 👋</h1><div class="spacer"></div>
     <div class="goal card" style="padding:12px 16px"><div class="row" style="justify-content:space-between"><span>Meta de hoje</span><span>${mins(tm)} de ${S.config.goal} min</span></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
   ${!API.url?'<div class="note" style="margin-bottom:12px">Os dados estão salvos só neste aparelho até a planilha ser conectada na área dos pais.</div>':''}
-  <div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'} ${s.id==='mem'&&memNovas().length?'novo':''}" data-act="subj" data-arg="${s.id}">${s.id==='mem'&&memNovas().length?'<span class="badge-novo">NOVO!</span>':''}<span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
+  ${rotOn?roteiroHTML(rot):''}
   ${(()=>{const wk=warmupKeys().length,m=missaoAtual(),f=missaoFeita(),lv=livrosLidos();return `<div class="cards2">
-    ${wk?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
+    ${wk&&!rotOn?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
     <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
     <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
+  ${livre?`<div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'} ${s.id==='mem'&&memNovas().length?'novo':''}" data-act="subj" data-arg="${s.id}">${s.id==='mem'&&memNovas().length?'<span class="badge-novo">NOVO!</span>':''}<span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
   <h2 style="font-size:26px;margin-bottom:12px">Trilha de ${curSubj().nome}</h2>
   ${S.subject==='fin'?potesHTML():''}
   <div class="path">${curLessons().map((l,i)=>{const p=S.progress[l.id]||{},ok=unlocked(i);
     return `<button class="node ${p.stars?'done':''} ${ok?'':'locked'} ${l.subject==='Memória'&&l.id!=='mem-mestre'&&!p.tries?'novo':''}" data-act="${ok?'open':'locked'}" data-arg="${i}">
-      <span class="badge">${ok?l.icone:'🔒'}</span><span class="col" style="gap:4px"><h3>${esc(l.titulo)}</h3>${starHTML(p.stars||0)}</span></button>`}).join('')}</div>
+      <span class="badge">${ok?l.icone:'🔒'}</span><span class="col" style="gap:4px"><h3>${esc(l.titulo)}</h3>${starHTML(p.stars||0)}</span></button>`}).join('')}</div>`:''}
   <div class="parentlink"><button data-act="parent">Área dos pais</button></div>`;
 }
 function startLesson(i){startLessonObj(curLessons()[i],i,curSubj().nome)}
@@ -429,6 +473,10 @@ function renderParent(){
     <div class="chart">${st.days.map(d=>`<div title="${d.k}"><span>${d.ms?mins(d.ms):''}</span><b class="${mins(d.ms)>=goal?'goalhit':''}" style="height:${Math.round(d.ms/maxMs*100)}%"></b></div>`).join('')}</div>
     <div class="chartx">${st.days.map(d=>`<span>${d.label}<br>${d.dow}${leitDia.has(d.k)?'<br>📖':''}</span>`).join('')}</div>
     <p class="muted" style="font-size:14px;margin:10px 0 0">Minutos de tempo ativo. Verde = meta de ${goal} min cumprida. O tempo pausa quando ela fica 2 minutos sem tocar na tela ou sai do app.</p></div></div>
+  <div class="sec"><h2>⚖️ Equilíbrio da semana</h2><div class="card tbl"><table><thead><tr><th>Matéria</th><th class="n">Minutos (7 dias)</th><th class="n">Lições feitas</th><th>Última vez</th></tr></thead><tbody>
+    ${SUBJECTS.filter(x=>x.ready).map(x=>{const ss=S.sessions.filter(z=>z.start>=lim7&&z.subject===x.nome),lt=lastStudied(x.nome),dias=lt?Math.floor((Date.now()-lt)/864e5):null;
+      return `<tr><td>${x.ic} ${esc(x.nome)}</td><td class="n">${mins(ss.reduce((a,z)=>a+(z.activeMs||0),0))}</td><td class="n">${ss.filter(z=>z.phaseReached==='done').length}</td><td>${dias==null?'<span class="pill no">nunca</span>':dias>7?`<span class="pill no">há ${dias} dias</span>`:dias===0?'hoje':`há ${dias} dia${dias>1?'s':''}`}</td></tr>`}).join('')}
+    </tbody></table><p class="muted" style="font-size:14px;margin:8px 0 0">Com o roteiro ligado, Matemática e Português se alternam a cada dia, e a matéria do dia sai das que estão há mais tempo sem estudo.</p></div></div>
   <div class="sec"><h2>📖 Leitura do dia</h2><div class="card col">
     <div class="note" style="background:var(--pri-soft);color:var(--ink)"><b>Perguntas para fazer durante a leitura de hoje:</b><ul style="margin:6px 0 0;padding-left:20px">${perguntasHoje().map(q=>`<li>${esc(q)}</li>`).join('')}</ul>
       <div style="margin-top:6px">No final, peça: <i>"Me conta o que aconteceu na história."</i></div></div>
@@ -478,6 +526,10 @@ function renderParent(){
     <label class="check" for="cf-read"><input id="cf-read" type="checkbox" ${S.config.autoRead?'checked':''}> Ler textos em voz alta automaticamente</label>
     <label class="check" for="cf-unlock"><input id="cf-unlock" type="checkbox" ${S.config.unlockAll?'checked':''}> Liberar todas as lições</label>
     <label class="check" for="cf-fundo"><input id="cf-fundo" type="checkbox" ${S.config.fundo!==false?'checked':''}> Imagem de fundo</label>
+    <label class="check" for="cf-rot"><input id="cf-rot" type="checkbox" ${S.config.roteiro!==false?'checked':''}> Roteiro do dia (Matemática e Português alternados + matéria do dia)</label>
+    <label class="check" for="cf-livre"><input id="cf-livre" type="checkbox" ${S.config.livreDepois!==false?'checked':''}> Tempo livre só depois do roteiro</label>
+    <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:15px;color:var(--muted);margin-bottom:6px">Dias da Memória CC no roteiro</legend>
+      <div class="row" style="gap:10px">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<label class="check" for="cf-md${i}" style="font-size:15px!important"><input id="cf-md${i}" type="checkbox" ${(S.config.memDias||[1,3,5]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></fieldset>
     </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button></div>
     <div id="voicebox">${voiceControls()}</div>
     </div></div>
@@ -521,7 +573,7 @@ async function saveCfg(){
   if(!/^\d{4}$/.test(pin)){toast('O PIN precisa ter 4 números.');return}
   const goal=Math.min(120,Math.max(5,parseInt(document.getElementById('cf-goal').value,10)||20));
   S.config={...S.config,childName:document.getElementById('cf-name').value.trim().slice(0,30),pin,goal,
-    ai:document.getElementById('cf-ai').checked,fundo:document.getElementById('cf-fundo').checked,autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked};
+    ai:document.getElementById('cf-ai').checked,fundo:document.getElementById('cf-fundo').checked,roteiro:document.getElementById('cf-rot').checked,livreDepois:document.getElementById('cf-livre').checked,memDias:[0,1,2,3,4,5,6].filter(i=>document.getElementById('cf-md'+i).checked),autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked};
   try{await saveConfig();applyFundo();toast('Configurações salvas.');renderParent()}catch(e){toast('Não consegui salvar. Tente de novo.')}
 }
 async function saveCon(){
@@ -566,6 +618,9 @@ const ACT={
   nextq(){if(R.qi<R.items.length-1){R.qi++;renderQ()}else if(R.phase==='practice'){R.quizOk=0;beginPhase('quiz')}else finishLesson()},
   again(){if(R.lesson.id==='aquecimento')startWarmup();else startLessonObj(R.lesson,R.idx,R.subjName)},
   warmup(){startWarmup()},
+  rot1(){startWarmup()},
+  rot2(){startSubjNext(mainSubj().id)},
+  rot3(id){const k='rot:'+today(),st=LS.get(k,{});st.escolha=id;LS.set(k,st);startSubjNext(id)},
   saymissao(){speak('Missão da semana: '+missaoAtual().texto)},
   nk(d){if(d==='ok'){if(!R.numVal){toast('Digite a resposta.');return}const v=+R.numVal,q=R.q,ok=v===q.answer,first=R.tries===0,o=q.options.find(x=>x.v===v);
       handleAnswer(ok,v,ok?null:((o&&o.type)||'errou a conta'),null);if(!ok&&R.phase==='practice'&&first){R.numVal='';drawNum()}return}

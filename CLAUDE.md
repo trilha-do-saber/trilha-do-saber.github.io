@@ -11,6 +11,7 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - `testes/verificar.js`: rode `node testes/verificar.js` antes de cada publicação. Se falhar, corrija ou não publique.
 
 ## Recursos do app (não remover)
+- **Roteiro do dia** (`roteiro()` em `app.js`): Aquecimento → Matemática ou Português (alternados por dia) → matéria do dia, que ela escolhe entre as 2 que estão há mais tempo sem estudo (Ciências, Dinheiro, Lógica, Emoções e, nos dias configurados ou com semana nova, Memória CC). O tempo livre só abre depois do roteiro. Matérias novas que devem entrar no rodízio precisam estar na lista de `rotOpcoes`.
 - **Aquecimento do dia:** 5 questões sorteadas das lições com estrela, com peso maior para as habilidades com erro nos últimos 14 dias (`warmupKeys` em `app.js`).
 - **Resposta digitada:** os geradores listados no bloco "Contas com resposta digitada" de `conteudo.js` viram teclado numérico (`q.num`). Geradores numéricos novos de contas devem entrar nessa lista.
 - **Missão da semana:** `MISSOES` em `conteudo.js`, uma por semana, feita fora da tela. O Pedro marca na área dos pais. Pode acrescentar missões novas ligadas às lições recentes.

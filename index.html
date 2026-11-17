@@ -195,6 +195,14 @@ html.fundo body{background:transparent}
 .ccrow textarea{resize:vertical;min-height:52px}
 @media (max-width:600px){.ccrow{grid-template-columns:1fr auto}.ccrow input{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){.subj.novo,.node.novo{animation:none}}
+.roteiro{margin-bottom:16px;gap:10px}
+.passo{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg);border-radius:18px;padding:12px 14px;border:3px solid transparent}
+.passo .ic{font-size:32px;flex:none}
+.passo small{color:var(--muted);font-size:14px}
+.passo .st{font-size:24px}
+.passo.ativo{border-color:var(--pri);background:var(--pri-soft)}
+.passo.feito{background:var(--ok-soft);opacity:.85}
+.passo[disabled]:not(.feito){opacity:.55}
 @media (max-width:520px){.hello{font-size:28px}.qtext{font-size:25px}.big{font-size:52px}.opt{font-size:34px;min-height:74px}}
 </style>
 </head>
