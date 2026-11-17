@@ -35,6 +35,10 @@ for(const [k,g] of Object.entries(GEN)){
     if(q.options.length<2){erros.push(`${k}: menos de 2 opções`);break}
   }
 }
+const versaoSw=(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8').match(/VERSAO = '([^']+)'/)||[])[1],
+  versaoApp=(fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8').match(/APP_VERSAO='([^']+)'/)||[])[1],
+  versaoJson=JSON.parse(fs.readFileSync(path.join(__dirname,'..','versao.json'),'utf8')).versao;
+if(!(versaoSw&&versaoSw===versaoApp&&versaoApp===versaoJson))erros.push(`versões diferentes: sw.js=${versaoSw} app.js=${versaoApp} versao.json=${versaoJson} (devem ser iguais)`);
 const prontas=SUBJECTS.filter(s=>s.ready).map(s=>`${s.nome}: ${s.lessons.length}`).join(' · ');
 if(erros.length){console.error('FALHOU\n'+[...new Set(erros)].join('\n'));process.exit(1)}
 console.log(`OK · ${LESSONS.length} lições · ${Object.keys(GEN).length} geradores · ${prontas}`);

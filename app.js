@@ -64,6 +64,31 @@ const store={
 function trimSessions(map){const arr=Object.values(map).sort((a,b)=>b.start-a.start).slice(0,300);const o={};arr.forEach(s=>o[s.id]=s);return o}
 const aiOn=()=>!!(API.url&&API.aiReady);
 
+/* ATUALIZAÇÃO: o app confere se há versão nova publicada e oferece o botão "Atualizar agora".
+   Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
+const APP_VERSAO='trilha-v14';
+let novaVersao=null;
+async function checarVersao(){
+  try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
+    if(j.versao&&j.versao!==APP_VERSAO){novaVersao=j.versao;mostrarAtualizacao()}else return false}catch(e){return null}
+  return true;
+}
+function mostrarAtualizacao(){
+  if(document.getElementById('upd'))return;
+  const d=document.createElement('div');d.id='upd';d.className='upd';
+  d.innerHTML='<span>✨ Tem versão nova do app!</span><button class="btn small okb" data-act="atualizar">Atualizar agora</button>';
+  document.body.appendChild(d);
+}
+async function atualizarApp(){
+  const b=document.querySelector('[data-act=atualizar]');if(b){b.disabled=true;b.textContent='Atualizando…'}
+  try{flushSession&&flushSession()}catch(e){}
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg){await reg.update();if(reg.waiting)reg.waiting.postMessage('pular')}}catch(e){}
+  try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
+  setTimeout(()=>location.reload(),400);
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checarVersao()});
+setInterval(checarVersao,10*60*1000);
+
 /* VOZ: voz do próprio aparelho (gratuita e funciona sem internet) */
 let speakTok=0,voiceWarned=false;
 const hasWebSpeech=()=>typeof window.speechSynthesis!=='undefined'&&typeof window.SpeechSynthesisUtterance!=='undefined';
@@ -581,7 +606,7 @@ function renderParent(){
     <label class="check" for="cf-livre"><input id="cf-livre" type="checkbox" ${S.config.livreDepois!==false?'checked':''}> Tempo livre só depois do roteiro</label>
     <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:15px;color:var(--muted);margin-bottom:6px">Dias da Memória CC no roteiro</legend>
       <div class="row" style="gap:10px">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<label class="check" for="cf-md${i}" style="font-size:15px!important"><input id="cf-md${i}" type="checkbox" ${(S.config.memDias||[1,3,5]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></fieldset>
-    </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button></div>
+    </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button><button class="btn small ghost" data-act="checarupd">Verificar atualização</button><span class="muted" style="font-size:13px">Versão ${APP_VERSAO.replace('trilha-','')}</span></div>
     <div id="voicebox">${voiceControls()}</div>
     </div></div>
   <div class="sec"><h2>Conexão com a planilha</h2><div class="card col"><div class="form">
@@ -709,6 +734,8 @@ const ACT={
   savecfg(){saveCfg()},
   export(){exportData()},
   savecon(){saveCon()},
+  atualizar(){atualizarApp()},
+  checarupd(_,el){el.disabled=true;checarVersao().then(r=>{el.disabled=false;if(r===false)toast('O app já está na versão mais nova.');else if(r===null)toast('Sem internet para verificar agora.')})},
   testvoice(){voiceWarned=false;speak('Olá! Vamos estudar juntos? Quantas dezenas tem o número quarenta e sete?')},
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
@@ -737,3 +764,4 @@ function applyMemoria(rows){
   if(S.view==='map'&&!R)renderMap();
 })();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+setTimeout(checarVersao,3000);
