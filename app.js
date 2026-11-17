@@ -366,7 +366,7 @@ async function aiAnalyze(btn){
     acertoGeral:st.pct,habilidades:st.skills.map(s=>({habilidade:s.k,acerto:s.pct,respostas:s.n,tempoMedioSeg:s.avg})),
     licoes:LESSONS.map(l=>({licao:l.subject+' - '+l.titulo,estrelas:(S.progress[l.id]||{}).stars||0,tentativas:(S.progress[l.id]||{}).tries||0})),
     errosFrequentes:st.errs.slice(0,8).map(([t,n])=>({tipo:t,vezes:n})),ultimosErros:st.recentErr.slice(0,8).map(a=>({pergunta:a.q,respondeu:a.given,certo:a.correct})),ajudasIA:st.aiHelps};
-  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço de Matemática e Português.
+  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço escolar (Matemática, Português e Ciências).
 Com base nos dados abaixo, escreva em português do Brasil, de forma direta e prática:
 **Resumo**: 2 ou 3 frases sobre frequência e tempo de estudo em relação à meta.
 **Pontos fortes**
