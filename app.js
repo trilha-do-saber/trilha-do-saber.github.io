@@ -57,17 +57,36 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* VOZ: voz do próprio aparelho (gratuita e funciona sem internet) */
 let speakTok=0,voiceWarned=false;
 const hasWebSpeech=()=>typeof window.speechSynthesis!=='undefined'&&typeof window.SpeechSynthesisUtterance!=='undefined';
-try{if(hasWebSpeech()){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}}catch(e){}
+try{if(hasWebSpeech()){speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{const b=document.getElementById('voicebox');if(b)b.innerHTML=voiceControls()}}}catch(e){}
 function webSpeak(text){
   if(!hasWebSpeech())return false;
   try{const ss=window.speechSynthesis;ss.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pt-BR';u.rate=.95;
-    const vs=ss.getVoices(),v=vs.find(v=>/pt[-_]BR/i.test(v.lang)&&/google|natural|enhanced|premium/i.test(v.name))||vs.find(v=>/pt[-_]BR/i.test(v.lang))||vs.find(v=>/^pt/i.test(v.lang));
-    if(v)u.voice=v;ss.speak(u);try{ss.resume()}catch(e){}return true}catch(e){return false}
+    const v=chosenVoice();if(v){u.voice=v;u.lang=v.lang}u.rate=LS.get('voiceRate',.95);ss.speak(u);try{ss.resume()}catch(e){}return true}catch(e){return false}
 }
 function noVoice(){if(voiceWarned)return;voiceWarned=true;toast('Este navegador não tem voz. Use o Chrome ou o Safari.')}
 function speak(text){if(!text)return;speakTok++;if(!webSpeak(text))noVoice()}
 function stopSpeak(){speakTok++;try{hasWebSpeech()&&speechSynthesis.cancel()}catch(e){}}
-function voiceStatus(){if(!hasWebSpeech())return 'nenhuma voz neste navegador';const v=speechSynthesis.getVoices().find(v=>/^pt/i.test(v.lang));return v?v.name:'voz padrão do aparelho'}
+/* vozes em português, das mais naturais para as mais simples */
+function ptVoices(){
+  if(!hasWebSpeech())return [];
+  const score=v=>(/pt[-_]BR/i.test(v.lang)?10:0)+(/natural|neural|online|premium|enhanced|aprimorad/i.test(v.name)?5:0)+(/google/i.test(v.name)?3:0);
+  return speechSynthesis.getVoices().filter(v=>/^pt/i.test(v.lang)).sort((a,b)=>score(b)-score(a));
+}
+function chosenVoice(){const vs=ptVoices(),pref=LS.get('voiceName','');return vs.find(v=>v.name===pref)||vs[0]||null}
+function voiceStatus(){if(!hasWebSpeech())return 'nenhuma voz neste navegador';const v=chosenVoice();return v?v.name:'voz padrão do aparelho'}
+function voiceControls(){
+  const vs=ptVoices(),cur=chosenVoice(),rate=LS.get('voiceRate',.95);
+  if(!vs.length)return `<p class="muted" style="font-size:14px;margin:0">Voz: ${esc(voiceStatus())}</p>`;
+  return `<div class="form"><label for="cf-voice">Voz (deste aparelho)<select id="cf-voice" style="height:48px;border-radius:12px;border:2px solid #D5DDEE;padding:0 10px;font:inherit;font-size:16px;color:var(--ink);background:#fff">
+    ${vs.map(v=>`<option value="${esc(v.name)}" ${cur&&v.name===cur.name?'selected':''}>${esc(v.name)}${/natural|neural|online|premium|enhanced|aprimorad/i.test(v.name)?' ★':''}</option>`).join('')}</select></label>
+    <label for="cf-rate">Velocidade da fala: <span id="ratev">${Math.round(rate*100)}%</span><input id="cf-rate" type="range" min="0.7" max="1.2" step="0.05" value="${rate}"></label></div>
+    <p class="muted" style="font-size:14px;margin:0">★ = vozes mais naturais. A voz fica salva só neste aparelho.</p>`;
+}
+document.addEventListener('change',e=>{
+  if(e.target.id==='cf-voice'){LS.set('voiceName',e.target.value);speak('Olá! Esta é a minha voz.')}
+  if(e.target.id==='cf-rate'){LS.set('voiceRate',parseFloat(e.target.value));speak('Olá! Esta é a velocidade da fala.')}
+});
+document.addEventListener('input',e=>{if(e.target.id==='cf-rate'){const r=document.getElementById('ratev');if(r)r.textContent=Math.round(e.target.value*100)+'%'}});
 
 /* =========================================================
    ESTADO
@@ -328,7 +347,8 @@ function renderParent(){
     <label class="check" for="cf-ai"><input id="cf-ai" type="checkbox" ${S.config.ai?'checked':''}> Botão de ajuda com IA para ela</label>
     <label class="check" for="cf-read"><input id="cf-read" type="checkbox" ${S.config.autoRead?'checked':''}> Ler textos em voz alta automaticamente</label>
     <label class="check" for="cf-unlock"><input id="cf-unlock" type="checkbox" ${S.config.unlockAll?'checked':''}> Liberar todas as lições</label>
-    </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button><span class="muted" style="font-size:14px" id="vstat">Voz: ${voiceStatus()}</span></div>
+    </div><div class="row"><button class="btn small okb" data-act="savecfg">Salvar configurações</button><button class="btn small ghost" data-act="export">Copiar todos os dados (JSON)</button><button class="btn small ghost" data-act="testvoice">Testar voz</button></div>
+    <div id="voicebox">${voiceControls()}</div>
     </div></div>
   <div class="sec"><h2>Conexão com a planilha</h2><div class="card col"><div class="form">
     <label for="cf-url">Endereço do Apps Script (termina em /exec)<input id="cf-url" type="text" value="${esc(API.url)}" placeholder="https://script.google.com/macros/s/.../exec"></label>
@@ -421,7 +441,7 @@ const ACT={
   savecfg(){saveCfg()},
   export(){exportData()},
   savecon(){saveCon()},
-  testvoice(){voiceWarned=false;speak('Olá! Esta é a voz da Trilha do Saber.');setTimeout(()=>{const e=document.getElementById('vstat');if(e)e.textContent='Voz: '+voiceStatus()},1500)},
+  testvoice(){voiceWarned=false;speak('Olá! Vamos estudar juntos? Quantas dezenas tem o número quarenta e sete?')},
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 
