@@ -158,9 +158,9 @@ function warmupKeys(){
 const warmupDone=()=>S.sessions.some(x=>x.lessonId==='aquecimento'&&x.date===today()&&x.phaseReached==='done');
 function startWarmup(){const keys=warmupKeys();if(!keys.length){toast('Complete uma lição primeiro.');return}
   startLessonObj({id:'aquecimento',titulo:'Aquecimento do dia',icone:'🔥',subject:'Revisão',slides:[],practice:[],quiz:keys},-1,'Revisão',true)}
-function potesHTML(){const p=potes();if(!p)return '<div class="mini"><span class="ic">🐷</span><span><b>Meus potes</b><small>Peça para o papai cadastrar seus potes de Gastar, Guardar e Doar.</small></span></div>';
+function potesHTML(){const p=potes();if(!p)return '<div class="mini"><span class="ic">🐷</span><span><b>Meus potes</b><small>Peça para o papai cadastrar seus potes de Gastar, Guardar e Investir.</small></span></div>';
   const pct=p.metaValor?Math.min(100,Math.round((p.guardar||0)/p.metaValor*100)):0;
-  return `<div class="card col" style="margin-bottom:14px"><div class="potes"><span>🛍️<b>Gastar</b>R$ ${p.gastar||0}</span><span>🐷<b>Guardar</b>R$ ${p.guardar||0}</span><span>💝<b>Doar</b>R$ ${p.doar||0}</span></div>
+  return `<div class="card col" style="margin-bottom:14px"><div class="potes"><span>🛍️<b>Gastar</b>R$ ${p.gastar||0}</span><span>🐷<b>Guardar</b>R$ ${p.guardar||0}</span><span>📈<b>Investir</b>R$ ${p.investir??p.doar??0}</span></div>
     ${p.metaNome?`<div><div class="row" style="justify-content:space-between"><span>Meta: ${esc(p.metaNome)}</span><span>R$ ${p.guardar||0} de R$ ${p.metaValor}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`:''}</div>`}
 /* ---- Memória CC: cadastro por foto ---- */
 let CCD=null;
@@ -501,7 +501,7 @@ function renderParent(){
     <div class="form">
       <label for="pt-g">🛍️ Gastar (R$)<input id="pt-g" type="number" min="0" step="0.5" value="${pt.gastar||0}"></label>
       <label for="pt-u">🐷 Guardar (R$)<input id="pt-u" type="number" min="0" step="0.5" value="${pt.guardar||0}"></label>
-      <label for="pt-d">💝 Doar (R$)<input id="pt-d" type="number" min="0" step="0.5" value="${pt.doar||0}"></label>
+      <label for="pt-d">📈 Investir (R$)<input id="pt-d" type="number" min="0" step="0.5" value="${pt.investir??pt.doar??0}"></label>
       <label for="pt-mn">Meta: o que ela quer comprar<input id="pt-mn" type="text" maxlength="40" value="${esc(pt.metaNome||'')}"></label>
       <label for="pt-mv">Valor da meta (R$)<input id="pt-mv" type="number" min="0" step="0.5" value="${pt.metaValor||0}"></label>
     </div>
@@ -637,7 +637,7 @@ const ACT={
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
   potes(){const n=id=>Math.max(0,parseFloat(document.getElementById(id).value)||0);
-    store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),gastar:n('pt-g'),guardar:n('pt-u'),doar:n('pt-d'),metaNome:document.getElementById('pt-mn').value.trim().slice(0,40),metaValor:n('pt-mv')});
+    store.setDiario({id:'potes',tipo:'potes',data:today(),ts:Date.now(),gastar:n('pt-g'),guardar:n('pt-u'),investir:n('pt-d'),metaNome:document.getElementById('pt-mn').value.trim().slice(0,40),metaValor:n('pt-mv')});
     toast('Potes salvos!');renderParent()},
   parent(){renderPin()},
   pk(d){pinKey(d)},

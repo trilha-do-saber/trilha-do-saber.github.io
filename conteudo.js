@@ -385,7 +385,8 @@ const FIN_LESSONS=[
    slides:[
     {t:'Algumas coisas a gente precisa, como comida e remédio. Outras a gente quer, como um brinquedo novo. O que a gente quer pode esperar.',v:'<div class="emo" style="font-size:56px">🍞 💊 &nbsp;|&nbsp; 🧸 🎮</div>'},
     {t:'Para comprar algo que queremos, podemos guardar um pouco de dinheiro toda semana no cofrinho até juntar.',v:'<div class="emo" style="font-size:64px">🐷💰</div>'},
-    {t:'Uma boa ideia é ter três potes: um para gastar, um para guardar e um para doar.',v:'<div class="potes"><span>🛍️<b>Gastar</b></span><span>🐷<b>Guardar</b></span><span>💝<b>Doar</b></span></div>'}],
+    {t:'Uma boa ideia é ter três potes: um para gastar agora, um para guardar para uma meta e um para investir.',v:'<div class="potes"><span>🛍️<b>Gastar</b></span><span>🐷<b>Guardar</b></span><span>📈<b>Investir</b></span></div>'},
+    {t:'Investir é deixar o dinheiro quietinho para ele crescer com o tempo. O dinheiro do pote Investir não é para gastar: ele vai ganhando um pouquinho a mais todo mês.',v:'<div class="emo" style="font-size:56px">🌱 → 🌿 → 🌳</div>'}],
    practice:['precisarQuerer','precisarQuerer','guardarMeta','precisarQuerer','guardarMeta','precisarQuerer'],quiz:['precisarQuerer','guardarMeta','precisarQuerer','guardarMeta','precisarQuerer']},
 ];
 
@@ -480,7 +481,7 @@ const MISSOES=[
   {icone:'✏️',materia:'Português',texto:'Copie no caderno, com letra caprichada, uma frase do livro que vocês leram esta semana.'},
   {icone:'🗣️',materia:'Leitura',texto:'Depois de uma leitura, conte a história para alguém da família com as suas palavras.'},
   {icone:'📏',materia:'Matemática',texto:'Com uma régua ou fita métrica, meça 3 objetos da casa e anote quantos centímetros cada um tem.'},
-  {icone:'🐷',materia:'Dinheiro',texto:'Separe três potes: Gastar, Guardar e Doar. Divida o dinheirinho da semana entre eles.'},
+  {icone:'🐷',materia:'Dinheiro',texto:'Separe três potes: Gastar, Guardar e Investir. Divida o dinheirinho da semana entre eles.'},
   {icone:'🛒',materia:'Dinheiro',texto:'No mercado, ajude a encontrar o mais barato entre dois produtos iguais.'},
   {icone:'🌱',materia:'Ciências',texto:'Plante um feijão no algodão molhado e desenhe como ele está a cada 2 dias.'},
   {icone:'🧩',materia:'Lógica',texto:'Monte um caminho no chão e dê comandos (frente, vira à direita) para alguém chegar até o final.'},

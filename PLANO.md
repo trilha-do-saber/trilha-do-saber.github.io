@@ -65,7 +65,7 @@ Legenda: [x] publicada · [ ] a fazer
 - [x] Moedas e cédulas (EF02MA20)
 - [x] Comprar e troco (EF02MA20)
 - [x] Precisar, querer e guardar
-- [ ] Os 3 potes: gastar, guardar e doar
+- [ ] Os 3 potes: gastar, guardar e investir (o dinheiro que cresce)
 - [ ] De onde vem o dinheiro: trabalho e esforço
 - [ ] Comparar preços e escolher
 - [ ] Planejar uma compra (meta e semanas)

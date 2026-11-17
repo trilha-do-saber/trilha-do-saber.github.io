@@ -140,7 +140,7 @@ function salvarDiario_(r) {
   if (!sh) { criarAbasNovas(); sh = aba_('Diario'); }
   const resumo = r.tipo === 'leitura' ? (r.livro + ' · ' + r.minutos + ' min · ' + r.quem + (r.recontou ? ' · recontou' : ''))
     : r.tipo === 'missao' ? ('Missão feita: ' + r.texto)
-    : r.tipo === 'potes' ? ('Gastar R$ ' + r.gastar + ' · Guardar R$ ' + r.guardar + ' · Doar R$ ' + r.doar + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
+    : r.tipo === 'potes' ? ('Gastar R$ ' + r.gastar + ' · Guardar R$ ' + r.guardar + ' · Investir R$ ' + (r.investir != null ? r.investir : r.doar) + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
   const linha = [r.id, r.data || '', r.tipo || '', resumo, JSON.stringify(r)];
   const achado = sh.getRange('A:A').createTextFinder(String(r.id)).matchEntireCell(true).findNext();
   if (achado) sh.getRange(achado.getRow(), 1, 1, linha.length).setValues([linha]);
