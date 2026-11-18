@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v20';
+const APP_VERSAO='trilha-v21';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -274,6 +274,26 @@ function potesHTML(){
     ${ult.length?`<div class="col" style="gap:4px;font-size:15px">${ult.map(m=>`<span>${movTexto(m)}</span>`).join('')}</div>`:''}</div>`;
 }
 
+/* ---- Conversa com o Claude (área dos pais) ----
+   O Pedro escreve pedidos (tipo 'pedido' na aba Diario). Uma rotina do Claude lê todo dia à noite,
+   faz as mudanças no app e responde gravando um registro tipo 'resposta' (ref = id do pedido) na mesma aba. */
+let chatTudo=false;
+const chatMsgs=()=>store.diario().filter(r=>r.tipo==='pedido'||r.tipo==='resposta').sort((x,y)=>(x.ts||0)-(y.ts||0));
+const chatNovas=()=>{const lido=LS.get('chatLido',0);return chatMsgs().filter(r=>r.tipo==='resposta'&&(r.ts||0)>lido).length};
+function chatHTML(){
+  const ms=chatMsgs(),mostra=chatTudo?ms:ms.slice(-6),resp=new Set(ms.filter(r=>r.tipo==='resposta').map(r=>r.ref)),nov=chatNovas();
+  const quando=ts=>new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const bolha=r=>{const eu=r.tipo==='pedido';return `<div style="display:flex;justify-content:${eu?'flex-end':'flex-start'}"><div style="max-width:85%;background:${eu?'#DCF3D8':'#fff'};border:1px solid #D5DDEE;border-radius:${eu?'16px 16px 4px 16px':'16px 16px 16px 4px'};padding:8px 12px;font-size:16px;line-height:1.4;white-space:pre-wrap">${eu?'':'<b style="color:var(--pri)">Claude</b><br>'}${esc(r.texto||'')}<div class="muted" style="font-size:12px;text-align:right;margin-top:4px">${quando(r.ts||0)}${eu?(resp.has(r.id)?' ✓✓':' ✓'):''}</div></div></div>`};
+  const pend=ms.filter(r=>r.tipo==='pedido'&&!resp.has(r.id)).length;
+  return `<div class="sec"><h2>💬 Conversa com o Claude${nov?` <span class="pill ok">${nov} nova${nov>1?'s':''}</span>`:''}</h2><div class="card col" style="gap:8px">
+    <p class="muted" style="margin:0;font-size:14px">Peça mudanças, lições, reforços ou ajustes. Eu leio e respondo todo dia à noite. As mudanças entram no app sozinhas. Para algo urgente, fale comigo pelo app do Claude.</p>
+    ${ms.length>6&&!chatTudo?'<button class="btn small ghost" data-act="chattudo" style="align-self:center">Ver conversa inteira</button>':''}
+    <div class="col" style="gap:8px;background:#EEF3FB;border-radius:14px;padding:10px">${mostra.length?mostra.map(bolha).join(''):'<div class="muted" style="text-align:center;font-size:15px">Nenhuma mensagem ainda.</div>'}</div>
+    ${pend?`<div class="muted" style="font-size:14px">⏳ ${pend} pedido${pend>1?'s':''} aguardando: respondo hoje à noite.</div>`:''}
+    <textarea id="chat-txt" rows="3" maxlength="1500" placeholder="Escreva aqui. Ex.: ela está errando horas, faça um reforço com meia hora." style="border-radius:12px;border:2px solid #D5DDEE;padding:10px;font:inherit;font-size:16px;width:100%;resize:vertical"></textarea>
+    <button class="btn small okb" data-act="chatenviar" style="align-self:flex-end">Enviar</button>
+  </div></div>`;
+}
 /* ---- Memória CC: cadastro por foto ---- */
 let CCD=null;
 function ccSemanas(){const rows=LS.get('memoria',[]),m={};rows.forEach(r=>{const k=String(r.ciclo||'1');(m[k]=m[k]||new Set()).add(Number(r.semana))});return m}
@@ -586,7 +606,7 @@ function pinKey(d){
   if(d==='del')pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=d;
   document.querySelectorAll('#dots i').forEach((e,i)=>e.classList.toggle('f',i<pinBuf.length));
   if(pinBuf.length===4){
-    if(pinBuf===String(S.config.pin))setTimeout(()=>{renderParent();sincronizar(true)},150);
+    if(pinBuf===String(S.config.pin))setTimeout(()=>{renderParent();sincronizar(true);setTimeout(()=>LS.set('chatLido',Date.now()),4000)},150);
     else{const d=document.getElementById('dots');d.classList.add('shake');setTimeout(()=>{pinBuf='';d.classList.remove('shake');document.querySelectorAll('#dots i').forEach(e=>e.classList.remove('f'))},400)}
   }
 }
@@ -620,6 +640,7 @@ function renderParent(){
     <div class="tile"><span class="l">Leitura (7 dias)</span><span class="v">${diasLeit} dia${diasLeit===1?'':'s'}</span><span class="l">${lt7.reduce((a,r)=>a+(r.minutos||0),0)} min · ${new Set(lt7.map(r=>r.livro)).size} livro(s)</span></div>
     <div class="tile"><span class="l">Missão da semana</span><span class="v">${misF?'✅ Feita':'⏳'}</span><span class="l">${mis.icone} ${esc(mis.materia)}</span></div>
   </div>
+  ${chatHTML()}
   <div class="sec"><h2>Tempo de estudo por dia</h2><div class="card">
     <div class="chart">${st.days.map(d=>`<div title="${d.k}"><span>${d.ms?mins(d.ms):''}</span><b class="${mins(d.ms)>=goal?'goalhit':''}" style="height:${Math.round(d.ms/maxMs*100)}%"></b></div>`).join('')}</div>
     <div class="chartx">${st.days.map(d=>`<span>${d.label}<br>${d.dow}${leitDia.has(d.k)?'<br>📖':''}</span>`).join('')}</div>
@@ -792,6 +813,10 @@ const ACT={
   ccdel(i){ccSync();CCD.itens.splice(+i,1);ccRedraw()},
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
+  chattudo(){chatTudo=true;const y=window.scrollY;renderParent();window.scrollTo(0,y)},
+  chatenviar(){const t=document.getElementById('chat-txt'),txt=(t&&t.value||'').trim();if(!txt){toast('Escreva a mensagem primeiro.');return}
+    store.setDiario({id:'p-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),tipo:'pedido',data:today(),ts:Date.now(),texto:txt.slice(0,1500)});
+    toast('Mensagem enviada. Respondo hoje à noite.');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   ccforcar(){if(!MEMINFO.prox)return;S.config.ccForcar=[...new Set([...(S.config.ccForcar||[]),MEMINFO.prox])];saveConfig();applyMemoria(LS.get('memoria',[]));toast('Semana liberada na tela dela.');renderParent()},
   parent(){renderPin()},
   pk(d){pinKey(d)},

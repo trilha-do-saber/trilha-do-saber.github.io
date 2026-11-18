@@ -32,6 +32,12 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - **Ampliar bancos:** use `addBanco(chave, [...])` num lote novo. Toda semana, olhe na aba `Respostas` as habilidades em que ela já viu boa parte do banco e acrescente pelo menos 10 itens novos nelas.
 - O teste confere a variedade nos níveis 1 e 3: cada gerador precisa ter mais perguntas diferentes do que as usadas numa lição.
 
+## Conversa com o Pedro (área dos pais)
+- O Pedro escreve pedidos no app. Cada um vira uma linha na aba `Diario` com tipo `pedido` (JSON na coluna E: `id`, `ts`, `data`, `texto`).
+- A rotina responde **acrescentando** uma linha nova no fim da aba `Diario`, com as colunas: A = `r-` + id do pedido, B = data (AAAA-MM-DD), C = `resposta`, D = resumo curto, E = JSON `{"id":"r-…","tipo":"resposta","ref":"<id do pedido>","ts":<milissegundos>,"data":"AAAA-MM-DD","texto":"…"}`. Esse é o único dado que a rotina pode gravar na planilha.
+- Pedido respondido é o que já tem uma `resposta` com `ref` igual ao seu `id`.
+- A resposta é curta, em português simples, e diz o que foi feito e quando chega no app, ou por que não foi possível. Não grave tokens, chaves nem frases da MemoriaCC na resposta.
+
 ## Memória CC
 A trilha Memória é montada em tempo real por `buildMemoria()` (em `conteudo.js`), a partir da aba privada `MemoriaCC` da planilha, com as colunas ciclo, semana, materia e texto. O Pedro cadastra cada semana na área dos pais, tirando foto da página do livro Foundations, que a família possui. O Gemini lê a foto pelo Apps Script (`lerFotoCC`), ele confere e salva (`salvarMemoria`); também dá para digitar à mão. Enquanto ela não abre uma semana nova, o ícone da Memória CC pisca com o selo NOVO. **Liberação semanal:** o Pedro pode cadastrar várias semanas de uma vez; elas ficam numa fila. A 1ª fica aberta e cada semana seguinte abre na segunda-feira depois que ela concluir a anterior com pelo menos 1 estrela (`memLiberacao()` em app.js, data em `progress.lessons[id].passouEm`). Semanas já começadas continuam abertas, e o Pedro pode liberar a próxima na hora (`config.ccForcar`). **Nunca copie essas frases para o repositório nem para mensagens de commit.** Elas são material protegido do Classical Conversations. A rotina pode ler a aba só para avaliar o desempenho (habilidades "Memória · ...") e pode melhorar o código das atividades.
 
