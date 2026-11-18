@@ -1095,6 +1095,18 @@ MISSOES.push(
   {icone:'↔️',materia:'Geografia',texto:'Brinque de "siga o mestre" com direita e esquerda: alguém dá os comandos e você obedece.'},
 );
 
+/* ================= LOTE 5 · 18/11/2026 · palavras dos jogos do tempo livre ================= */
+/* Temas do caça-palavras e do jogo da memória (jogos.js). Palavras SEM acento e sem Ç, de 3 a 8 letras.
+   Para ampliar: JOGO_TEMAS.novoTema={nome:'…',ic:'…',palavras:[['PALAVRA','emoji'],…]} com pelo menos 8 palavras. */
+const JOGO_TEMAS={
+  animais:{nome:'Animais',ic:'🐾',palavras:[['GATO','🐱'],['PATO','🦆'],['VACA','🐄'],['SAPO','🐸'],['COBRA','🐍'],['URSO','🐻'],['PEIXE','🐟'],['ZEBRA','🦓'],['MACACO','🐒'],['CAVALO','🐴'],['GALINHA','🐔'],['TIGRE','🐯'],['RATO','🐭'],['POLVO','🐙'],['CORUJA','🦉'],['OVELHA','🐑']]},
+  frutas:{nome:'Frutas',ic:'🍓',palavras:[['UVA','🍇'],['BANANA','🍌'],['MANGA','🥭'],['PERA','🍐'],['KIWI','🥝'],['MELANCIA','🍉'],['LARANJA','🍊'],['CEREJA','🍒'],['COCO','🥥'],['MORANGO','🍓'],['ABACAXI','🍍']]},
+  cores:{nome:'Cores',ic:'🎨',palavras:[['AZUL','🔵'],['VERDE','🟢'],['ROSA','🌸'],['PRETO','⚫'],['BRANCO','⚪'],['ROXO','🟣'],['CINZA','🩶'],['AMARELO','🟡'],['VERMELHO','🔴'],['MARROM','🟤']]},
+  escola:{nome:'Escola',ic:'🏫',palavras:[['LIVRO','📘'],['MOCHILA','🎒'],['CADERNO','📓'],['COLA','🧴'],['TESOURA','✂️'],['ESTOJO','👝'],['QUADRO','🖼️'],['GIZ','🖍️'],['MESA','🪑'],['PROVA','📝'],['RECREIO','⚽']]},
+  corpo:{nome:'Corpo',ic:'🧍',palavras:[['BOCA','👄'],['NARIZ','👃'],['OLHO','👁️'],['DEDO','☝️'],['PERNA','🦵'],['CABELO','💇'],['ORELHA','👂'],['DENTE','🦷'],['JOELHO','🦿']]},
+  casa:{nome:'Casa',ic:'🏠',palavras:[['CAMA','🛏️'],['PORTA','🚪'],['JANELA','🪟'],['CADEIRA','🪑'],['PANELA','🍳'],['COPO','🥤'],['PRATO','🍽️'],['GARFO','🍴'],['ESPELHO','🪞'],['CHUVEIRO','🚿']]},
+};
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */

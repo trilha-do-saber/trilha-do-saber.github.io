@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v21';
+const APP_VERSAO='trilha-v22';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -93,14 +93,14 @@ async function checarVersao(){
 }
 function atualizarSePuder(){
   if(!novaVersao)return;
-  if(R||S.view==='parent'||S.view==='pin')return;           // no meio de lição ou na área dos pais: espera
+  if(R||S.view==='parent'||S.view==='pin'||S.view==='jogo')return;           // no meio de lição ou na área dos pais: espera
   const t=LS.get('updTent',{});
   if(t.v===novaVersao&&Date.now()-t.ts<90000){setTimeout(atualizarSePuder,90000);return} // tentou há pouco: tenta de novo sozinho, sem botão
   LS.set('updTent',{v:novaVersao,ts:Date.now()});
   toast('Atualizando o app…');atualizarApp();
 }
 function mostrarAtualizacao(){}
-const ARQ_APP=['./','index.html','app.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
+const ARQ_APP=['./','index.html','app.js','jogos.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
 async function atualizarApp(){
   const b=document.querySelector('[data-act=atualizar]');if(b){b.disabled=true;b.textContent='Atualizando…'}
   try{flushSession&&flushSession()}catch(e){}
@@ -412,6 +412,7 @@ function renderMap(){
     <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
     ${(()=>{const c=potesCfg();if(!c.ativo)return '';const sd=saldos(),mi=metaInfo();return `<button class="mini" data-act="subj" data-arg="fin"><span class="ic">🐷</span><span><b>Meus potes</b><small>🛍️ ${brl(sd.gastar)} · 🐷 ${brl(sd.guardar)} · 📈 ${brl(sd.investir)}</small>${mi?`<small>🎯 ${esc(c.metaNome)}: ${mi.pct}%</small><span class="bar" style="height:8px"><i style="width:${mi.pct}%"></i></span>`:''}</span></button>`})()}
     <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
+  ${livre&&typeof jogosHTML==='function'?jogosHTML():''}
   ${livre?`<div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'} ${s.id==='mem'&&memNovas().length?'novo':''}" data-act="subj" data-arg="${s.id}">${s.id==='mem'&&memNovas().length?'<span class="badge-novo">NOVO!</span>':''}<span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
   <h2 style="font-size:26px;margin-bottom:12px">Trilha de ${curSubj().nome}</h2>
   ${S.subject==='fin'?potesHTML():''}

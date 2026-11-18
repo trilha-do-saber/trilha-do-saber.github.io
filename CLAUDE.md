@@ -5,6 +5,7 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 ## Arquivos
 - `conteudo.js`: lições, geradores de questões (`GEN`) e matérias (`SUBJECTS`). **É o único lugar para conteúdo novo.** Lotes novos entram como um bloco `/* LOTE N · data */` antes da linha `MAT_LESSONS.forEach(...)`, com `Object.assign(GEN,{...})` e `X_LESSONS.push(...)`. Para uma matéria nova, crie `X_LESSONS`, defina `subject` nas lições, ligue em `SUBJECTS[i]` (`lessons`, `ready:true`, `ano`) e inclua em `LESSONS`.
 - `app.js`: lógica. Só mexa para corrigir bug.
+- `jogos.js`: jogos do tempo livre (caça-palavras, memória, sudoku de figuras). Não contam como estudo. As palavras ficam em `JOGO_TEMAS` (conteudo.js); dá para acrescentar temas novos lá.
 - `sw.js`, `app.js` e `versao.json`: a cada publicação, aumente a versão (`trilha-vN`) nos três lugares: `VERSAO` no sw.js, `APP_VERSAO` no app.js e `versao.json`. O app compara e se atualiza sozinho quando ela não está no meio de uma lição. O teste falha se as três forem diferentes.
 - `apps-script/Codigo.gs`: cópia do servidor. Não altere sem o Pedro pedir, porque ele precisa reimplantar à mão.
 - `PLANO.md`: roteiro de lições. Marque `[x]` no que publicar.
