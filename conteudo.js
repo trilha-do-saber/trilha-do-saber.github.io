@@ -725,7 +725,7 @@ Object.assign(GEN,{
     const ops=[{v:certo,label:certo,ok:true,type:null}];for(const [v,type] of cand)if(ops.length<3&&!ops.some(o=>o.label===v))ops.push({v,label:v,ok:false,type});
     return{skill:'Grupos iguais',text:`Qual conta mostra ${g} ${pl} com ${k} ${it} cada?`,visual:gruposHTML(g,k,e),desc:`conta de ${g} grupos de ${k} ${it}`,optClass:'txt',options:shuffle(ops),
       hint:'Cada grupo vira um número na conta. Quantos grupos? Quantos em cada um?',explain:`São ${g} grupos, e cada um tem ${k}: ${certo}.`}},
-  dobro:comoNum(()=>{const l=nv('Dobro e metade'),n=rnd(2,l===1?10:l===2?25:45),r=2*n;
+  dobro:comoNum(()=>{const l=nv('Dobro e metade'),n=rnd(1,l===1?12:l===2?25:45),r=2*n;
     return{skill:'Dobro e metade',text:`Qual é o dobro de ${n}?`,visual:n<=10?`<div class="emo">${rep('🔵',n)}<span class="op">+</span>${rep('🔵',n)}</div>`:'',desc:`dobro de ${n}`,
       options:opts(r,[{v:n+2,type:'somou 2 em vez de dobrar'},{v:n,type:'respondeu o próprio número'},{v:r+1,type:'errou a conta'}]),
       hint:'Dobro é duas vezes o número: some o número com ele mesmo.',explain:`O dobro de ${n} é ${n} + ${n} = ${r}.`}}),
@@ -1106,6 +1106,56 @@ const JOGO_TEMAS={
   corpo:{nome:'Corpo',ic:'🧍',palavras:[['BOCA','👄'],['NARIZ','👃'],['OLHO','👁️'],['DEDO','☝️'],['PERNA','🦵'],['CABELO','💇'],['ORELHA','👂'],['DENTE','🦷'],['JOELHO','🦿']]},
   casa:{nome:'Casa',ic:'🏠',palavras:[['CAMA','🛏️'],['PORTA','🚪'],['JANELA','🪟'],['CADEIRA','🪑'],['PANELA','🍳'],['COPO','🥤'],['PRATO','🍽️'],['GARFO','🍴'],['ESPELHO','🪞'],['CHUVEIRO','🚿']]},
 };
+
+/* Bancos ampliados para as lições mais longas (tamanho médio: até 17 perguntas da mesma habilidade). */
+addBanco('plantas',[
+  ['Qual destes alimentos é uma semente?','Feijão',['Alface','Cenoura'],'🫘','O feijão é a semente da planta. Se plantar, nasce um pé de feijão!'],
+  ['Qual parte da planta é a batata que comemos?','Uma parte que cresce embaixo da terra',['A flor','A folha'],'🥔','A batata cresce embaixo da terra, guardando alimento para a planta.'],
+  ['O que a planta solta no ar e nós respiramos?','Oxigênio',['Fumaça','Areia'],'🌬️','As plantas soltam oxigênio, o ar que respiramos.'],
+  ['Para que servem as folhas?','Para pegar a luz do Sol e fazer o alimento da planta',['Para segurar a planta na terra','Para guardar as sementes'],'🍃','As folhas usam a luz do Sol para fazer o alimento da planta.'],
+  ['Qual planta tem espinhos para se proteger?','Cacto',['Alface','Grama'],'🌵','O cacto tem espinhos e guarda água no caule.'],
+  ['Onde a planta de vaso deve ficar?','Perto de uma janela com luz',['Dentro do armário','Embaixo da cama'],'🪴','A planta precisa de luz para crescer.'],
+  ['O que acontece quando uma semente germina?','Ela começa a brotar',['Ela vira pedra','Ela some'],'🌱','Germinar é a semente começar a brotar: sai a raiz e depois o broto.']],'confundiu as partes da planta');
+addBanco('sol',[
+  ['De onde vem a luz da Lua?','Do Sol, que ilumina a Lua',['Da própria Lua, que tem luz','Das lâmpadas da cidade'],'🌕','A Lua não tem luz própria: ela reflete a luz do Sol.'],
+  ['O Sol é uma...','Estrela',['Planeta','Nuvem'],'⭐','O Sol é uma estrela, a mais perto da Terra.'],
+  ['Por que é bom brincar na sombra ao meio-dia?','Porque o Sol está muito forte',['Porque a sombra é colorida','Porque faz frio no sol'],'🌳','Ao meio-dia o Sol queima mais, então a sombra protege.'],
+  ['O que usamos para proteger os olhos do Sol?','Óculos escuros e boné',['Luvas','Cachecol'],'🕶️','Óculos escuros e boné protegem os olhos.'],
+  ['Quando a lanterna fica perto do boneco, a sombra fica...','Maior',['Menor','Invisível'],'🔦','Com a luz perto, a sombra cresce.'],
+  ['De noite, por que fica escuro?','Porque o nosso lado da Terra não recebe a luz do Sol',['Porque o Sol apaga','Porque as nuvens comem o Sol'],'🌍','A Terra gira: o lado virado para longe do Sol fica de noite.'],
+  ['Qual destes precisa de água para não ter sede no calor?','Nós e os animais',['As pedras','Os brinquedos'],'💧','No calor, pessoas e animais precisam beber mais água.']],'confundiu dia, noite e sombra');
+addBanco('tempo',[
+  ['Que dia vem depois de hoje?','Amanhã',['Ontem','Agora'],'📆','Depois de hoje vem amanhã.'],
+  ['Que dia veio antes de hoje?','Ontem',['Amanhã','Depois'],'📆','Antes de hoje foi ontem.'],
+  ['O que é mais antigo: a foto do seu avô criança ou a sua foto de hoje?','A foto do avô criança',['A sua foto de hoje','As duas são de hoje'],'👴','O avô foi criança há muitos anos: essa foto é mais antiga.'],
+  ['Quantos meses tem um ano?','12',['7','30'],'🗓️','Um ano tem 12 meses.'],
+  ['Na história da família, quem nasceu primeiro?','Os avós',['Os netos','Os bebês da família'],'👵','Os avós nasceram antes dos pais, e os pais antes dos filhos.'],
+  ['O que você vai fazer no ano que vem é...','Futuro',['Passado','Presente'],'🚀','O que ainda vai acontecer é futuro.'],
+  ['Qual é a ordem certa?','Semente, broto, árvore',['Árvore, semente, broto','Broto, árvore, semente'],'🌳','Primeiro a semente, depois o broto, depois a árvore.']],'confundiu passado, presente e futuro');
+addBanco('antigamente',[
+  ['Antigamente, como as pessoas viam as horas sem celular?','No relógio de parede ou de bolso',['No tablet','Na televisão'],'🕰️','Usavam relógios de parede, de pulso ou de bolso.'],
+  ['Antes do carro, como as pessoas viajavam?','A cavalo, de carroça ou a pé',['De avião','De metrô'],'🐎','Antes do carro, usavam cavalos, carroças ou iam a pé.'],
+  ['Antigamente, onde as pessoas guardavam as fotos?','Em álbuns de papel',['Na nuvem da internet','No celular'],'📔','As fotos eram reveladas em papel e guardadas em álbuns.'],
+  ['Qual brinquedo era feito em casa, com pano e linha?','Boneca de pano',['Robô com bateria','Jogo de tablet'],'🧸','As bonecas de pano eram costuradas em casa.'],
+  ['Antes da televisão, as famílias à noite...','Contavam histórias e ouviam rádio',['Assistiam vídeos no celular','Jogavam videogame'],'📻','As famílias conversavam, contavam histórias e ouviam rádio.'],
+  ['O que é um museu?','Um lugar que guarda objetos antigos para conhecermos',['Um lugar de comprar pão','Um lugar de jogar bola'],'🏛️','No museu vemos objetos de antigamente.'],
+  ['Antigamente, para pegar água em casa, muitas famílias usavam...','Um poço',['A torneira da pia','Um filtro elétrico'],'🪣','Muitas casas pegavam água do poço com balde.']],'confundiu antigamente com hoje');
+addBanco('lugares',[
+  ['Onde vemos médicos e enfermeiros cuidando de doentes?','No hospital',['Na escola','No parque'],'🏥','No hospital cuidam das pessoas doentes.'],
+  ['Onde compramos remédio?','Na farmácia',['Na padaria','No correio'],'💊','O remédio é vendido na farmácia.'],
+  ['Onde compramos arroz, feijão e frutas?','No mercado',['Na biblioteca','No hospital'],'🛒','No mercado compramos comida.'],
+  ['Quem entrega as cartas?','O carteiro',['O bombeiro','O dentista'],'📬','O carteiro entrega cartas e encomendas.'],
+  ['O que é uma rua?','Um caminho para pessoas e carros',['Um tipo de rio','Uma montanha'],'🛣️','As ruas ligam as casas e os lugares da cidade.'],
+  ['Um rio, um morro e uma floresta são...','Elementos da natureza',['Coisas construídas pelas pessoas','Prédios'],'🏞️','Rio, morro e floresta são da natureza.'],
+  ['Uma ponte, um prédio e uma estrada são...','Coisas construídas pelas pessoas',['Elementos da natureza','Animais'],'🌉','Pontes, prédios e estradas foram construídos pelas pessoas.']],'confundiu os lugares');
+addBanco('transportes',[
+  ['Qual transporte anda embaixo da terra em cidades grandes?','Metrô',['Barco','Carroça'],'🚇','O metrô anda em túneis embaixo da cidade.'],
+  ['Qual transporte leva doentes com urgência?','Ambulância',['Caminhão de lixo','Ônibus escolar'],'🚑','A ambulância leva doentes ao hospital rápido.'],
+  ['Qual transporte leva muitas coisas pesadas pela estrada?','Caminhão',['Bicicleta','Patinete'],'🚚','O caminhão carrega cargas pesadas.'],
+  ['O sinal verde para os carros quer dizer...','Pode seguir',['Pare','Buzine'],'🟢','Verde quer dizer que pode seguir, com cuidado.'],
+  ['Ao andar de bicicleta, devemos usar...','Capacete',['Chinelo','Óculos de natação'],'⛑️','O capacete protege a cabeça.'],
+  ['Qual destes serve para mandar mensagem escrita na hora?','Celular',['Carta','Jornal'],'📱','No celular a mensagem chega na hora.'],
+  ['Qual transporte anda na água e é bem grande?','Navio',['Trem','Moto'],'🚢','O navio é um barco bem grande.']],'confundiu os meios de transporte');
 
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations

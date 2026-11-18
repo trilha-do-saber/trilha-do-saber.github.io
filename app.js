@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v22';
+const APP_VERSAO='trilha-v23';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -210,7 +210,7 @@ function warmupKeys(){
   S.sessions.filter(x=>x.start>=lim).forEach(x=>(x.answers||[]).forEach(a=>{if(!a.ok)err[a.skill]=(err[a.skill]||0)+1}));
   const w=keys.map(k=>{let sk='';try{sk=GEN[k]().skill}catch(e){}return 1+3*Math.min(3,err[sk]||0)});
   const tot=w.reduce((a,b)=>a+b,0),out=[];
-  for(let i=0;i<5;i++){let r=Math.random()*tot,ch=keys[keys.length-1];for(let j=0;j<keys.length;j++){r-=w[j];if(r<=0){ch=keys[j];break}}out.push(ch)}
+  for(let i=0;i<tam().aquec;i++){let r=Math.random()*tot,ch=keys[keys.length-1];for(let j=0;j<keys.length;j++){r-=w[j];if(r<=0){ch=keys[j];break}}out.push(ch)}
   return out;
 }
 const warmupDone=()=>S.sessions.some(x=>x.lessonId==='aquecimento'&&x.date===today()&&x.phaseReached==='done');
@@ -424,13 +424,29 @@ function renderMap(){
 function startLesson(i){startLessonObj(curLessons()[i],i,curSubj().nome)}
 function startLessonObj(l,i,subj,direto){
   R={idx:i,lesson:l,subjName:subj,phase:'learn',slide:0,items:[],qi:0,q:null,tries:0,qStart:0,quizOk:0,aiUsed:0,results:[]};
+  if(!direto)R.lesson={...l,slides:[...(l.slides||[]),...exemplos(l)]};
   S.session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:today(),start:Date.now(),end:Date.now(),activeMs:0,
     lessonId:l.id,lessonTitle:l.titulo,subject:subj,phaseReached:'learn',answers:[],quizScore:null,quizTotal:l.quiz.length,stars:null};
   flushSession(); if(direto){R.quizOk=0;beginPhase('quiz')}else renderLearn();
 }
 function lessonTop(stepsHTML){return `<div class="lesson-top"><button class="btn ghost small" data-act="home" aria-label="Voltar para a trilha">✕</button><div class="steps">${stepsHTML}</div><span class="timer" id="timer">⏱ ${mins(todayMs())} min hoje</span></div>`}
+/* EXEMPLO RESOLVIDO: antes de praticar, a lição mostra 1 ou 2 questões já respondidas, com a explicação. */
+function respostaDe(q){if(q.options&&q.options.length){const o=q.options.find(o=>o.ok);return o?o.label:null}return q.answer!=null?String(q.answer):null}
+function exemplos(l){
+  const keys=[...new Set(l.practice||[])].filter(k=>GEN[k]),out=[];R.usados=R.usados||new Set();calcNiveis();
+  for(const k of shuffle(keys)){if(out.length>=tam().ex)break;
+    try{const q=GEN[k]();if(q.kind||!respostaDe(q)||!q.explain)continue;R.usados.add(qid(q));out.push({ex:q,t:q.text+' A resposta é '+respostaDe(q)+'. '+q.explain})}catch(e){}}
+  return out;
+}
+function exemploHTML(q){const r=respostaDe(q);
+  return `<div class="col" style="gap:10px;align-items:center;width:100%"><span class="pill ok">👀 Vamos fazer juntos</span><p class="qtext" style="margin:0">${esc(q.text)}</p>${q.visual?`<div class="visual">${q.visual}</div>`:''}
+   ${q.options&&q.options.length?`<div class="opts ${q.optClass||''}">${q.options.map(o=>`<div class="opt" style="${o.ok?'background:var(--ok-soft);border-color:var(--ok);color:#11603B':'opacity:.45'}">${o.ok?'✅ ':''}${esc(o.label)}</div>`).join('')}</div>`:`<div class="numdisp" style="color:#11603B;background:var(--ok-soft)">${esc(r)}</div>`}
+   <div style="max-width:640px;background:var(--ok-soft);color:#11603B;border-radius:16px;padding:12px 16px;font-size:20px;font-weight:700;text-align:left">💡 ${esc(q.explain)}</div></div>`}
 function renderLearn(){
   const s=R.lesson.slides[R.slide],n=R.lesson.slides.length;
+  if(s.ex){app.innerHTML=lessonTop(R.lesson.slides.map((_,i)=>`<i class="${i<=R.slide?'on':''}"></i>`).join(''))+`<div class="qcard">${exemploHTML(s.ex)}
+   <div class="row" style="justify-content:center"><button class="speak" data-act="say" aria-label="Ouvir">🔊</button>${R.slide>0?'<button class="btn ghost" data-act="prevslide">Voltar</button>':''}<button class="btn" data-act="nextslide">${R.slide<n-1?'Próximo':'Agora é sua vez!'}</button></div></div>`;
+    if(S.config.autoRead)speak(s.t);return}
   app.innerHTML=lessonTop(R.lesson.slides.map((_,i)=>`<i class="${i<=R.slide?'on':''}"></i>`).join(''))+`
   <div class="qcard"><div class="row" style="justify-content:center"><span class="pill mid">Aprender · ${esc(R.lesson.titulo)}</span></div>
    <div class="visual">${s.v}</div>
@@ -440,11 +456,15 @@ function renderLearn(){
 }
 function beginPhase(phase){
   R.phase=phase;R.qi=0;R.results=[];
-  calcNiveis();R.items=gerarItens(R.lesson[phase],R.usados=R.usados||new Set());
+  calcNiveis();const alvo=R.lesson.id==='aquecimento'?R.lesson[phase].length:tam()[phase];R.items=gerarItens(esticar(R.lesson[phase],alvo),R.usados=R.usados||new Set());
   S.session.phaseReached=phase;queueSave();renderQ();
 }
 /* ---- Variedade: nada repetido na lição e o mínimo de repetição entre os dias ---- */
 const qid=q=>q.skill+'|'+(q.desc||q.text);
+/* TAMANHO DAS LIÇÕES (Configurações): a lição usa as chaves dela e repete, embaralhadas, até chegar no tamanho escolhido. */
+const TAMANHOS={curta:{practice:6,quiz:5,aquec:5,ex:1},media:{practice:9,quiz:7,aquec:8,ex:2},longa:{practice:12,quiz:9,aquec:10,ex:2}};
+const tam=()=>TAMANHOS[S.config.tamanho]||TAMANHOS.media;
+function esticar(keys,n){keys=(keys||[]).filter(k=>GEN[k]);if(!keys.length||keys.length>=n)return keys.slice();const out=keys.slice();while(out.length<n)out.push(...shuffle(keys.slice()));return out.slice(0,n)}
 function gerarItens(keys,usados){
   const vistos=LS.get('vistos',{}),lim=Date.now()-5*864e5,out=[];
   for(const k of keys){
@@ -568,7 +588,7 @@ Regras: no máximo 2 frases curtas; palavras simples; português do Brasil; use 
   }catch(e){out.innerHTML='<div class="ai">Não consegui explicar agora. Tente a dica de novo.</div>'}
 }
 function finishLesson(){
-  const total=R.items.length,ok=R.quizOk,stars=ok>=total?3:ok>=total-1?2:ok>=total-2?1:0;
+  const total=R.items.length,ok=R.quizOk,stars=ok>=total?3:ok>=total-1?2:ok>=Math.ceil(total*0.6)?1:0;
   if(R.lesson.id!=='aquecimento'){const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
     p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();if(p.stars>=1&&!p.passouEm)p.passouEm=Date.now();
     S.progress[R.lesson.id]=p;saveProgress();}
@@ -690,6 +710,7 @@ function renderParent(){
     <label class="check" for="cf-unlock"><input id="cf-unlock" type="checkbox" ${S.config.unlockAll?'checked':''}> Liberar todas as lições</label>
     <label class="check" for="cf-fundo"><input id="cf-fundo" type="checkbox" ${S.config.fundo!==false?'checked':''}> Imagem de fundo</label>
     <label class="check" for="cf-rot"><input id="cf-rot" type="checkbox" ${S.config.roteiro!==false?'checked':''}> Roteiro do dia (Matemática e Português alternados + matéria do dia)</label>
+    <label>Tamanho das lições<select id="cf-tam">${[['curta','Curta: 6 para praticar + 5 no desafio'],['media','Média: 9 + 7, com 2 exemplos resolvidos'],['longa','Longa: 12 + 9, com 2 exemplos resolvidos']].map(([v,t])=>`<option value="${v}" ${(S.config.tamanho||'media')===v?'selected':''}>${t}</option>`).join('')}</select></label>
     <label class="check" for="cf-livre"><input id="cf-livre" type="checkbox" ${S.config.livreDepois!==false?'checked':''}> Tempo livre só depois do roteiro</label>
     <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:15px;color:var(--muted);margin-bottom:6px">Dias da Memória CC no roteiro</legend>
       <div class="row" style="gap:10px">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<label class="check" for="cf-md${i}" style="font-size:15px!important"><input id="cf-md${i}" type="checkbox" ${(S.config.memDias||[1,3,5]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></fieldset>
@@ -736,7 +757,7 @@ async function saveCfg(){
   if(!/^\d{4}$/.test(pin)){toast('O PIN precisa ter 4 números.');return}
   const goal=Math.min(120,Math.max(5,parseInt(document.getElementById('cf-goal').value,10)||20));
   S.config={...S.config,childName:document.getElementById('cf-name').value.trim().slice(0,30),pin,goal,
-    ai:document.getElementById('cf-ai').checked,fundo:document.getElementById('cf-fundo').checked,roteiro:document.getElementById('cf-rot').checked,livreDepois:document.getElementById('cf-livre').checked,memDias:[0,1,2,3,4,5,6].filter(i=>document.getElementById('cf-md'+i).checked),autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked};
+    ai:document.getElementById('cf-ai').checked,fundo:document.getElementById('cf-fundo').checked,roteiro:document.getElementById('cf-rot').checked,livreDepois:document.getElementById('cf-livre').checked,memDias:[0,1,2,3,4,5,6].filter(i=>document.getElementById('cf-md'+i).checked),autoRead:document.getElementById('cf-read').checked,unlockAll:document.getElementById('cf-unlock').checked,tamanho:document.getElementById('cf-tam').value};
   try{await saveConfig();applyFundo();toast('Configurações salvas.');renderParent()}catch(e){toast('Não consegui salvar. Tente de novo.')}
 }
 async function saveCon(){

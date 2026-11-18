@@ -22,7 +22,7 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - Criança de 7 anos: frases curtas, palavras simples, tudo em português do Brasil. A explicação (`explain`) diz o porquê da resposta.
 - Cada questão tem exatamente uma resposta certa. O `type` dos distratores descreve o erro provável, porque aparece no painel dos pais.
 - Prefira geradores com variação (números aleatórios). Para conteúdo factual, use `bankGen(skill, [...])` com pelo menos 10 itens.
-- Lição: 2 ou 3 slides de explicação, 6 itens de prática e 5 de desafio.
+- Lição: 2 ou 3 slides de explicação, 6 itens de prática e 5 de desafio. O app estica a lição até o tamanho escolhido pelo Pedro (`TAMANHOS` em app.js; padrão médio = 9 + 7) repetindo as chaves embaralhadas, e acrescenta 1 ou 2 **exemplos resolvidos** gerados das chaves de prática (precisam de `explain`). Por isso cada gerador de uma lição precisa render perguntas diferentes suficientes para o tamanho médio; o teste confere.
 - Nada de personagens, músicas ou textos protegidos por direitos autorais. Na trilha Memória, só letras originais ou cantigas de domínio público.
 - Nunca colocar nome, escola ou dados pessoais dela no repositório, que é público.
 
