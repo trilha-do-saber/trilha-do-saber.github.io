@@ -12,13 +12,14 @@ App de estudos (PWA no GitHub Pages) da filha do Pedro, 2º ano do Ensino Fundam
 - `testes/verificar.js`: rode `node testes/verificar.js` antes de cada publicação. Se falhar, corrija ou não publique.
 
 ## Recursos do app (não remover)
-- **Roteiro do dia** (`roteiro()` em `app.js`): Aquecimento → Matemática ou Português (alternados por dia) → as 2 matérias do dia, ambas obrigatórias e na ordem que ela quiser: as 2 que estão há mais tempo sem estudo (Ciências, Dinheiro, Lógica, Emoções e, nos dias configurados ou com semana nova, Memória CC). O tempo livre só abre depois do roteiro. Matérias novas que devem entrar no rodízio precisam estar na lista de `rotOpcoes`.
+- **Roteiro do dia** (`roteiro()` em `app.js`): Aquecimento → Matemática ou Português (alternados por dia) → as 2 matérias do dia, ambas obrigatórias e na ordem que ela quiser: as 2 que estão há mais tempo sem estudo (Ciências, Dinheiro, Lógica, Inglês e, nos dias configurados ou com semana nova, Memória CC). O tempo livre só abre depois do roteiro. Matérias novas que devem entrar no rodízio precisam estar na lista de `rotOpcoes`.
 - **Aquecimento do dia:** 5 a 10 questões (conforme o tamanho das lições) sorteadas das lições com estrela, com peso maior para as habilidades com erro nos últimos 14 dias (`warmupKeys` em `app.js`).
 - **Resposta digitada:** os geradores listados no bloco "Contas com resposta digitada" de `conteudo.js` viram teclado numérico (`q.num`). Geradores numéricos novos de contas devem entrar nessa lista.
 - **Missão da semana:** `MISSOES` em `conteudo.js`, uma por semana, feita fora da tela. O Pedro marca na área dos pais. Pode acrescentar missões novas ligadas às lições recentes.
 - **Leitura do dia, estante e potes:** são registrados pelo Pedro na área dos pais e salvos na aba `Diario` da planilha (coluna E = JSON; tipos `leitura`, `missao`, `potes` = configuração dos potes e `pote` = cada movimento, com variações em `v.gastar/guardar/investir`; os saldos são a soma dos movimentos, e o rendimento mensal entra sozinho com id `rend-AAAA-MM`). As perguntas de leitura ficam em `LEIT_PERGUNTAS`.
 
 ## Regras do conteúdo
+- **Inglês:** nos campos de fala (`speak`, `fala` dos slides, `acerto`, `explainFala`, `respFala`), as palavras em inglês vão entre chaves, como `{dog}`, e são lidas com a voz em inglês do aparelho. Nos textos da tela, sem chaves.
 - Criança de 7 anos: frases curtas, palavras simples, tudo em português do Brasil. A explicação (`explain`) diz o porquê da resposta.
 - Cada questão tem exatamente uma resposta certa. O `type` dos distratores descreve o erro provável, porque aparece no painel dos pais.
 - Prefira geradores com variação (números aleatórios). Para conteúdo factual, use `bankGen(skill, [...])` com pelo menos 10 itens.

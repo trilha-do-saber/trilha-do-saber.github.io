@@ -436,42 +436,6 @@ const LOG_LESSONS=[
    practice:['passos','passos','passos','passos','passos','passos'],quiz:['passos','passos','passos','passos','passos']},
 ];
 
-/* ---- Emoções e convivência ---- */
-Object.assign(GEN,{
-  sentir:bankGen('Nomear emoções',[
-    {q:'Você ganhou um presente de aniversário. Como se sente?',a:'😄 Feliz',w:['😢 Triste','😠 Com raiva'],e:'🎁',x:'Ganhar um presente deixa a gente feliz.',erro:'confundiu as emoções'},
-    {q:'Seu cachorrinho ficou doente. Como você se sente?',a:'😢 Triste',w:['😄 Feliz','😮 Surpresa'],e:'🐶',x:'Quando alguém que amamos está mal, ficamos tristes. Tudo bem sentir isso.',erro:'confundiu as emoções'},
-    {q:'Um colega pegou seu brinquedo sem pedir. Como você se sente?',a:'😠 Com raiva',w:['😄 Feliz','😴 Com sono'],e:'🧸',x:'É normal sentir raiva. O importante é o que fazemos com ela.',erro:'confundiu as emoções'},
-    {q:'Ouviu um trovão muito forte de noite. Como pode se sentir?',a:'😨 Com medo',w:['😄 Feliz','😠 Com raiva'],e:'⛈️',x:'Barulho forte no escuro pode dar medo. Dá para chamar um adulto.',erro:'confundiu as emoções'},
-    {q:'Achou um bilhete de carinho na mochila que não esperava. Como se sente?',a:'😮 Surpresa',w:['😢 Triste','😨 Com medo'],e:'💌',x:'Quando algo bom acontece sem esperar, sentimos surpresa.',erro:'confundiu as emoções'},
-    {q:'Você terminou um quebra-cabeça difícil sozinha. Como se sente?',a:'😊 Orgulhosa',w:['😢 Triste','😨 Com medo'],e:'🧩',x:'Quando conseguimos algo difícil, sentimos orgulho.',erro:'confundiu as emoções'},
-    {q:'Seu melhor amigo mudou de cidade. Como você pode se sentir?',a:'😢 Triste',w:['😄 Feliz','😠 Com raiva'],e:'🚚',x:'Sentir saudade de quem gostamos dá tristeza.',erro:'confundiu as emoções'},
-    {q:'Vai começar o primeiro dia numa escola nova. Como pode se sentir?',a:'😬 Nervosa',w:['😴 Com sono','😠 Com raiva'],e:'🏫',x:'Coisas novas podem deixar a gente nervosa. Isso passa com o tempo.',erro:'confundiu as emoções'},
-    {q:'Seu irmão rasgou seu desenho de propósito. Como pode se sentir?',a:'😠 Com raiva',w:['😄 Feliz','😮 Surpresa'],e:'📄',x:'Ficamos com raiva quando estragam algo nosso. Conversar ajuda.',erro:'confundiu as emoções'},
-    {q:'A família toda vai ao parque no domingo. Como você se sente?',a:'🤩 Animada',w:['😢 Triste','😨 Com medo'],e:'🎡',x:'Esperar algo legal deixa a gente animada.',erro:'confundiu as emoções'}]),
-  conviver:bankGen('Resolver conflitos',[
-    {q:'Um colega empurrou você na fila. O que é melhor fazer?',a:'Dizer que não gostou e avisar a professora',w:['Empurrar de volta','Gritar com ele'],e:'🧍',x:'Falar com calma e pedir ajuda a um adulto resolve sem machucar ninguém.',erro:'escolheu revidar'},
-    {q:'Você perdeu no jogo. O que é melhor fazer?',a:'Respirar fundo e jogar de novo',w:['Jogar as peças no chão','Dizer que o outro roubou'],e:'🎲',x:'Perder faz parte. Respirar fundo e tentar de novo é o melhor.',erro:'não lidou bem com a frustração'},
-    {q:'Duas crianças querem o mesmo balanço. O que é justo?',a:'Combinar e revezar',w:['Puxar a outra criança','Chorar até ganhar'],e:'🛝',x:'Revezar é justo: cada um brinca um pouco.',erro:'escolheu brigar'},
-    {q:'Você está com muita raiva. O que pode ajudar?',a:'Respirar fundo e contar até 10',w:['Bater em alguém','Quebrar um brinquedo'],e:'😤',x:'Respirar e contar acalma o corpo, e depois dá para conversar.',erro:'escolheu revidar'},
-    {q:'Uma colega está sozinha e triste no recreio. O que você pode fazer?',a:'Convidar para brincar',w:['Rir dela','Fingir que não viu'],e:'🤝',x:'Convidar alguém para brincar é ser gentil e faz a pessoa se sentir melhor.',erro:'não percebeu o outro'},
-    {q:'Sem querer, você derrubou o lanche do amigo. O que fazer?',a:'Pedir desculpas e ajudar a limpar',w:['Sair correndo','Dizer que foi outra pessoa'],e:'🥤',x:'Pedir desculpas e ajudar mostra respeito.',erro:'não assumiu o erro'},
-    {q:'Um amigo pediu seu lápis emprestado. O que é gentil?',a:'Emprestar e pedir para devolver depois',w:['Esconder o lápis','Dizer que não tem'],e:'✏️',x:'Emprestar e combinar a devolução é ser gentil e cuidadoso.',erro:'escolheu não compartilhar'},
-    {q:'Alguém está falando mal de um colega. O que fazer?',a:'Não participar e defender o colega',w:['Rir junto','Contar para todo mundo'],e:'🗣️',x:'Não participar de maldade e defender o colega é coragem.',erro:'acompanhou a maldade'},
-    {q:'Você não entendeu a lição. O que fazer?',a:'Pedir ajuda à professora ou ao papai',w:['Desistir','Ficar brava consigo mesma'],e:'🙋',x:'Pedir ajuda é inteligente. Todo mundo aprende assim.',erro:'desistiu'},
-    {q:'Seu amigo ganhou o jogo de você. O que dizer?',a:'Parabéns, jogou bem!',w:['Não brinco mais com você','Foi sorte!'],e:'🏆',x:'Dar parabéns mostra que sabemos perder e ganhar com respeito.',erro:'não lidou bem com a frustração'}]),
-});
-const EMO_LESSONS=[
-  {id:'sentimentos',titulo:'O que eu sinto',icone:'😊',bncc:'Competência 8',
-   slides:[{t:'Todo mundo sente coisas diferentes: alegria, tristeza, raiva, medo e surpresa. Todos esses sentimentos são normais.',v:'<div class="emo" style="font-size:52px">😄 😢 😠 😨 😮</div>'},
-    {t:'Dar nome ao que sentimos ajuda a entender e a pedir ajuda. Por exemplo: estou triste porque meu amigo foi embora.',v:'<div class="emo" style="font-size:64px">💬</div>'}],
-   practice:['sentir','sentir','sentir','sentir','sentir','sentir'],quiz:['sentir','sentir','sentir','sentir','sentir']},
-  {id:'conviver',titulo:'Resolver conflitos',icone:'🤝',bncc:'Competência 9',
-   slides:[{t:'Quando alguém faz algo que não gostamos, dá vontade de revidar. Mas revidar só piora.',v:'<div class="emo" style="font-size:56px">😤 ➡️ 🌬️ ➡️ 🙂</div>'},
-    {t:'O melhor é respirar fundo, falar com calma o que sentimos e, se precisar, chamar um adulto.',v:'<div class="emo" style="font-size:56px">🗣️ 🤝 🙋</div>'}],
-   practice:['conviver','conviver','conviver','conviver','conviver','conviver'],quiz:['conviver','conviver','conviver','conviver','conviver']},
-];
-
 /* ---- Contas com resposta digitada (evita chute) ---- */
 ['somaPequena','soma2','somaHist','subPequena','sub2','subHist','somaReserva','somaReservaHist','subReserva','subReservaHist','pular','pularFalta','depois','antes','seq','contarDinheiro','troco','guardarMeta'].forEach(k=>{
   const g=GEN[k];GEN[k]=()=>{const q=g();q.num=true;q.answer=q.options.find(o=>o.ok).v;return q}});
@@ -486,13 +450,13 @@ const MISSOES=[
   {icone:'🌱',materia:'Ciências',texto:'Plante um feijão no algodão molhado e desenhe como ele está a cada 2 dias.'},
   {icone:'🧩',materia:'Lógica',texto:'Monte um caminho no chão e dê comandos (frente, vira à direita) para alguém chegar até o final.'},
   {icone:'🔢',materia:'Matemática',texto:'Conte de 2 em 2 usando tampinhas ou feijões até chegar em 30.'},
-  {icone:'💛',materia:'Emoções',texto:'Desenhe uma carinha para o sentimento de cada dia da semana e conte por que se sentiu assim.'},
+  {icone:'🎨',materia:'Inglês',texto:'Ache em casa um objeto de cada cor e diga a cor em inglês: red, blue, yellow, green.'},
   {icone:'🗺️',materia:'Geografia',texto:'Desenhe o caminho da sua casa até a escola, com as coisas que você vê no meio.'},
   {icone:'🏛️',materia:'História',texto:'Pergunte a um avô ou avó do que eles brincavam quando eram crianças e faça um desenho.'},
   {icone:'🧼',materia:'Ciências',texto:'Ensine para a família o jeito certo de lavar as mãos, contando até 20.'},
   {icone:'🕐',materia:'Matemática',texto:'Olhe o relógio na hora do almoço e do jantar e desenhe onde estavam os ponteiros.'},
   {icone:'📚',materia:'Leitura',texto:'Escolha um livro novo na biblioteca ou na estante de casa e leiam juntos.'},
-  {icone:'🎁',materia:'Emoções',texto:'Faça um desenho ou um bilhete de carinho para alguém da família.'},
+  {icone:'👋',materia:'Inglês',texto:'Durante uma semana, dê bom-dia em inglês para a família: Good morning!'},
   {icone:'🔤',materia:'Português',texto:'Encontre em casa 5 coisas que começam com a letra B e escreva os nomes.'},
 ];
 const LEIT_PERGUNTAS=['O que você acha que vai acontecer agora?','Como o personagem está se sentindo? Por quê?','O que você faria no lugar dele?','Qual foi a parte mais legal até agora?','Tem alguma palavra que você não conhecia?','Onde e quando essa história acontece?','Quem é o personagem principal?','Por que você acha que ele fez isso?','Essa história parece com algo que já aconteceu com você?','Como você acha que a história vai terminar?','Se pudesse mudar o final, como seria?','O que o desenho dessa página mostra?','Qual personagem você mais gostou? Por quê?','O que aconteceu primeiro, depois e por último?','Você daria outro nome para o livro? Qual?'];
@@ -617,48 +581,6 @@ addBanco('passos',[
  ['Para ver um filme no cinema, o que vem primeiro?','Comprar o ingresso',['Sair da sala','Ver o final do filme'],'🎬','Primeiro o ingresso, depois o filme.'],
  ['Para andar de bicicleta com segurança, o que vem primeiro?','Colocar o capacete',['Pedalar rápido','Guardar a bicicleta'],'🚲','O capacete vem antes de pedalar.'],
  ['Para guardar os brinquedos, o que fazemos por último?','Fechar a caixa',['Pegar os brinquedos do chão','Colocar na caixa'],'🧸','Pegar, colocar na caixa e por último fechar.']],'errou a ordem dos passos');
-addBanco('sentir',[
- ['Você caiu na frente dos colegas e todos riram. Como pode se sentir?','😳 Envergonhada',['😄 Feliz','🤩 Animada'],'😳','Quando riem de nós, podemos sentir vergonha.'],
- ['Seu irmãozinho ganhou todo o colo da mamãe hoje. Como pode se sentir?','😒 Com ciúme',['😄 Feliz','😨 Com medo'],'🤱','Querer a atenção só para nós é ciúme. Dá para conversar sobre isso.'],
- ['Você tentou montar a torre e ela caiu três vezes. Como pode se sentir?','😣 Frustrada',['🤩 Animada','😮 Surpresa'],'🧱','Quando tentamos e não dá certo, ficamos frustrados. Respire e tente de novo.'],
- ['Você está deitada ouvindo uma música suave. Como se sente?','😌 Calma',['😠 Com raiva','😨 Com medo'],'🎶','Uma música suave deixa a gente calma.'],
- ['Amanhã é seu aniversário e vai ter festa! Como se sente?','🤩 Animada',['😢 Triste','😣 Frustrada'],'🎉','Esperar algo legal deixa a gente animada.'],
- ['Você vai apresentar um trabalho para a turma toda. Como pode se sentir?','😬 Nervosa',['😴 Com sono','😒 Com ciúme'],'🎤','Falar em público pode deixar nervosa. Isso é normal.'],
- ['Você ajudou a vovó a carregar as sacolas. Como se sente?','😊 Orgulhosa',['😠 Com raiva','😳 Envergonhada'],'🛍️','Ajudar alguém dá orgulho.'],
- ['Abriu a porta e todos gritaram: surpresa! Como se sente?','😮 Surpresa',['😢 Triste','😌 Calma'],'🎊','Algo inesperado dá surpresa.'],
- ['Sua amiga não quis brincar com você hoje. Como pode se sentir?','😢 Triste',['🤩 Animada','😊 Orgulhosa'],'🧸','Ser deixada de lado pode deixar triste.'],
- ['Alguém furou a fila na sua frente. Como pode se sentir?','😠 Com raiva',['😌 Calma','😮 Surpresa'],'🚶','Quando algo não é justo, sentimos raiva.'],
- ['Você ouviu um barulho estranho no escuro. Como pode se sentir?','😨 Com medo',['😊 Orgulhosa','🤩 Animada'],'🌑','Barulhos no escuro podem dar medo. Chame um adulto.'],
- ['Você aprendeu a andar de bicicleta sem rodinhas! Como se sente?','😊 Orgulhosa',['😢 Triste','😨 Com medo'],'🚲','Conseguir algo novo dá orgulho.'],
- ['Seu sorvete caiu no chão. Como pode se sentir?','😢 Triste',['😌 Calma','😊 Orgulhosa'],'🍦','Perder algo que queríamos deixa triste.'],
- ['Esqueceu a fala na peça da escola e todos olharam. Como pode se sentir?','😳 Envergonhada',['🤩 Animada','😒 Com ciúme'],'🎭','Errar na frente de todos dá vergonha. Acontece com todo mundo.'],
- ['Perdeu o jogo depois de treinar muito. Como pode se sentir?','😣 Frustrada',['😄 Feliz','😌 Calma'],'⚽','Quando o esforço não deu resultado, ficamos frustrados.'],
- ['Quando estamos com raiva, o corpo pode...','Ficar quente e com o coração rápido',['Ficar com sono','Ficar com fome'],'😤','A raiva acelera o coração. Respirar fundo ajuda a acalmar.'],
- ['Quando sentimos medo, o que ajuda?','Contar para um adulto de confiança',['Guardar segredo','Fingir que não sentiu'],'🫂','Contar para um adulto de confiança ajuda com o medo.'],
- ['Seu amigo está chorando. Como ele provavelmente se sente?','😢 Triste',['😄 Feliz','🤩 Animado'],'😭','Chorar costuma mostrar tristeza.'],
- ['Seu primo sorri e pula quando vê você. Como ele se sente?','😄 Feliz',['😠 Com raiva','😨 Com medo'],'😃','Sorrir e pular mostra alegria.'],
- ['Tudo bem sentir raiva?','Sim, mas sem machucar ninguém',['Não, nunca podemos sentir raiva','Sim, e podemos bater'],'💬','Todo sentimento é normal. O que importa é o que fazemos com ele.']],'confundiu as emoções');
-addBanco('conviver',[
- ['Você quer o brinquedo que o colega está usando. O que fazer?','Pedir e esperar a vez',['Pegar da mão dele','Chorar até ele dar'],'🧸','Pedir e esperar a vez é respeitar o colega.'],
- ['Um colega novo chegou na turma. O que é gentil?','Dizer oi e se apresentar',['Ignorar','Rir dele'],'👋','Receber bem quem chegou é ser gentil.'],
- ['Você recebeu um presente. O que dizer?','Obrigada!',['Só isso?','Não dizer nada'],'🎁','Agradecer mostra carinho com quem deu.'],
- ['Seu irmão está dormindo. O que fazer?','Brincar em silêncio',['Gritar','Ligar a TV bem alta'],'🤫','Respeitar o sono do outro é fazer silêncio.'],
- ['Um amigo caiu no recreio. O que fazer?','Ajudar e chamar um adulto',['Rir','Continuar correndo'],'🤕','Ajudar quem se machucou é o certo.'],
- ['Você e sua amiga querem brincadeiras diferentes. O que é justo?','Brincar um pouco de cada uma',['Só a sua','Ir embora brava'],'🤝','Revezar as brincadeiras é justo para as duas.'],
- ['A professora está falando. O que fazer?','Ouvir com atenção',['Conversar com o colega','Levantar e sair'],'👩‍🏫','Ouvir com atenção é respeito e ajuda a aprender.'],
- ['Você quebrou um copo sem querer. O que fazer?','Contar para um adulto e pedir desculpas',['Esconder os cacos','Culpar o irmão'],'🥛','Assumir o erro é coragem, e o adulto ajuda a limpar com segurança.'],
- ['Alguém pediu desculpas para você. O que é bom fazer?','Aceitar e continuar amigos',['Ficar brava para sempre','Rir da pessoa'],'🙏','Aceitar as desculpas faz a amizade continuar.'],
- ['Um colega está com dificuldade na tarefa. O que você pode fazer?','Oferecer ajuda',['Rir dele','Esconder seu caderno'],'✏️','Ajudar quem tem dificuldade é ser bom colega.'],
- ['Um adulto desconhecido oferece doce no parque. O que fazer?','Não aceitar e avisar o papai',['Aceitar e ir com ele','Guardar segredo'],'🍬','Nunca aceite nada de estranhos. Sempre avise um adulto da família.'],
- ['Você ganhou o jogo. O que fazer?','Comemorar sem zombar do outro',['Rir de quem perdeu','Dizer que o outro é ruim'],'🏅','Ganhar com respeito é tão importante quanto ganhar.'],
- ['Alguém pede para você guardar um segredo que te deixa triste ou com medo. O que fazer?','Contar para um adulto de confiança',['Guardar para sempre','Esquecer'],'🤐','Segredo que deixa triste ou com medo deve ser contado a um adulto de confiança.'],
- ['Seu colega esqueceu o lanche. O que você pode fazer?','Dividir um pouco do seu',['Comer na frente dele rindo','Fingir que não viu'],'🥪','Dividir é um jeito de cuidar do outro.'],
- ['Você está muito brava com sua amiga. O que fazer primeiro?','Respirar e se acalmar antes de falar',['Gritar com ela','Empurrar'],'🌬️','Primeiro acalmar, depois conversar.'],
- ['Na fila do escorregador, o que é certo?','Esperar a sua vez',['Furar a fila','Empurrar quem está na frente'],'🛝','Esperar a vez é justo com todos.'],
- ['Um amigo fez um desenho bonito. O que dizer?','Que bonito, parabéns!',['O meu é melhor','Que feio'],'🖍️','Elogiar o outro deixa todos felizes.'],
- ['Você precisa usar o lápis do colega. O que fazer?','Pedir emprestado',['Pegar sem pedir','Esconder o lápis dele'],'✏️','Pedir antes de pegar é respeito.'],
- ['Seu time perdeu. O que é bom dizer?','Foi divertido, vamos treinar mais',['A culpa é sua','Não jogo nunca mais'],'⚽','Perder faz parte. Culpar os outros não ajuda.'],
- ['Duas amigas estão brigando. O que você pode fazer?','Chamar um adulto para ajudar',['Torcer para uma delas','Brigar junto'],'👭','Um adulto pode ajudar a resolver a briga.']],'escolheu uma atitude que não ajuda');
 /* lições de reforço */
 MAT_LESSONS.splice(MAT_LESSONS.findIndex(l=>l.id==='vizinhos')+1,0,
   {id:'reta',titulo:'Reta numérica',icone:'📏',bncc:'EF02MA01',
@@ -1210,13 +1132,93 @@ function buildMemoria(rows){
   return lessons;
 }
 
-MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');EMO_LESSONS.forEach(l=>l.subject='Emoções');HIS_LESSONS.forEach(l=>l.subject='História');GEO_LESSONS.forEach(l=>l.subject='Geografia');
+/* ================= LOTE 4 · 18/11/2026 · Inglês (substitui Emoções) =================
+   Palavras em inglês entre chaves nos campos de fala (speak, fala, acerto, explainFala, respFala)
+   são lidas pela voz em inglês do aparelho. Nos textos que aparecem na tela, sem chaves. */
+function vocabGen(skill,lista){
+  return function(){const it=pick(lista),[en,pt,e]=it,forma=rnd(1,3);
+    const outros=shuffle(lista.filter(x=>x!==it)).slice(0,2);
+    const base={skill,acerto:`{${en}} é ${pt}.`,explain:`${cap1(pt)} em inglês é ${en}.`,explainFala:`${cap1(pt)} em inglês é {${en}}.`};
+    if(forma===1){const ops=shuffle([{v:en,label:en,ok:true,type:null},...outros.map(x=>({v:x[0],label:x[0],ok:false,type:'trocou a palavra em inglês'}))]);
+      return{...base,text:`Como se diz "${pt}" em inglês?`,visual:`<div class="emo" style="font-size:72px">${e}</div>`,desc:`pt>en ${en}`,optClass:'txt',options:ops,respFala:`{${en}}`,
+        hint:'Lembre da lição. Fale as palavras das opções em voz alta.'}}
+    if(forma===2){const ops=shuffle([{v:pt,label:pt,ok:true,type:null},...outros.map(x=>({v:x[1],label:x[1],ok:false,type:'não reconheceu a palavra em inglês'}))]);
+      return{...base,text:`O que quer dizer "${en}"?`,speak:`O que quer dizer {${en}}?`,visual:`<div class="big" style="font-size:52px">${en}</div>`,desc:`en>pt ${en}`,optClass:'txt',options:ops,
+        hint:'Toque no 🔊 para ouvir a palavra de novo.'}}
+    const ops=shuffle([{v:e,label:e,ok:true,type:null},...outros.map(x=>({v:x[2],label:x[2],ok:false,type:'não entendeu ouvindo'}))]);
+    return{...base,text:'Ouça a palavra em inglês e toque na figura certa.',speak:`Ouça e toque na figura certa: {${en}}.`,visual:'<div class="emo" style="font-size:64px">👂🔊</div>',desc:`ouvir ${en}`,options:ops,respFala:`${pt}, {${en}}`,
+      hint:'Toque no 🔊 para ouvir de novo, com calma.'}};
+}
+const ING_NUM=['one','two','three','four','five','six','seven','eight','nine','ten'];
+const ING_VOC={
+  ola:[['Hello','olá','👋'],['Good morning','bom dia','🌅'],['Good afternoon','boa tarde','☀️'],['Good night','boa noite','🌙'],['Goodbye','tchau','🙋'],
+    ['Thank you','obrigada','🙏'],['Please','por favor','🤲'],['Sorry','desculpa','😔'],['Yes','sim','👍'],['No','não','👎'],['I love you','eu te amo','❤️'],['Welcome','bem-vinda','🚪']],
+  cores:[['red','vermelho','🔴'],['blue','azul','🔵'],['yellow','amarelo','🟡'],['green','verde','🟢'],['orange','laranja','🟠'],['purple','roxo','🟣'],
+    ['black','preto','⚫'],['white','branco','⚪'],['brown','marrom','🟤'],['pink','rosa','💗']],
+  animais:[['dog','cachorro','🐶'],['cat','gato','🐱'],['bird','pássaro','🐦'],['fish','peixe','🐟'],['cow','vaca','🐮'],['horse','cavalo','🐴'],
+    ['pig','porco','🐷'],['duck','pato','🦆'],['lion','leão','🦁'],['monkey','macaco','🐵'],['rabbit','coelho','🐰'],['frog','sapo','🐸']],
+  comida:[['apple','maçã','🍎'],['grape','uva','🍇'],['strawberry','morango','🍓'],['watermelon','melancia','🍉'],['bread','pão','🍞'],['milk','leite','🥛'],
+    ['water','água','💧'],['egg','ovo','🥚'],['cake','bolo','🎂'],['cheese','queijo','🧀'],['juice','suco','🧃'],['banana','banana','🍌']],
+  corpo:[['eye','olho','👁️'],['ear','orelha','👂'],['nose','nariz','👃'],['mouth','boca','👄'],['hand','mão','✋'],['foot','pé','🦶'],
+    ['leg','perna','🦵'],['tooth','dente','🦷'],['hair','cabelo','💇'],['arm','braço','💪']],
+  escola:[['pencil','lápis','✏️'],['book','livro','📕'],['bag','mochila','🎒'],['ruler','régua','📏'],['scissors','tesoura','✂️'],['crayon','giz de cera','🖍️'],
+    ['notebook','caderno','📓'],['teacher','professora','👩‍🏫'],['school','escola','🏫'],['pen','caneta','🖊️'],['chair','cadeira','🪑'],['clock','relógio','🕐']],
+  familia:[['mother','mãe','👩'],['father','pai','👨'],['sister','irmã','👧'],['brother','irmão','👦'],['baby','bebê','👶'],['grandma','avó','👵'],
+    ['grandpa','avô','👴'],['family','família','👨‍👩‍👧'],['house','casa','🏠'],['bed','cama','🛏️'],['door','porta','🚪'],['friend','amigo','🤝']],
+};
+Object.assign(GEN,{
+  ingOla:vocabGen('Inglês · cumprimentos',ING_VOC.ola),
+  ingCores:vocabGen('Inglês · cores',ING_VOC.cores),
+  ingAnimais:vocabGen('Inglês · animais',ING_VOC.animais),
+  ingComida:vocabGen('Inglês · comidas',ING_VOC.comida),
+  ingCorpo:vocabGen('Inglês · corpo',ING_VOC.corpo),
+  ingEscola:vocabGen('Inglês · escola',ING_VOC.escola),
+  ingFamilia:vocabGen('Inglês · família e casa',ING_VOC.familia),
+  ingNum(){const n=rnd(1,10),en=ING_NUM[n-1],forma=rnd(1,4),err=[n-1,n+1,n+2,n-2].filter(x=>x>=1&&x<=10);const w=shuffle(err).slice(0,2);
+    const base={skill:'Inglês · números',acerto:`{${en}} é ${n}.`,explain:`${n} em inglês é ${en}.`,explainFala:`${n} em inglês é {${en}}.`};
+    const opsEn=()=>shuffle([{v:en,label:en,ok:true,type:null},...w.map(x=>({v:ING_NUM[x-1],label:ING_NUM[x-1],ok:false,type:'trocou o número em inglês'}))]);
+    const opsN=t=>shuffle([{v:n,label:String(n),ok:true,type:null},...w.map(x=>({v:x,label:String(x),ok:false,type:t}))]);
+    if(forma===1)return{...base,text:'Quantas estrelas? Responda em inglês.',visual:`<div class="emo">${rep('⭐',n)}</div>`,desc:`contar ${n}`,optClass:'txt',options:opsEn(),respFala:`{${en}}`,hint:'Conte as estrelas em português e depois pense no nome em inglês.'};
+    if(forma===2)return{...base,text:`Como se diz ${n} em inglês?`,visual:`<div class="big">${n}</div>`,desc:`num>en ${n}`,optClass:'txt',options:opsEn(),respFala:`{${en}}`,hint:'Conte em inglês desde o começo: one, two, three...'};
+    if(forma===3)return{...base,text:`Que número é "${en}"?`,speak:`Que número é {${en}}?`,visual:`<div class="big" style="font-size:52px">${en}</div>`,desc:`en>num ${n}`,options:opsN('não reconheceu o número em inglês'),hint:'Conte em inglês nos dedos até chegar nessa palavra.'};
+    return{...base,text:'Ouça o número em inglês e toque nele.',speak:`Ouça o número: {${en}}.`,visual:'<div class="emo" style="font-size:64px">👂🔊</div>',desc:`ouvir ${n}`,options:opsN('não entendeu ouvindo'),hint:'Toque no 🔊 para ouvir de novo.'}},
+});
+const ingSlide=(t,v)=>({t:t.replace(/[{}]/g,''),fala:t,v:`<div class="emo" style="font-size:52px">${v}</div>`});
+const ingLic=(id,titulo,icone,k,s1,v1,s2,v2)=>({id,titulo,icone,bncc:'Inglês',slides:[ingSlide(s1,v1),ingSlide(s2,v2)],practice:Array(6).fill(k),quiz:Array(5).fill(k)});
+const ING_LESSONS=[
+  ingLic('ing-ola','Hello! Cumprimentos','👋','ingOla',
+    'Inglês é a língua falada nos Estados Unidos, na Inglaterra e em muitos outros países. Para dizer olá, falamos {Hello}!','👋 🌎',
+    'De manhã dizemos {Good morning}, que é bom dia. Para agradecer, {Thank you}. Para se despedir, {Goodbye}!','🌅 🙏 🙋'),
+  ingLic('ing-cores','Colors: as cores','🎨','ingCores',
+    'As cores em inglês: {red} é vermelho, {blue} é azul, {yellow} é amarelo e {green} é verde.','🔴 🔵 🟡 🟢',
+    'Mais cores: {orange} é laranja, {purple} é roxo, {pink} é rosa, {black} é preto, {white} é branco e {brown} é marrom.','🟠 🟣 💗 ⚫ ⚪ 🟤'),
+  ingLic('ing-numeros','Numbers: de 1 a 10','🔢','ingNum',
+    'Vamos contar em inglês: {one}, {two}, {three}, {four}, {five}.','1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣',
+    'E continua: {six}, {seven}, {eight}, {nine}, {ten}! Conte nos dedos junto.','6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟'),
+  ingLic('ing-animais','Animals: os animais','🐶','ingAnimais',
+    'Os animais em inglês: {dog} é cachorro, {cat} é gato, {bird} é pássaro e {fish} é peixe.','🐶 🐱 🐦 🐟',
+    'Na fazenda tem {cow}, a vaca, {pig}, o porco, e {horse}, o cavalo. Na floresta tem {lion}, o leão, e {monkey}, o macaco.','🐮 🐷 🐴 🦁 🐵'),
+  ingLic('ing-comida','Food: frutas e comidas','🍎','ingComida',
+    'As frutas em inglês: {apple} é maçã, {grape} é uva e {strawberry} é morango. {Banana} é igual em português!','🍎 🍇 🍓 🍌',
+    'No café da manhã: {bread} é pão, {milk} é leite, {egg} é ovo e {juice} é suco.','🍞 🥛 🥚 🧃'),
+  ingLic('ing-corpo','My body: o corpo','✋','ingCorpo',
+    'As partes do rosto em inglês: {eye} é olho, {ear} é orelha, {nose} é nariz e {mouth} é boca.','👁️ 👂 👃 👄',
+    'E o resto do corpo: {hand} é mão, {foot} é pé, {arm} é braço e {leg} é perna.','✋ 🦶 💪 🦵'),
+  ingLic('ing-escola','School: na escola','🎒','ingEscola',
+    'Na escola em inglês: {school} é escola, {teacher} é professora e {bag} é mochila.','🏫 👩‍🏫 🎒',
+    'No estojo: {pencil} é lápis, {pen} é caneta, {ruler} é régua e {scissors} é tesoura.','✏️ 🖊️ 📏 ✂️'),
+  ingLic('ing-familia','Family: a família','👨‍👩‍👧','ingFamilia',
+    'A família em inglês: {mother} é mãe, {father} é pai, {sister} é irmã e {brother} é irmão.','👩 👨 👧 👦',
+    'Também tem {grandma}, a avó, {grandpa}, o avô, e o {baby}, o bebê. A família mora na {house}, a casa.','👵 👴 👶 🏠'),
+];
+
+MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');ING_LESSONS.forEach(l=>l.subject='Inglês');HIS_LESSONS.forEach(l=>l.subject='História');GEO_LESSONS.forEach(l=>l.subject='Geografia');
 SUBJECTS[0].lessons=MAT_LESSONS;Object.assign(SUBJECTS[1],{lessons:POR_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS[2],{lessons:CIE_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS.find(x=>x.id==='his'),{lessons:HIS_LESSONS,ready:true,ano:'2º ano'});Object.assign(SUBJECTS.find(x=>x.id==='geo'),{lessons:GEO_LESSONS,ready:true,ano:'2º ano'});
 SUBJECTS.splice(SUBJECTS.findIndex(x=>x.id==='mem'),0,
   {id:'fin',nome:'Dinheiro',ic:'🪙',ano:'2º ano',ready:true,lessons:FIN_LESSONS},
   {id:'log',nome:'Lógica',ic:'🧩',ano:'2º ano',ready:true,lessons:LOG_LESSONS},
-  {id:'emo',nome:'Emoções',ic:'💛',ano:'2º ano',ready:true,lessons:EMO_LESSONS});
-const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS,...FIN_LESSONS,...LOG_LESSONS,...EMO_LESSONS,...HIS_LESSONS,...GEO_LESSONS];
+  {id:'ing',nome:'Inglês',ic:'🌎',ano:'2º ano',ready:true,lessons:ING_LESSONS});
+const LESSONS=[...MAT_LESSONS,...POR_LESSONS,...CIE_LESSONS,...FIN_LESSONS,...LOG_LESSONS,...ING_LESSONS,...HIS_LESSONS,...GEO_LESSONS];
 const PRAISE=['Muito bem!','Isso aí!','Arrasou!','Perfeito!','Você acertou!'];

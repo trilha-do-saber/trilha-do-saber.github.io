@@ -80,12 +80,19 @@ Legenda: [x] publicada · [ ] a fazer
 - [ ] Classificar por cor, forma e tamanho
 - [ ] Se... então... (condições simples)
 
-### Emoções e convivência
-- [x] O que eu sinto
-- [x] Resolver conflitos
-- [ ] Empatia: como o outro se sente
-- [ ] Lidar com a frustração e tentar de novo
-- [ ] Gentileza e gratidão
+### Inglês
+- [x] Hello! Cumprimentos
+- [x] Colors: as cores
+- [x] Numbers: de 1 a 10
+- [x] Animals: os animais
+- [x] Food: frutas e comidas
+- [x] My body: o corpo
+- [x] School: na escola
+- [x] Family: a família
+- [ ] Numbers: de 11 a 20
+- [ ] Clothes: as roupas
+- [ ] Days of the week: dias da semana
+- [ ] Toys: brinquedos
 
 ### Segurança (uma lição de vez em quando)
 - [ ] Atravessar a rua e segurança no trânsito

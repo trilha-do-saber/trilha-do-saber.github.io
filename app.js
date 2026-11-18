@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v25';
+const APP_VERSAO='trilha-v26';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -128,7 +128,18 @@ function webSpeak(text){
 let vozAviso=false;
 function vozFalhou(motivo){console.warn('voz',motivo);if(vozAviso)return;vozAviso=true;toast('O tablet não conseguiu falar. Confira a voz do sistema em Configurações → Saída de texto para voz.')}
 function noVoice(){if(voiceWarned)return;voiceWarned=true;toast('Este navegador não tem voz. Use o Chrome ou o Safari.')}
-function speak(text){if(!text)return;speakTok++;if(!webSpeak(text))noVoice()}
+function speak(text){if(!text)return;speakTok++;text=String(text);
+  if(!/\{[^}]+\}/.test(text)){if(!webSpeak(text))noVoice();return}
+  if(!hasWebSpeech()){noVoice();return}
+  /* trechos entre chaves {apple} são falados com voz em inglês */
+  try{const ss=window.speechSynthesis;ss.cancel();const pv=chosenVoice(),ev=enVoice(),rate=LS.get('voiceRate',.95);
+    text.split(/(\{[^}]+\})/).filter(t=>t.trim()).forEach(t=>{const en=t[0]==='{',u=new SpeechSynthesisUtterance(en?t.slice(1,-1):t);
+      if(en){u.lang='en-US';if(ev){u.voice=ev;u.lang=ev.lang}u.rate=Math.min(rate,.85)}else{u.lang='pt-BR';if(pv){u.voice=pv;u.lang=pv.lang}u.rate=rate}
+      ss.speak(u)});try{ss.resume()}catch(e){}}catch(e){noVoice()}}
+/* voz em inglês para a matéria Inglês (prefere en-US e vozes do Google) */
+function enVoice(){if(!hasWebSpeech())return null;
+  const score=v=>(/en[-_]US/i.test(v.lang)?10:/en[-_]GB/i.test(v.lang)?8:0)+(/natural|neural|online|premium|enhanced/i.test(v.name)?5:0)+(/google/i.test(v.name)?3:0);
+  return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>score(b)-score(a))[0]||null}
 function stopSpeak(){speakTok++;try{hasWebSpeech()&&speechSynthesis.cancel()}catch(e){}}
 /* vozes em português, das mais naturais para as mais simples */
 function ptVoices(){
@@ -361,7 +372,7 @@ const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&
 const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n).map(z=>z.start));
 function rotOpcoes(){
   const memOk=(S.config.memDias||[1,3,5]).includes(new Date().getDay())||memNovas().length>0;
-  const pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','emo','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
+  const pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','ing','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
   let ops=pool.slice(0,2).map(x=>x.id);
   if(memNovas().length&&pool.some(x=>x.id==='mem')&&!ops.includes('mem'))ops=[ops[0],'mem'];
   return ops;
@@ -433,7 +444,7 @@ function respostaDe(q){if(q.options&&q.options.length){const o=q.options.find(o=
 function exemplos(l){
   const keys=[...new Set(l.practice||[])].filter(k=>GEN[k]),out=[];R.usados=R.usados||new Set();calcNiveis();
   for(const k of shuffle(keys)){if(out.length>=tam().ex)break;
-    try{const q=GEN[k]();if(q.kind||!respostaDe(q)||!q.explain)continue;R.usados.add(qid(q));out.push({ex:q,t:q.text+' A resposta é '+respostaDe(q)+'. '+q.explain})}catch(e){}}
+    try{const q=GEN[k]();if(q.kind||!respostaDe(q)||!q.explain)continue;R.usados.add(qid(q));out.push({ex:q,t:(q.speak||q.text)+' A resposta é '+(q.respFala||respostaDe(q))+'. '+(q.explainFala||q.explain)})}catch(e){}}
   return out;
 }
 function exemploHTML(q){const r=respostaDe(q);
@@ -444,13 +455,13 @@ function renderLearn(){
   const s=R.lesson.slides[R.slide],n=R.lesson.slides.length;
   if(s.ex){app.innerHTML=lessonTop(R.lesson.slides.map((_,i)=>`<i class="${i<=R.slide?'on':''}"></i>`).join(''))+`<div class="qcard">${exemploHTML(s.ex)}
    <div class="row" style="justify-content:center"><button class="speak" data-act="say" aria-label="Ouvir">🔊</button>${R.slide>0?'<button class="btn ghost" data-act="prevslide">Voltar</button>':''}<button class="btn" data-act="nextslide">${R.slide<n-1?'Próximo':'Agora é sua vez!'}</button></div></div>`;
-    if(S.config.autoRead)speak(s.t);return}
+    if(S.config.autoRead)speak(s.fala||s.t);return}
   app.innerHTML=lessonTop(R.lesson.slides.map((_,i)=>`<i class="${i<=R.slide?'on':''}"></i>`).join(''))+`
   <div class="qcard"><div class="row" style="justify-content:center"><span class="pill mid">Aprender · ${esc(R.lesson.titulo)}</span></div>
    <div class="visual">${s.v}</div>
    <div class="row" style="justify-content:center;flex-wrap:nowrap;max-width:640px"><button class="speak" data-act="say" aria-label="Ouvir">🔊</button><p class="qtext" style="font-size:26px;margin:0;text-align:left">${esc(s.t)}</p></div>
    <div class="row" style="justify-content:center">${R.slide>0?'<button class="btn ghost" data-act="prevslide">Voltar</button>':''}<button class="btn" data-act="nextslide">${R.slide<n-1?'Próximo':'Vamos praticar!'}</button></div></div>`;
-  if(S.config.autoRead)speak(s.t);
+  if(S.config.autoRead)speak(s.fala||s.t);
 }
 function beginPhase(phase){
   R.phase=phase;R.qi=0;R.results=[];
@@ -546,7 +557,7 @@ function handleAnswer(ok,given,type,optEl){
     if(optEl)optEl.classList.add('right'); if(opts)opts.classList.add('locked');
     lockBuild();
     const p=pick(PRAISE);R.results.push(R.tries===0); if(R.phase==='quiz')R.quizOk++;
-    showFb('good',`<b style="font-size:24px">✅ ${p}</b>${nextBtn()}`);speak(p);
+    showFb('good',`<b style="font-size:24px">✅ ${p}</b>${nextBtn()}`);speak(R.q.acerto?p+' '+R.q.acerto:p);
     return;
   }
   if(optEl)optEl.classList.add('wrong','shake');
@@ -561,7 +572,7 @@ function handleAnswer(ok,given,type,optEl){
   const right=R.q.kind?null:[...document.querySelectorAll('.opt')].find((b,i)=>R.q.options[i].ok);
   if(right)right.classList.add('right');
   showFb('bad',`<b>Essa foi difícil. Veja como é:</b><span>${esc(R.q.explain)}</span>${R.phase==='practice'?aiBtn():''}${nextBtn()}`);
-  speak(R.q.explain);
+  speak(R.q.explainFala||R.q.explain);
 }
 function drawNum(){const e=document.getElementById('nd');if(e)e.textContent=R.numVal||'?'}
 function lockBuild(){document.querySelectorAll('[data-act=addT],[data-act=addU],[data-act=undoB],[data-act=checkB],[data-act=sylPick],[data-act=sylDel],[data-act=sylCheck],[data-act=nk]').forEach(b=>b.disabled=true)}
@@ -730,7 +741,7 @@ async function aiAnalyze(btn){
     acertoGeral:st.pct,habilidades:st.skills.map(s=>({habilidade:s.k,acerto:s.pct,respostas:s.n,tempoMedioSeg:s.avg})),
     licoes:LESSONS.map(l=>({licao:l.subject+' - '+l.titulo,estrelas:(S.progress[l.id]||{}).stars||0,tentativas:(S.progress[l.id]||{}).tries||0})),
     errosFrequentes:st.errs.slice(0,8).map(([t,n])=>({tipo:t,vezes:n})),ultimosErros:st.recentErr.slice(0,8).map(a=>({pergunta:a.q,respondeu:a.given,certo:a.correct})),ajudasIA:st.aiHelps,leitura7dias:{dias:new Set(leituras().filter(r=>r.ts>=Date.now()-7*864e5).map(r=>r.data)).size,recontou:leituras().filter(r=>r.ts>=Date.now()-7*864e5&&r.recontou).length},missaoDaSemanaFeita:!!missaoFeita()};
-  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço escolar (Matemática, Português, Ciências, Dinheiro, Lógica, Emoções e Memória do Classical Conversations). Os dados também trazem a leitura em família e a missão fora da tela da semana.
+  const prompt=`Você ajuda um pai a acompanhar os estudos da filha de 7 anos (2º ano, Brasil), que usa em casa um app de reforço escolar (Matemática, Português, Ciências, Dinheiro, Lógica, Inglês e Memória do Classical Conversations). Os dados também trazem a leitura em família e a missão fora da tela da semana.
 Com base nos dados abaixo, escreva em português do Brasil, de forma direta e prática:
 **Resumo**: 2 ou 3 frases sobre frequência e tempo de estudo em relação à meta.
 **Pontos fortes**
@@ -781,7 +792,7 @@ const ACT={
   locked(){toast('Ganhe pelo menos 1 estrela na lição anterior para abrir esta.');speak('Termine a lição anterior para abrir esta.')},
   open(i){startLesson(+i)},
   home(){if(S.view==='lesson'||R)leaveLesson();else renderMap()},
-  say(){speak(R.lesson.slides[R.slide].t)},
+  say(){const s=R.lesson.slides[R.slide];speak(s.fala||s.t)},
   sayq(){speak(R.q.speak||R.q.text)},
   prevslide(){R.slide--;renderLearn()},
   nextslide(){if(R.slide<R.lesson.slides.length-1){R.slide++;renderLearn()}else beginPhase('practice')},
