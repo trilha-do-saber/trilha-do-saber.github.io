@@ -1079,6 +1079,119 @@ addBanco('transportes',[
   ['Qual destes serve para mandar mensagem escrita na hora?','Celular',['Carta','Jornal'],'📱','No celular a mensagem chega na hora.'],
   ['Qual transporte anda na água e é bem grande?','Navio',['Trem','Moto'],'🚢','O navio é um barco bem grande.']],'confundiu os meios de transporte');
 
+/* ================= LOTE 6 · 18/11/2026 · gramática do 2º ano: ortografia, pontuação, sinônimos, aumentativo, plural e feminino ================= */
+/* Completar a palavra: cada item = [antes, parte que falta, depois, emoji, palavra falada] */
+function lacunaGen(skill,lista,opcoes,erro,regra){return()=>{const [pre,alvo,pos,e,fala]=pick(lista),pal=(pre+alvo+pos).toUpperCase();
+  return{skill,text:'Complete a palavra:',speak:`Complete a palavra ${fala}.`,
+    visual:`<div class="emo" style="font-size:64px">${e}</div><div class="big" style="font-size:44px;letter-spacing:3px">${pre.toUpperCase()}<span style="color:var(--pri);border-bottom:4px solid var(--pri);padding:0 8px">?</span>${pos.toUpperCase()}</div>`,
+    desc:`${skill}: ${fala}`,optClass:'txt',options:shuffle(opcoes.map(o=>({v:o,label:o,ok:o===alvo.toUpperCase(),type:o===alvo.toUpperCase()?null:erro}))),
+    hint:'Fale a palavra em voz alta e preste atenção no som.',explain:`Escreve-se ${pal}. ${regra(alvo.toUpperCase(),pre,pos)}`,respFala:pal.toLowerCase()}}}
+const L_RRR=[['ca','rr','o','🚗','carro'],['cacho','rr','o','🐶','cachorro'],['te','rr','a','🌍','terra'],['go','rr','o','🧢','gorro'],['to','rr','e','🗼','torre'],['se','rr','ote','🪚','serrote'],['ma','rr','om','🟤','marrom'],['ga','rr','afa','🍾','garrafa'],['a','rr','oz','🍚','arroz'],['co','rr','ida','🏃','corrida'],['to','rr','ada','🍞','torrada'],['bo','rr','acha','🧽','borracha'],['ca','rr','oça','🐴','carroça'],['ba','rr','iga','🍽️','barriga'],['bu','rr','o','🫏','burro'],['ja','rr','a','🏺','jarra'],
+  ['pi','r','ulito','🍭','pirulito'],['gi','r','afa','🦒','girafa'],['a','r','ara','🦜','arara'],['co','r','uja','🦉','coruja'],['teso','r','a','✂️','tesoura'],['ceno','r','a','🥕','cenoura'],['pe','r','a','🍐','pera'],['ba','r','ata','🪳','barata'],['jaca','r','é','🐊','jacaré'],['co','r','ação','❤️','coração'],['pe','r','u','🦃','peru'],['ma','r','iposa','🦋','mariposa'],['espe','r','ança','🦗','esperança'],['ope','r','ário','👷','operário'],['fa','r','ol','🚨','farol']];
+const L_SSS=[['pá','ss','aro','🐦','pássaro'],['o','ss','o','🦴','osso'],['ma','ss','a','🍝','massa'],['to','ss','e','😷','tosse'],['va','ss','oura','🧹','vassoura'],['pê','ss','ego','🍑','pêssego'],['a','ss','obio','😗','assobio'],['pa','ss','eio','🚶','passeio'],['a','ss','ado','🍗','assado'],['gro','ss','o','📚','grosso'],['pa','ss','o','👣','passo'],['a','ss','ustado','😱','assustado'],['so','ss','ego','😌','sossego'],['ave','ss','o','🙃','avesso'],['mi','ss','ão','🚀','missão'],['po','ss','o','✋','posso'],
+  ['ca','s','a','🏠','casa'],['me','s','a','🪑','mesa'],['ro','s','a','🌹','rosa'],['va','s','o','🏺','vaso'],['cami','s','a','👕','camisa'],['a','s','a','🪽','asa'],['mú','s','ica','🎵','música'],['pre','s','ente','🎁','presente'],['coi','s','a','📦','coisa'],['be','s','ouro','🪲','besouro'],['rapo','s','a','🦊','raposa'],['ca','s','aco','🧥','casaco'],['bri','s','a','🌬️','brisa'],['blu','s','a','👚','blusa'],['me','s','ada','💵','mesada']];
+const L_MN=[['ca','m','po','🌾','campo'],['bo','m','bom','🍬','bombom'],['so','m','bra','🌳','sombra'],['ta','m','pa','🫙','tampa'],['lâ','m','pada','💡','lâmpada'],['e','m','pada','🥟','empada'],['ba','m','bu','🎋','bambu'],['po','m','ba','🕊️','pomba'],['ta','m','bor','🥁','tambor'],['se','m','pre','♾️','sempre'],['u','m','bigo','👶','umbigo'],['li','m','po','✨','limpo'],['co','m','prar','🛒','comprar'],['te','m','po','⏰','tempo'],['ca','m','balhota','🤸','cambalhota'],
+  ['ca','n','to','🎶','canto'],['ba','n','da','🎺','banda'],['po','n','te','🌉','ponte'],['de','n','te','🦷','dente'],['ma','n','ga','🥭','manga'],['ci','n','to','🥋','cinto'],['pe','n','te','🪮','pente'],['mu','n','do','🌍','mundo'],['o','n','da','🌊','onda'],['a','n','jo','👼','anjo'],['lara','n','ja','🍊','laranja'],['ve','n','to','🌬️','vento'],['ve','n','tilador','🪭','ventilador']];
+Object.assign(GEN,{
+  rRR:lacunaGen('R ou RR',L_RRR,['R','RR'],'confundiu R com RR',a=>a==='RR'?'Entre duas vogais, o som forte do R (como em RATO) se escreve com RR.':'Entre duas vogais, um R só tem som fraquinho, como em ARARA.'),
+  sSS:lacunaGen('S ou SS',L_SSS,['S','SS'],'confundiu S com SS',a=>a==='SS'?'Entre duas vogais, para ter o som de S (como em SAPO), usamos SS.':'Entre duas vogais, um S só tem som de Z, como em CASA.'),
+  mN:lacunaGen('M antes de P e B',L_MN,['M','N'],'esqueceu da regra do M antes de P e B',a=>a==='M'?'Antes de P e de B, sempre usamos M.':'Antes das outras consoantes, usamos N.'),
+});
+
+/* Pontuação: ponto final, interrogação e exclamação */
+const FRASES_PONT=[['Você quer brincar comigo','?'],['Que horas são','?'],['Onde está o meu sapato','?'],['Qual é o seu nome','?'],['Quantos anos você tem','?'],['Posso tomar sorvete','?'],['Quem comeu o bolo','?'],['Você gosta de gatos','?'],
+  ['Que bolo gostoso','!'],['Socorro','!'],['Que susto','!'],['Parabéns','!'],['Oba, vamos à praia','!'],['Que lindo presente','!'],['Cuidado com o fogo','!'],['Viva, ganhamos o jogo','!'],
+  ['Eu gosto de maçã','.'],['O gato dorme no sofá','.'],['Hoje está chovendo','.'],['A escola fica perto da minha casa','.'],['Meu irmão tem cinco anos','.'],['O sol nasce de manhã','.'],['Nós fomos ao parque','.'],['A girafa tem o pescoço comprido','.']];
+const NOME_PONT={'?':'Interrogação ( ? )','!':'Exclamação ( ! )','.':'Ponto final ( . )'},PORQUE_PONT={'?':'é uma pergunta: usamos o ponto de interrogação.','!':'mostra emoção, susto ou alegria: usamos o ponto de exclamação.','.':'conta uma informação: termina com ponto final.'};
+Object.assign(GEN,{
+  pontuacao(){const [f,s]=pick(FRASES_PONT);
+    return{skill:'Pontuação',text:'Que sinal termina esta frase?',speak:`Que sinal termina esta frase? ${f}`,visual:`<div class="big" style="font-size:30px;line-height:1.4">${f} <span style="color:var(--pri);border-bottom:4px solid var(--pri);padding:0 10px">?</span></div>`,
+      desc:'pontuação: '+f,optClass:'sent',options:shuffle(['.','?','!'].map(x=>({v:x,label:NOME_PONT[x],ok:x===s,type:x===s?null:(x==='.'?'esqueceu da emoção ou da pergunta':s==='.'?'colocou emoção onde era só informação':'confundiu pergunta com exclamação')}))),
+      hint:'Leia a frase com a voz. Ela pergunta? Ela mostra emoção? Ou só conta algo?',explain:`"${f}${s}" ${PORQUE_PONT[s]}`}},
+});
+
+/* Sinônimos e antônimos */
+const SINON=[['alegre','feliz'],['bonito','lindo'],['grande','enorme'],['rápido','veloz'],['começar','iniciar'],['falar','dizer'],['carro','automóvel'],['menino','garoto'],['contente','alegre'],['pequeno','miúdo'],['casa','lar'],['bravo','zangado'],['ganhar','vencer'],['cheiroso','perfumado'],['acabar','terminar']];
+const ANTON=[['alto','baixo'],['quente','frio'],['cheio','vazio'],['dia','noite'],['abrir','fechar'],['feliz','infeliz'],['possível','impossível'],['paciente','impaciente'],['limpo','sujo'],['rápido','devagar'],['claro','escuro'],['perto','longe'],['entrar','sair'],['grande','pequeno'],['forte','fraco'],['subir','descer'],['novo','velho'],['molhado','seco'],['certo','errado'],['ligar','desligar']];
+Object.assign(GEN,{
+  sinonimo(){const sin=Math.random()<.45,[a,b]=pick(sin?SINON:ANTON),ida=Math.random()<.5,[w,r]=ida?[a,b]:[b,a];
+    const outroS=pick(SINON.filter(p=>!p.includes(w)&&!p.includes(r)))[0],outroA=pick(ANTON.filter(p=>!p.includes(w)&&!p.includes(r)))[1];
+    const par=sin?pick(ANTON.filter(p=>p[0]===w||p[1]===w))||null:pick(SINON.filter(p=>p[0]===w||p[1]===w))||null,cruz=par?(par[0]===w?par[1]:par[0]):null;
+    const cands=[{v:r,ok:true}];const add=(v,type)=>{if(v&&!cands.some(c=>c.v===v)&&v!==w)cands.push({v,type})};
+    add(cruz,sin?'escolheu o contrário em vez do parecido':'escolheu o parecido em vez do contrário');add(sin?outroA:outroS,'escolheu uma palavra que não combina');add(sin?outroS:outroA,'escolheu uma palavra que não combina');
+    const ops=shuffle(cands.slice(0,3).map(c=>({v:c.v,label:c.v,ok:!!c.ok,type:c.ok?null:c.type})));
+    return{skill:sin?'Sinônimos':'Antônimos',text:sin?`Qual palavra quer dizer o mesmo que "${w}"?`:`Qual é o contrário de "${w}"?`,visual:`<div class="emo" style="font-size:48px">${sin?'🟰':'↔️'}</div>`,
+      desc:`${sin?'sin':'ant'} ${w}`,optClass:'txt',options:ops,hint:sin?'Sinônimo é palavra que quer dizer quase a mesma coisa.':'Antônimo é a palavra de sentido contrário.',
+      explain:sin?`"${w}" e "${r}" querem dizer quase a mesma coisa: são sinônimos.`:`"${w}" e "${r}" têm sentidos contrários: são antônimos.${/^i[nm]/.test(r)&&r.slice(2)===w?` Colocar ${r.slice(0,2).toUpperCase()} no começo faz o contrário.`:''}`}},
+});
+
+/* Aumentativo e diminutivo */
+const AUMDIM=[['gato','gatinho','gatão','gatos','🐱'],['bola','bolinha','bolão','bolas','⚽'],['carro','carrinho','carrão','carros','🚗'],['livro','livrinho','livrão','livros','📘'],['copo','copinho','copão','copos','🥤'],['cachorro','cachorrinho','cachorrão','cachorros','🐶'],
+  ['peixe','peixinho','peixão','peixes','🐟'],['dente','dentinho','dentão','dentes','🦷'],['bolo','bolinho','bolão','bolos','🎂'],['pé','pezinho','pezão','pés','🦶'],['boca','boquinha','bocão','bocas','👄'],['casa','casinha','casarão','casas','🏠'],['nariz','narizinho','narigão','narizes','👃'],['chapéu','chapeuzinho','chapelão','chapéus','👒'],['amigo','amiguinho','amigão','amigos','🤝'],['urso','ursinho','ursão','ursos','🐻']];
+Object.assign(GEN,{
+  aumDim(){const [w,d,a,pl,e]=pick(AUMDIM),t=pick(['dim','aum','qual','qual']);let text,ops,expl,certo;
+    if(t==='dim'||t==='aum'){certo=t==='dim'?d:a;text=`Qual é o ${t==='dim'?'diminutivo (pequeno)':'aumentativo (grande)'} de "${w}"?`;
+      ops=[{v:certo,ok:true},{v:t==='dim'?a:d,type:'confundiu aumentativo com diminutivo'},{v:pl,type:'confundiu com plural'}];expl=`${t==='dim'?d:a} é ${t==='dim'?'um '+w+' pequeno: diminutivo':'um '+w+' grande: aumentativo'}.`}
+    else{const forma=pick([d,a]),dim=forma===d;certo=dim?'Diminutivo':'Aumentativo';text=`"${cap1(forma)}" é aumentativo ou diminutivo?`;
+      ops=[{v:'Diminutivo',ok:dim},{v:'Aumentativo',ok:!dim},{v:'Plural',type:'confundiu com plural'}].map(o=>({...o,type:o.ok?null:(o.type||'confundiu aumentativo com diminutivo')}));expl=dim?`Terminar em -INHO ou -INHA indica tamanho pequeno: ${forma} é diminutivo.`:`Terminar em -ÃO indica tamanho grande: ${forma} é aumentativo.`}
+    return{skill:'Aumentativo e diminutivo',text,visual:`<div class="emo"><span style="font-size:30px">${e}</span> <span style="font-size:52px">${e}</span> <span style="font-size:80px">${e}</span></div>`,desc:`aumdim ${t} ${w}${t==='qual'?' '+text:''}`,optClass:'txt',
+      options:shuffle(ops.map(o=>({v:o.v,label:o.v,ok:!!o.ok,type:o.ok?null:o.type}))),hint:'-INHO e -INHA: pequeno. -ÃO: grande.',explain:expl}},
+});
+
+/* Singular e plural, masculino e feminino */
+const PLURAL=[['gato','gatos','gatoes','m'],['flor','flores','flors','f'],['mar','mares','mars','m'],['colher','colheres','colhers','f'],['mão','mãos','mães','f'],['avião','aviões','aviãos','m'],['balão','balões','balãos','m'],['leão','leões','leãos','m'],['bola','bolas','bolaes','f'],['casa','casas','casaes','f'],['professor','professores','professors','m'],['lápis','lápis','lápises','m'],['ônibus','ônibus','ônibuses','m'],['pão','pães','pãos','m'],['cão','cães','cãos','m'],['mulher','mulheres','mulhers','f'],['dente','dentes','dentees','m'],['botão','botões','botãos','m']];
+const FEMIN=[['menino','menina','menine'],['gato','gata','gatoa'],['leão','leoa','leã'],['professor','professora','professoa'],['pai','mãe','paia'],['rei','rainha','reia'],['galo','galinha','gala'],['boi','vaca','boia'],['homem','mulher','homa'],['avô','avó','avoa'],['tio','tia','tioa'],['cavalo','égua','cavala'],['ator','atriz','atora'],['príncipe','princesa','príncipa'],['padrinho','madrinha','padrinha'],['irmão','irmã','irmona'],['cachorro','cachorra','cachorrona'],['moço','moça','moçoa']];
+Object.assign(GEN,{
+  plural(){const [sg,p,e,g]=pick(PLURAL),igual=sg===p,um=g==='f'?'uma':'um',dois=g==='f'?'duas':'dois';
+    const ops=[{v:p,label:p,ok:true,type:null},{v:e,label:e,ok:false,type:'errou a terminação do plural'}];
+    if(!igual)ops.push({v:sg,label:sg,ok:false,type:'esqueceu de fazer o plural'});else ops.push({v:sg+'s',label:sg+'s',ok:false,type:'errou a terminação do plural'});
+    return{skill:'Singular e plural',text:`${cap1(um)} ${sg}, ${dois}...`,speak:`${cap1(um)} ${sg}, ${dois}. Como fica no plural?`,visual:`<div class="big" style="font-size:30px">1 ${sg} → 2 <span style="color:var(--pri)">?</span></div>`,desc:'plural '+sg,optClass:'txt',options:shuffle(ops),
+      hint:'Plural é mais de um. Fale "dois..." ou "duas..." e escute como fica.',explain:igual?`${cap1(sg)} não muda no plural: ${um} ${sg}, ${dois} ${p}.`:/r$/.test(sg)?`Palavras que terminam em R ganham -ES: ${p}.`:/ão$/.test(sg)?`O plural de ${sg} é ${p}. Palavras com -ÃO podem virar -ÕES, -ÃES ou -ÃOS: é bom decorar.`:`No plural fica ${p}.`}},
+  feminino(){const [m,f,e]=pick(FEMIN),irr=!f.startsWith(m.slice(0,2));
+    return{skill:'Masculino e feminino',text:`Qual é o feminino de "${m}"?`,visual:'<div class="emo" style="font-size:48px">👦 → 👧</div>',desc:'feminino '+m,optClass:'txt',
+      options:shuffle([{v:f,label:f,ok:true,type:null},{v:e,label:e,ok:false,type:'trocou só a última letra'},{v:pick(FEMIN.filter(x=>x[0]!==m))[1],label:'',ok:false,type:'escolheu outra palavra'}].map(o=>o.label?o:{...o,label:o.v}).filter((o,i,a)=>a.findIndex(x=>x.label===o.label)===i)),
+      hint:'Feminino é a forma usada para meninas e fêmeas.',explain:irr?`${cap1(m)} e ${f} são palavras diferentes: o feminino de ${m} é ${f}.`:`O feminino de ${m} é ${f}.`}},
+});
+
+POR_LESSONS.push(
+  {id:'r-rr',titulo:'R ou RR',icone:'🚗',bncc:'EF02LP03',
+   slides:[{t:'No começo da palavra, o R tem som forte: RATO, RUA, RODA.',v:'<div class="emo" style="font-size:56px">🐭 RATO</div>'},
+    {t:'Entre duas vogais, o R sozinho tem som fraquinho: ARARA, PERA, GIRAFA.',v:'<div class="emo" style="font-size:56px">🦜 ARARA</div>'},
+    {t:'Para ter som forte entre vogais, usamos RR: CARRO, TERRA, CACHORRO.',v:'<div class="emo" style="font-size:56px">🚗 CA<b style="color:var(--pri)">RR</b>O</div>'}],
+   practice:['rRR','rRR','rRR','rRR','rRR','rRR'],quiz:['rRR','rRR','rRR','rRR','rRR']},
+  {id:'s-ss',titulo:'S ou SS',icone:'🐦',bncc:'EF02LP03',
+   slides:[{t:'No começo da palavra, o S tem som de S: SAPO, SOL, SUCO.',v:'<div class="emo" style="font-size:56px">🐸 SAPO</div>'},
+    {t:'Entre duas vogais, o S sozinho tem som de Z: CASA, MESA, ROSA.',v:'<div class="emo" style="font-size:56px">🏠 CA<b style="color:var(--pri)">S</b>A</div>'},
+    {t:'Para ter som de S entre vogais, usamos SS: PÁSSARO, OSSO, MASSA.',v:'<div class="emo" style="font-size:56px">🐦 PÁ<b style="color:var(--pri)">SS</b>ARO</div>'}],
+   practice:['sSS','sSS','sSS','sSS','sSS','sSS'],quiz:['sSS','sSS','sSS','sSS','sSS']},
+  {id:'m-pb',titulo:'M antes de P e B',icone:'🍬',bncc:'EF02LP03',
+   slides:[{t:'Antes de P e de B, sempre usamos M: CAMPO, BOMBOM, SOMBRA.',v:'<div class="emo" style="font-size:52px">🍬 BO<b style="color:var(--pri)">M</b>BOM</div>'},
+    {t:'Antes das outras letras, usamos N: PONTE, DENTE, LARANJA.',v:'<div class="emo" style="font-size:52px">🦷 DE<b style="color:var(--pri)">N</b>TE</div>'}],
+   practice:['mN','mN','mN','mN','mN','mN'],quiz:['mN','mN','mN','mN','mN']},
+  {id:'pontuacao',titulo:'Ponto, pergunta e exclamação',icone:'❓',bncc:'EF02LP09',
+   slides:[{t:'O ponto final ( . ) termina uma frase que conta algo: O gato dorme.',v:'<div class="big" style="font-size:32px">O gato dorme<b style="color:var(--pri)">.</b></div>'},
+    {t:'O ponto de interrogação ( ? ) termina uma pergunta: Você quer brincar?',v:'<div class="big" style="font-size:32px">Você quer brincar<b style="color:var(--pri)">?</b></div>'},
+    {t:'O ponto de exclamação ( ! ) mostra emoção, susto ou alegria: Que bolo gostoso!',v:'<div class="big" style="font-size:32px">Que bolo gostoso<b style="color:var(--pri)">!</b></div>'}],
+   practice:['pontuacao','pontuacao','pontuacao','pontuacao','pontuacao','pontuacao'],quiz:['pontuacao','pontuacao','pontuacao','pontuacao','pontuacao']},
+  {id:'sinonimos',titulo:'Sinônimos e antônimos',icone:'🔁',bncc:'EF02LP10',
+   slides:[{t:'Sinônimos são palavras que querem dizer quase a mesma coisa: alegre e feliz.',v:'<div class="emo" style="font-size:44px">😄 alegre 🟰 feliz</div>'},
+    {t:'Antônimos são palavras de sentido contrário: quente e frio, cheio e vazio.',v:'<div class="emo" style="font-size:44px">🔥 quente ↔️ frio 🧊</div>'},
+    {t:'Às vezes, colocar IN ou IM no começo faz o contrário: feliz e infeliz, possível e impossível.',v:'<div class="emo" style="font-size:40px">feliz ↔️ <b style="color:var(--pri)">IN</b>feliz</div>'}],
+   practice:['sinonimo','sinonimo','sinonimo','sinonimo','sinonimo','sinonimo'],quiz:['sinonimo','sinonimo','sinonimo','sinonimo','sinonimo']},
+  {id:'aum-dim',titulo:'Aumentativo e diminutivo',icone:'🐘',bncc:'EF02LP11',
+   slides:[{t:'O diminutivo mostra algo pequeno ou carinhoso. Muitas vezes termina em -INHO ou -INHA: gatinho, casinha.',v:'<div class="emo"><span style="font-size:30px">🐱</span> gat<b style="color:var(--pri)">inho</b></div>'},
+    {t:'O aumentativo mostra algo grande. Muitas vezes termina em -ÃO: gatão, bolão.',v:'<div class="emo"><span style="font-size:80px">🐱</span> gat<b style="color:var(--pri)">ão</b></div>'}],
+   practice:['aumDim','aumDim','aumDim','aumDim','aumDim','aumDim'],quiz:['aumDim','aumDim','aumDim','aumDim','aumDim']},
+  {id:'plural-feminino',titulo:'Plural e feminino',icone:'👫',bncc:'EF02LP08',
+   slides:[{t:'Singular é um só. Plural é mais de um: um gato, dois gatos. Quem termina em R ganha -ES: flor, flores.',v:'<div class="emo" style="font-size:44px">🐱 → 🐱🐱</div>'},
+    {t:'Masculino e feminino: menino e menina, gato e gata. Algumas palavras mudam todinhas: pai e mãe, boi e vaca.',v:'<div class="emo" style="font-size:44px">👦 menino · 👧 menina</div>'}],
+   practice:['plural','feminino','plural','feminino','plural','feminino'],quiz:['plural','feminino','plural','feminino','plural']},
+);
+MISSOES.push(
+  {icone:'📝',materia:'Português',texto:'Escreva 3 frases num papel: uma que conta algo ( . ), uma pergunta ( ? ) e uma com emoção ( ! ).'},
+  {icone:'🔁',materia:'Português',texto:'Brinque de "contrário" com alguém: um fala uma palavra (quente) e o outro responde o contrário (frio).'},
+);
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
