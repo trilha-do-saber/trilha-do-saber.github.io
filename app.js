@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v23';
+const APP_VERSAO='trilha-v24';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -370,8 +370,9 @@ function roteiro(){
   const key='rot:'+today();let st=LS.get(key,null);
   if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes()};LS.set(key,st)}
   const main=mainSubj(),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
-  const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=doneToday(x=>x.subject===main.nome),s3=!ops.length||doneToday(x=>ops.some(o=>o.nome===x.subject));
-  return {main,ops,w,s1,s2,s3,done:s1&&s2&&s3,total:(w?1:0)+1+(ops.length?1:0),feitos:(w&&s1?1:0)+(s2?1:0)+(ops.length&&s3?1:0)};
+  const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=doneToday(x=>x.subject===main.nome),opsFeitas=ops.map(o=>doneToday(x=>x.subject===o.nome)),s3=opsFeitas.every(Boolean);
+  /* as 2 matérias do dia são obrigatórias, na ordem que ela quiser */
+  return {main,ops,opsFeitas,w,s1,s2,s3,done:s1&&s2&&s3,total:(w?1:0)+1+ops.length,feitos:(w&&s1?1:0)+(s2?1:0)+opsFeitas.filter(Boolean).length};
 }
 function nextLessonOf(subj){
   const L=subj.lessons||[];
@@ -384,13 +385,10 @@ function roteiroHTML(r){
   const nx=nextLessonOf(r.main);
   const passo=(act,arg,ic,tit,sub,feito,ativo)=>`<button class="passo ${feito?'feito':''} ${ativo&&!feito?'ativo':''}" data-act="${act}" ${arg?`data-arg="${arg}"`:''} ${feito||!ativo?'disabled':''}><span class="ic">${ic}</span><span class="col" style="gap:2px;flex:1"><b>${tit}</b><small>${sub}</small></span><span class="st">${feito?'✅':ativo?'▶️':'🔒'}</span></button>`;
   let h=`<div class="card col roteiro"><div class="row"><h2 style="font-size:26px">🗺️ Roteiro de hoje</h2><span class="spacer"></span><span class="pill ${r.done?'ok':'mid'}">${r.feitos} de ${r.total}</span></div>`;
-  if(r.w)h+=passo('rot1','','🔥','Aquecimento','5 questões de revisão',r.s1,true);
+  if(r.w)h+=passo('rot1','','🔥','Aquecimento',`${tam().aquec} questões de revisão`,r.s1,true);
   h+=passo('rot2','',r.main.ic,r.main.nome,(nx.rev?'Revisão: ':'')+esc(nx.l.titulo),r.s2,r.s1);
-  if(r.ops.length){
-    if(r.s3)h+=passo('rot3','','🎲','Matéria do dia','Feita!',true,true);
-    else if(r.s1&&r.s2)h+=`<div class="passo ativo" style="flex-wrap:wrap"><span class="ic">🎲</span><span class="col" style="gap:2px;flex:1"><b>Matéria do dia</b><small>Escolha uma:</small></span><span class="row" style="gap:10px">${r.ops.map(o=>`<button class="btn small" data-act="rot3" data-arg="${o.id}">${o.ic} ${esc(o.nome)}${o.id==='mem'&&memNovas().length?' ✨':''}</button>`).join('')}</span></div>`;
-    else h+=passo('rot3','','🎲','Matéria do dia',`Você vai escolher: ${r.ops.map(o=>o.ic+' '+esc(o.nome)).join(' ou ')}`,false,false);
-  }
+  r.ops.forEach((o,k)=>{const nxo=nextLessonOf(o);
+    h+=passo('rot3',o.id,o.ic,`Matéria do dia ${k+1}: ${esc(o.nome)}${o.id==='mem'&&memNovas().length?' ✨':''}`,r.opsFeitas[k]?'Feita!':(nxo&&nxo.l?(nxo.rev?'Revisão: ':'')+esc(nxo.l.titulo):''),r.opsFeitas[k],r.s1&&r.s2)});
   if(r.done)h+=`<div class="note" style="background:var(--ok-soft);color:#11603B;text-align:center;font-size:18px">🎉 Roteiro completo! Agora é tempo livre: escolha o que quiser.</div>`;
   else if(S.config.livreDepois!==false)h+=`<p class="muted" style="margin:0;font-size:14px;text-align:center">Termine o roteiro para liberar o tempo livre.</p>`;
   return h+'</div>';
