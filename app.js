@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v47';
+const APP_VERSAO='trilha-v48';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -101,7 +101,7 @@ function atualizarSePuder(){
   toast('Atualizando o app…');atualizarApp();
 }
 function mostrarAtualizacao(){}
-const ARQ_APP=['./','index.html','app.js','jogos.js','fotos.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
+const ARQ_APP=['./','index.html','app.js','jogos.js','fotos.js','robo.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
 async function atualizarApp(){
   const b=document.querySelector('[data-act=atualizar]');if(b){b.disabled=true;b.textContent='Atualizando…'}
   try{flushSession&&flushSession()}catch(e){}
@@ -555,7 +555,7 @@ function renderMap(){
 function startLesson(i){startLessonObj(curLessons()[i],i,curSubj().nome)}
 function startLessonObj(l,i,subj,direto){
   R={idx:i,lesson:l,subjName:subj,phase:'learn',slide:0,items:[],qi:0,q:null,tries:0,qStart:0,quizOk:0,aiUsed:0,results:[]};
-  if(!direto)R.lesson={...l,slides:[...(l.slides||[]),...exemplos(l)]};
+  R.base=l;if(!direto)R.lesson={...l,slides:[...(l.slides||[]),...exemplos(l)]};
   S.session={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:today(),start:Date.now(),end:Date.now(),activeMs:0,
     lessonId:l.id,lessonTitle:l.titulo,subject:subj,phaseReached:'learn',answers:[],quizScore:null,quizTotal:l.quiz.length,stars:null};
   flushSession(); if(direto){R.quizOk=0;beginPhase('quiz')}else renderLearn();
@@ -587,7 +587,7 @@ function renderLearn(){
 }
 function beginPhase(phase){
   R.phase=phase;R.qi=0;R.results=[];
-  calcNiveis();const alvo=R.lesson.id==='aquecimento'?R.lesson[phase].length:tam()[phase];R.items=gerarItens(esticar(R.lesson[phase],alvo),R.usados=R.usados||new Set());
+  calcNiveis();const alvo=(R.lesson.id==='aquecimento'||R.lesson.treino)?R.lesson[phase].length:tam()[phase];R.items=gerarItens(esticar(R.lesson[phase],alvo),R.usados=R.usados||new Set());
   S.session.phaseReached=phase;queueSave();renderQ();
 }
 /* ---- Variedade: nada repetido na lição e o mínimo de repetição entre os dias ---- */
@@ -720,7 +720,7 @@ Regras: no máximo 2 frases curtas; palavras simples; português do Brasil; use 
 }
 function finishLesson(){
   const total=R.items.length,ok=R.quizOk,stars=ok>=total?3:ok>=total-1?2:ok>=Math.ceil(total*0.6)?1:0;
-  if(R.lesson.id!=='aquecimento'){const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
+  if(R.lesson.id!=='aquecimento'&&!R.lesson.treino){const p=S.progress[R.lesson.id]||{stars:0,best:0,tries:0};
     p.tries=(p.tries||0)+1;p.last=ok;p.best=Math.max(p.best||0,ok);p.stars=Math.max(p.stars||0,stars);p.lastAt=Date.now();if(p.stars>=1&&!p.passouEm)p.passouEm=Date.now();
     S.progress[R.lesson.id]=p;saveProgress();}
   S.session.quizScore=ok;S.session.stars=stars;S.session.phaseReached='done';
@@ -931,8 +931,8 @@ const ACT={
   sylCheck(){const q=R.q,given=R.syl.picked.map(i=>q.parts[i]).join('');if(R.syl.picked.length<q.parts.length){toast('Use todas as sílabas.');return}
     const ok=given===q.word,first=R.tries===0;handleAnswer(ok,given,ok?null:'trocou a ordem das sílabas',null);if(!ok&&R.phase==='practice'&&first){R.syl.picked=[];drawSyl()}},
   aiexp(_,el){aiExplain(el)},
-  nextq(){if(R.qi<R.items.length-1){R.qi++;renderQ()}else if(R.phase==='practice'){R.quizOk=0;beginPhase('quiz')}else finishLesson()},
-  again(){if(R.lesson.id==='aquecimento')startWarmup();else startLessonObj(R.lesson,R.idx,R.subjName)},
+  nextq(){if(R.qi<R.items.length-1){R.qi++;renderQ()}else if(R.phase==='practice'&&!R.lesson.treino){R.quizOk=0;beginPhase('quiz')}else finishLesson()},
+  again(){if(R.lesson.id==='aquecimento')startWarmup();else if(R.lesson.treino&&typeof roboTreino==='function')roboTreino(R.lesson.skillTreino);else startLessonObj(R.base||R.lesson,R.idx,R.subjName)},
   warmup(){startWarmup()},
   rot1(){startWarmup()},
   rot2(){startSubjNext(mainSubj().id)},
