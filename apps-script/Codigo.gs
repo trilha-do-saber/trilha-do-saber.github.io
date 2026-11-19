@@ -140,6 +140,8 @@ function salvarDiario_(r) {
   if (!sh) { criarAbasNovas(); sh = aba_('Diario'); }
   const resumo = r.tipo === 'leitura' ? (r.livro + ' · ' + r.minutos + ' min · ' + r.quem + (r.recontou ? ' · recontou' : ''))
     : r.tipo === 'missao' ? ('Missão feita: ' + r.texto)
+    : r.tipo === 'pratica' ? ('Mãos na massa C' + r.ciclo + ' S' + r.semana + ': ' + r.titulo + (r.feita ? ' · feita' : ''))
+    : r.tipo === 'pedido' || r.tipo === 'resposta' ? String(r.texto || '').slice(0, 80)
     : r.tipo === 'pote' ? (r.desc + ': ' + Object.keys(r.v || {}).map(k => k + ' ' + (r.v[k] > 0 ? '+' : '') + r.v[k]).join(', '))
     : r.tipo === 'potes' ? ('Configuração: mesada R$ ' + r.mesada + (r.pct ? ' (' + r.pct.gastar + '/' + r.pct.guardar + '/' + r.pct.investir + '%)' : '') + (r.metaNome ? ' · Meta: ' + r.metaNome + ' R$ ' + r.metaValor : '')) : '';
   const linha = [r.id, r.data || '', r.tipo || '', resumo, JSON.stringify(r)];
@@ -238,6 +240,7 @@ function lerFotoCC_(p) {
   const imgs = (p.imagens || []).slice(0, 4);
   if (!imgs.length) throw new Error('sem_imagem');
   contarUsoIA_();
+  if (p.tipo === 'pratica') return lerPratica_(p, imgs);
   const schema = { type: 'OBJECT', properties: { itens: { type: 'ARRAY', items: { type: 'OBJECT',
     properties: { materia: { type: 'STRING' }, texto: { type: 'STRING' } }, required: ['materia', 'texto'] } } }, required: ['itens'] };
   const fotos = imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } }));
@@ -259,6 +262,22 @@ function lerFotoCC_(p) {
     if (itens.length) break;
   }
   return { itens: itens, motivo: itens.length ? '' : motivo, bruto: itens.length ? '' : bruto };
+}
+
+/** Página "Mãos na massa": a IA RESUME a atividade com palavras próprias, em passos simples para uma criança de 7 anos. */
+function lerPratica_(p, imgs) {
+  const schema = { type: 'OBJECT', properties: { titulo: { type: 'STRING' }, passos: { type: 'ARRAY', items: { type: 'STRING' } },
+    materiais: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['titulo', 'passos'] };
+  const prompt = 'Estas fotos mostram a atividade prática ("Mãos na massa": belas artes, ciências ou outra) da semana ' + p.semana
+    + ' do guia Foundations, livro que a família possui. Não copie o texto do livro. Com suas próprias palavras, explique a atividade '
+    + 'para uma criança de 7 anos fazer em casa com um adulto: um título curto, de 2 a 5 passos bem simples (frases curtas, começando com um verbo) '
+    + 'e a lista de materiais. Português do Brasil.';
+  const txt = geminiParts_([{ text: prompt }].concat(imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } }))), 4000, true, schema);
+  let j = {};
+  try { j = JSON.parse(txt.replace(/^```(json)?/, '').replace(/```$/, '').trim()); } catch (e) { return { pratica: null, motivo: GEMINI_FIM_ || 'resposta_invalida' }; }
+  const lista = v => (Array.isArray(v) ? v : v ? [v] : []).map(x => String(x).slice(0, 200)).filter(Boolean).slice(0, 8);
+  const pr = { titulo: String(j.titulo || '').slice(0, 80), passos: lista(j.passos), materiais: lista(j.materiais) };
+  return { pratica: pr.titulo || pr.passos.length ? pr : null, motivo: GEMINI_FIM_ };
 }
 
 /** Aceita as variações de JSON que o Gemini às vezes devolve e transforma em [{materia, texto}]. */

@@ -14,6 +14,7 @@ function jogosHTML(){
     ${j('medico','🩺','Clínica dos bichinhos','Cuide dos animais doentes')}
     ${j('dentista','🦷','Dentista','Deixe os dentes brilhando')}
     ${j('forca','🎈','Forca dos balões','Descubra a palavra antes dos balões estourarem')}
+    ${j('desenho','🙃','Desenho de cabeça para baixo','Copie o desenho virado e depois vire!')}
     ${j('caca','🔎','Caça-palavras','Ache as palavras escondidas')}
     ${j('memoria','🃏','Jogo da memória','Encontre os pares')}
     ${j('sudoku','🧩','Sudoku das figuras','Cada figura uma vez em cada linha')}</div>`;
@@ -272,15 +273,64 @@ function desenhaDente(chegou){const J=JG,pend=J.alvos.filter(a=>!a.ok&&!a.final)
   if(chegou){speak(`${cap1(J.nome)} tem ${J.ps.map(p=>p.txt).join(', ')}. Vamos ajudar?`);pedeDica()}
 }
 
+/* ---------- Desenho de cabeça para baixo + ilusão "dois rostos ou uma taça?" ----------
+   Técnica de desenho: copiar uma figura virada ao contrário ajuda a desenhar o que se vê. Desenhos originais, feitos aqui. */
+const MODELOS=[
+  ['Casa','<path d="M30 110 L100 45 L170 110 M45 98 V175 H155 V98 M85 175 V130 H115 V175 M120 105 H145 V128 H120 Z"/>'],
+  ['Peixe','<path d="M30 100 C70 50 130 50 160 100 C130 150 70 150 30 100 Z M160 100 L190 70 V130 Z"/><circle cx="65" cy="92" r="6"/><path d="M95 75 C105 95 105 105 95 125"/>'],
+  ['Estrela','<path d="M100 25 L120 80 L178 80 L131 113 L149 170 L100 136 L51 170 L69 113 L22 80 L80 80 Z"/>'],
+  ['Barco','<path d="M30 130 H170 L145 165 H55 Z M100 130 V35 L150 115 H100 M100 45 L60 115 H100"/>'],
+  ['Árvore','<path d="M90 180 V125 H110 V180 M100 125 C40 130 35 70 70 60 C70 25 130 25 130 60 C165 70 160 130 100 125"/>'],
+  ['Gato','<circle cx="100" cy="110" r="55"/><path d="M58 75 L62 30 L90 58 M142 75 L138 30 L110 58 M88 120 L100 128 L112 120 M60 115 H25 M60 125 L28 135 M140 115 H175 M140 125 L172 135"/><circle cx="80" cy="100" r="5"/><circle cx="120" cy="100" r="5"/>'],
+  ['Flor','<circle cx="100" cy="70" r="16"/><circle cx="100" cy="35" r="18"/><circle cx="135" cy="70" r="18"/><circle cx="100" cy="105" r="18"/><circle cx="65" cy="70" r="18"/><path d="M100 123 V185 M100 160 C80 140 65 150 60 160 C80 165 95 162 100 160"/>'],
+  ['Sorvete','<path d="M65 95 L100 185 L135 95 Z M70 95 C55 60 85 40 100 55 C115 40 145 60 130 95 M80 120 L120 150 M120 120 L80 150"/>'],
+];
+const CORES_D=['#1D2846','#E5484D','#3557E8','#1F9D61','#FFB020','#9B51E0'];
+function novoDesenho(i){const k=i==null?Math.floor(Math.random()*MODELOS.length):i;JG={tipo:'desenho',k,virado:false,cor:CORES_D[0],tracos:[]}}
+function desenhoHTML(){const J=JG,[nome,svg]=MODELOS[J.k];
+  return jogoTopo('🙃 Desenho de cabeça para baixo',`<button class="btn small ghost" data-act="ilusao">👀 Ilusão</button>`)+
+  `<div class="card col" style="align-items:center;gap:10px;text-align:center;margin-top:10px">
+   <div class="note" style="margin:0;font-size:17px">${J.virado?`Olha só o seu desenho de <b>${nome.toLowerCase()}</b>! Ficou parecido?`:'Copie o desenho do jeitinho que você vê, <b>de cabeça para baixo</b>. Não tente adivinhar o que é: só copie as linhas!'}</div>
+   <div class="row" style="gap:12px;justify-content:center;flex-wrap:wrap">
+     <div style="background:#fff;border:3px solid #D5DDEE;border-radius:18px;padding:6px"><div class="muted" style="font-size:13px">Modelo</div>
+       <svg viewBox="0 0 200 200" style="width:min(150px,38vw);transition:transform .8s;transform:rotate(${J.virado?0:180}deg)"><g fill="none" stroke="#1D2846" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${svg}</g></svg></div>
+     <div style="background:#fff;border:3px solid var(--pri);border-radius:18px;padding:6px"><div class="muted" style="font-size:13px">Seu desenho</div>
+       <canvas id="tela" width="600" height="600" style="width:min(320px,78vw);height:min(320px,78vw);touch-action:none;border-radius:12px;background:#FFFDF6;transition:transform .8s;transform:rotate(${J.virado?180:0}deg)"></canvas></div>
+   </div>
+   <div class="row" style="gap:8px;justify-content:center">${CORES_D.map(c=>`<button data-act="dcor" data-arg="${c}" aria-label="cor" style="width:40px;height:40px;border-radius:50%;background:${c};border:${J.cor===c?'4px solid #FFB020':'3px solid #fff'};box-shadow:0 0 0 1px #ccd"></button>`).join('')}
+     <button class="btn small ghost" data-act="dapaga">🧽 Apagar</button></div>
+   <div class="row" style="gap:10px;justify-content:center">${J.virado?'<button class="btn" data-act="dvira">🙃 Desvirar</button><button class="btn okb" data-act="dnovo">Outro desenho ➡️</button>':'<button class="btn okb" data-act="dvira">🔄 Virar e comparar</button><button class="btn small ghost" data-act="dnovo">Trocar desenho</button>'}</div>
+  </div>`}
+function telaRedesenha(){const c=document.getElementById('tela');if(!c)return;const g=c.getContext('2d');g.clearRect(0,0,600,600);g.lineCap='round';g.lineJoin='round';g.lineWidth=12;
+  for(const t of JG.tracos){g.strokeStyle=t.cor;g.beginPath();t.p.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));if(t.p.length===1)g.lineTo(t.p[0][0]+.1,t.p[0][1]);g.stroke()}}
+function abreDesenho(){app.innerHTML=desenhoHTML();telaRedesenha();const c=document.getElementById('tela');let atual=null;
+  const pos=e=>{const r=c.getBoundingClientRect();let x=(e.clientX-r.left)/r.width*600,y=(e.clientY-r.top)/r.height*600;if(JG.virado){x=600-x;y=600-y}return[x,y]};
+  c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);atual={cor:JG.cor,p:[pos(e)]};JG.tracos.push(atual);telaRedesenha()});
+  c.addEventListener('pointermove',e=>{if(!atual)return;e.preventDefault();atual.p.push(pos(e));telaRedesenha()});
+  const fim=()=>{atual=null};c.addEventListener('pointerup',fim);c.addEventListener('pointercancel',fim)}
+/* Ilusão: perfil desenhado aqui (pontos x,y); o rosto da direita é o espelho. O espaço branco entre eles forma uma taça. */
+const PERFIL=[[64,0],[66,30],[72,62],[66,78],[70,88],[90,104],[74,114],[80,122],[72,128],[78,136],[68,146],[74,160],[66,176],[60,196],[58,240]];
+function ilusaoHTML(){const esq='M0 0 '+PERFIL.map(([x,y])=>`L${x} ${y}`).join(' ')+' L0 240 Z',dir='M200 0 '+PERFIL.map(([x,y])=>`L${200-x} ${y}`).join(' ')+' L200 240 Z';
+  return jogoTopo('👀 Ilusão de ótica',`<button class="btn small ghost" data-act="jogo" data-arg="desenho">🙃 Desenhar</button>`)+
+  `<div class="card col" style="align-items:center;gap:10px;text-align:center;margin-top:10px">
+   <div class="note" style="margin:0;font-size:18px">O que você vê? <b>Dois rostos</b> olhando um para o outro ou <b>uma taça</b>?</div>
+   <svg viewBox="0 0 200 240" style="width:min(300px,80vw);border-radius:16px;border:3px solid #D5DDEE;background:#fff"><path d="${esq}" fill="#2B3A67" stroke="#2B3A67" stroke-linejoin="round" stroke-width="3"/><path d="${dir}" fill="#2B3A67" stroke="#2B3A67" stroke-linejoin="round" stroke-width="3"/></svg>
+   <div class="row" style="gap:10px;justify-content:center"><button class="btn" data-act="ilresp" data-arg="rostos">👥 Dois rostos</button><button class="btn" data-act="ilresp" data-arg="taca">🏆 Uma taça</button></div>
+   <div id="ilfb"></div></div>`}
 /* ---------- Ações ---------- */
 Object.assign(ACT,{
   jogos(){renderJogos()},
-  jogo(t){S.view='jogo';clearTimeout(dicaT);if(t==='caca'){novoCaca();app.innerHTML=cacaHTML()}else if(t==='memoria'){novaMemoria();app.innerHTML=memoriaHTML()}else if(t==='forca'){novaForca();app.innerHTML=forcaHTML()}else if(t==='medico'){novoPaciente();desenhaClinica(true)}else if(t==='dentista'){novoDente();desenhaDente(true)}else{novoSudoku(1);app.innerHTML=sudokuHTML()}window.scrollTo(0,0)},
+  jogo(t){S.view='jogo';clearTimeout(dicaT);if(t==='caca'){novoCaca();app.innerHTML=cacaHTML()}else if(t==='memoria'){novaMemoria();app.innerHTML=memoriaHTML()}else if(t==='forca'){novaForca();app.innerHTML=forcaHTML()}else if(t==='medico'){novoPaciente();desenhaClinica(true)}else if(t==='dentista'){novoDente();desenhaDente(true)}else if(t==='desenho'){novoDesenho();abreDesenho()}else{novoSudoku(1);app.innerHTML=sudokuHTML()}window.scrollTo(0,0)},
   cacaletra(a){cacaToque(a)},cacanovo(){novoCaca(JG.tid);app.innerHTML=cacaHTML()},cacatema(t){novoCaca(t);app.innerHTML=cacaHTML()},
   memcarta(i){memoriaToque(i)},memnovo(){novaMemoria(JG.modo);app.innerHTML=memoriaHTML()},memmodo(m){novaMemoria(m);app.innerHTML=memoriaHTML()},
   forcaletra(l){forcaLetra(l)},forcanovo(){novaForca(JG.tid);app.innerHTML=forcaHTML()},forcatema(t){novaForca(t);app.innerHTML=forcaHTML()},
   forcafala(){speak(`Tema: ${JOGO_TEMAS[JG.tid].nome}. A palavra tem ${JG.w.length} letras.`)},
   mednovo(){novoPaciente();desenhaClinica(true)},dentnovo(){novoDente();desenhaDente(true)},
+  dcor(c){JG.cor=c;document.querySelectorAll('[data-act=dcor]').forEach(b=>b.style.border=b.dataset.arg===c?'4px solid #FFB020':'3px solid #fff')},
+  dapaga(){JG.tracos=[];telaRedesenha()},dvira(){JG.virado=!JG.virado;const tr=JG.tracos;app.innerHTML=desenhoHTML();JG.tracos=tr;abreDesenho();if(JG.virado){somVitoria();if(JG.tracos.length>3){ganhaEstrela();speak('Que legal! Veja o seu desenho do lado certo.')}}},
+  dnovo(){novoDesenho((JG.k+1+Math.floor(Math.random()*(MODELOS.length-1)))%MODELOS.length);abreDesenho()},
+  ilusao(){S.view='jogo';JG={tipo:'ilusao'};app.innerHTML=ilusaoHTML()},
+  ilresp(){const d=document.getElementById('ilfb');if(d)d.innerHTML='<div class="note jpop" style="background:var(--ok-soft);color:#11603B;font-size:18px">🎉 As duas respostas estão certas! Se você olha para a parte escura, vê dois rostos. Se olha para a parte branca do meio, vê uma taça. O nosso olho escolhe o que ver!</div>';somAcerto();speak('As duas respostas estão certas! Olhando a parte escura, você vê dois rostos. Olhando a parte branca, você vê uma taça.')},
   sudocel(k){JG.sel=Number(k);JG.erro=null;app.innerHTML=sudokuHTML()},sudofig(i){sudokuFig(i)},sudonovo(){novoSudoku(JG.nivel);app.innerHTML=sudokuHTML()},sudonivel(n){novoSudoku(Number(n));app.innerHTML=sudokuHTML()},
 });
 
