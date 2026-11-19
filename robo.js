@@ -123,7 +123,7 @@ function roboMensagem(){const a=roboAnalise();
 /* ---------- visual ---------- */
 const ROBO_CSS=`<style id="robo-css">
 .robo{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,#F3EEFF,#FFEAF3);border:3px solid #fff}
-.robo .av{width:86px;flex:none;animation:roboBob 2.4s ease-in-out infinite;transform-origin:50% 90%}.robo .nome{display:block;font-size:15px;font-weight:800;color:#C2185B;margin-bottom:2px}
+.robo .av{flex:none;cursor:pointer;padding:4px;border:3px solid #F7A8CB;border-radius:50%;background:rgba(255,255,255,.55);animation:roboBob 2.4s ease-in-out infinite,lumiAnel 2.4s ease-out infinite;transform-origin:50% 90%;line-height:0}.robo .av:active{transform:scale(.94)}@keyframes lumiAnel{0%{box-shadow:0 0 0 0 rgba(244,143,177,.55)}70%,100%{box-shadow:0 0 0 10px rgba(244,143,177,0)}}.robo .nome{display:block;font-size:15px;font-weight:800;color:#C2185B;margin-bottom:2px}
 .robo .balao{flex:1;background:#fff;border-radius:18px;padding:12px 14px;position:relative;font-size:19px;font-weight:700;color:var(--ink);box-shadow:0 2px 0 rgba(29,40,70,.08)}
 .robo .balao:before{content:'';position:absolute;left:-10px;top:18px;border:10px solid transparent;border-right-color:#fff;border-left:0}
 .robo .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
@@ -135,8 +135,8 @@ button.av.pula img{animation:lumiPula .6s ease}@keyframes lumiPula{0%{transform:
 if(!document.getElementById('robo-css'))document.head.insertAdjacentHTML('beforeend',ROBO_CSS);
 let ROBO_ATUAL=null;
 function roboCardHTML(m,extra){
-  return `<div class="card robo"><span class="av">${roboImg(86)}</span><div class="balao"><span class="nome">${ROBO_NOME} diz:</span>${esc(m.txt)}
-    <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
+  return `<div class="card robo"><button class="av" data-act="robofala" aria-label="Tocar na ${ROBO_NOME} para ouvir">${roboImg(80)}</button><div class="balao"><span class="nome">${ROBO_NOME} diz:</span>${esc(m.txt)}
+    <div class="acoes">${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
 
 /* 1) balão na tela inicial, com interação: humor do dia, curiosidade do dia, toque na Lumi (reação ou adivinha) */
 const LUMI_HUMOR={feliz:['😊','Feliz','Que bom@n! Então vamos com tudo hoje! 💖'],
@@ -163,9 +163,9 @@ function lumiConteudo(){const m=ROBO_ATUAL,b=(a,arg,t,cls)=>`<button class="btn 
   if(LUMI.modo==='adivinha'){const [p,r]=LUMI.adiv;return {txt:LUMI.ver?`${p} ${r} ${comNome('Acertou@n? 🎉')}`:p,bts:LUMI.ver?b('lumivolta','','⬅ Voltar'):b('lumiresp','','🤔 Ver a resposta','okb')}}
   return {txt:m.txt,bts:(m.treino?b('robotreino',esc(m.treino),'💪 Treinar agora','okb'):'')+(lumiCurioDia()?b('lumicurio','','💡 Curiosidade do dia'):'')}}
 function lumiHomeHTML(){const c=lumiConteudo(),seq=lumiSequencia();LUMI.falaAtual=c.txt;
-  return `<div class="card robo"><button class="av" data-act="lumitoque" aria-label="Tocar na ${ROBO_NOME}" style="background:none;border:0;padding:0;cursor:pointer">${roboImg(86)}</button>
+  return `<div class="card robo"><button class="av" data-act="lumitoque" aria-label="Tocar na ${ROBO_NOME} para ouvir">${roboImg(80)}</button>
     <div class="balao"><span class="nome">${ROBO_NOME} diz:${seq>=2?` <span class="pill" style="font-size:13px;margin-left:6px">🔥 ${seq} dias seguidos estudando!</span>`:''}</span><span id="lumi-txt">${esc(c.txt)}</span>
-    <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${c.bts}</div></div></div>`}
+    ${c.bts?`<div class="acoes">${c.bts}</div>`:''}</div></div>`}
 function lumiRedraw(falar){const d=document.getElementById('robo-home');if(!d)return;d.innerHTML=lumiHomeHTML();
   if(falar){roboFala(LUMI.falaAtual);const av=d.querySelector('.av');if(av){av.classList.remove('pula');void av.offsetWidth;av.classList.add('pula')}}}
 const _renderMapRobo=renderMap;
@@ -219,12 +219,16 @@ function roboTreino(skill){const keys=roboKeys(skill);if(!keys.length){toast('Ai
     slides:[{v:roboImg(170,'margin:0 auto'),t:comNome(`Vamos treinar ${nome}@n! ${dica}`),fala:roboFalaTxt(comNome(`Vamos treinar ${nome}@n! ${dica}`))}],practice:esticar(keys,6),quiz:[]};
   startLessonObj(l,-1,'Revisão')}
 Object.assign(ACT,{
-  robofala(){if(S.view==='map'&&document.getElementById('robo-home')&&LUMI.falaAtual)roboFala(LUMI.falaAtual);else if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt)},
+  robofala(_,el){if(S.view==='map'&&document.getElementById('robo-home')&&LUMI.falaAtual)roboFala(LUMI.falaAtual);else if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt);if(el){el.classList.remove('pula');void el.offsetWidth;el.classList.add('pula')}},
   lumihumor(k){if(!LUMI_HUMOR[k])return;LS.set('lumiHumor:'+today(),k);LUMI.modo='humor';lumiRedraw(true)},
   lumivolta(){const f=LUMI.modo==='humor';LUMI.modo=null;LUMI.ver=false;lumiRedraw(f)},
   lumicurio(){LUMI.modo='curio';lumiRedraw(true)},
   lumiresp(){LUMI.ver=true;lumiRedraw(true);if(typeof confetti==='function')confetti()},
-  lumitoque(){if(!LS.get('lumiHumor:'+today(),null)&&!LUMI.modo){lumiRedraw(true);return}
+  /* tocar na Lumi: ela fala o que está no balão; tocando de novo logo em seguida, faz uma surpresa (reação ou adivinha) */
+  lumitoque(){const agora=Date.now(),av=document.querySelector('#robo-home .av');
+    const pula=()=>{if(av){av.classList.remove('pula');void av.offsetWidth;av.classList.add('pula')}};
+    if(!LS.get('lumiHumor:'+today(),null)&&!LUMI.modo||!(LUMI.lido&&agora-LUMI.lido<8000)){roboFala(LUMI.falaAtual);pula();LUMI.lido=agora;return}
+    LUMI.lido=agora;
     if(Math.random()<.4&&typeof LUMI_ADIVINHAS!=='undefined'){const a=LUMI_ADIVINHAS;let x;do{x=a[Math.floor(Math.random()*a.length)]}while(a.length>1&&LUMI.adiv===x);LUMI.adiv=x;LUMI.ver=false;LUMI.modo='adivinha'}
     else{const r=typeof LUMI_REACOES!=='undefined'?LUMI_REACOES:['Oi! 💖'];let t;do{t=r[Math.floor(Math.random()*r.length)]}while(r.length>1&&t===LUMI.txt);LUMI.txt=t;LUMI.modo='reacao'}
     lumiRedraw(true)},
