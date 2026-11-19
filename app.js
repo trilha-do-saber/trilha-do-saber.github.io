@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v39';
+const APP_VERSAO='trilha-v40';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -364,7 +364,10 @@ function maosParentHTML(){
     /* nomes que o Pedro escreveu e que ainda não viraram experimento (a rotina da noite cria) */
     const pend=praticas().filter(p=>(p.ciencias||[]).length&&!EX.some(e=>e.cc===`${p.ciclo}|${p.semana}`)).flatMap(p=>p.ciencias.map(n=>({n,c:p.ciclo,s:p.semana})));
     if(!EX.length&&!pend.length)return '';
-    return `<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${pend.map(x=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill mid">C${esc(x.c)} · S${x.s}</span><span style="flex:1">${esc(x.n)}</span><span class="pill">⏳ fica pronto ${quando}</span></div>`).join('')}${EX.map(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`}).join('')}</div>`})()}
+    /* em ordem de ciclo e semana: prontos e pendentes juntos */
+    const ord=k=>{const[c,s]=String(k).split('|');return Number(c)*100+Number(s)};
+    const itens=[...EX.map(e=>({k:e.cc,e})),...pend.map(x=>({k:`${x.c}|${x.s}`,x}))].sort((a,b)=>ord(a.k)-ord(b.k));
+    return `<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${itens.map(({e,x})=>x?`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill mid">C${esc(x.c)} · S${x.s}</span><span style="flex:1">${esc(x.n)}</span><span class="pill">⏳ fica pronto ${quando}</span></div>`:(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`})(e)).join('')}</div>`})()}
   ${ps.length?`<div class="col" style="gap:6px">${ps.map(p=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${p.feita?'ok':'mid'}">C${esc(p.ciclo)} · S${p.semana}</span><span style="flex:1">${esc(p.titulo)}</span><button class="btn small ghost" data-act="mmedit" data-arg="${esc(p.id)}">✏️ Editar</button>${p.feita?'<span class="pill ok">✅ Feita</span>':`<button class="btn small okb" data-act="mmfeita" data-arg="${esc(p.id)}">Marcar como feita</button>`}</div>`).join('')}</div>`:''}`;
 }
 function mmDraftHTML(){if(!MMD)return '';
