@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v38';
+const APP_VERSAO='trilha-v39';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -203,6 +203,16 @@ function saveConfig(){return store.set('config/main',S.config)}
 function starHTML(n){return '<span class="stars">'+[1,2,3].map(i=>`<span class="${i<=n?'':'off'}">⭐</span>`).join('')+'</span>'}
 const curSubj=()=>SUBJECTS.find(s=>s.id===S.subject)||SUBJECTS[0];
 const curLessons=()=>curSubj().lessons;
+/* Semana do CC recém-liberada que ela ainda não terminou: aviso na tela inicial com tudo o que veio junto */
+function ccSemanaNova(){const lib=MEMINFO.lib;if(!lib.length)return null;const k=lib[lib.length-1].k,[c,s]=k.split('|');
+  const ls=LESSONS.filter(l=>l.subject==='Memória'&&(l.id===`mem-c${c}-s${s}`||l.cc===k)),falta=ls.filter(l=>!((S.progress[l.id]||{}).tries));
+  if(!falta.length)return null;
+  return {k,c,s,aprof:ls.filter(l=>l.cc===k).length,mem:ls.some(l=>l.id===`mem-c${c}-s${s}`),pratica:praticaDe(k),exper:(typeof CC_EXPER!=='undefined'?CC_EXPER:[]).filter(e=>e.cc===k).length,falta:falta.length}}
+function ccAvisoHTML(){const n=ccSemanaNova();if(!n)return '';
+  if(LS.get('ccAvisada','')!==n.k){LS.set('ccAvisada',n.k);setTimeout(()=>speak(`Chegou a semana ${n.s} do CC! Vamos descobrir as novidades?`),800)}
+  const it=[n.mem?'🎵 Memorização':'',n.aprof?`📚 ${n.aprof} lições Aprofunde`:'',n.pratica?'🖐️ Mãos na massa':'',n.exper?`🧪 ${n.exper} experimento${n.exper>1?'s':''}`:''].filter(Boolean);
+  return `<button class="mini" data-act="subj" data-arg="mem" style="width:100%;margin-bottom:12px;background:linear-gradient(135deg,#FFF1C9,#FFD9E8);border:3px solid #FFB020;animation:jpisca 1.6s infinite;text-align:left">
+    <span class="ic">✨</span><span><b style="font-size:20px">Chegou a semana ${n.s} do CC!</b><small>${it.join(' · ')}</small><small>Toque para começar. ${n.falta>1?`Faltam ${n.falta} lições desta semana.`:'Falta 1 lição desta semana.'}</small></span></button>`}
 const memNovas=()=>LESSONS.filter(l=>l.subject==='Memória'&&l.id!=='mem-mestre'&&!((S.progress[l.id]||{}).tries));
 function unlocked(i){const L=curLessons();if(curSubj().id==='mem')return true;return S.config.unlockAll||i===0||((S.progress[L[i-1].id]||{}).stars||0)>=1}
 /* ---- missão, aquecimento, leitura, potes ---- */
@@ -465,11 +475,12 @@ function renderMap(){
     <div class="goal card" style="padding:12px 16px"><div class="row" style="justify-content:space-between"><span>Meta de hoje</span><span>${mins(tm)} de ${S.config.goal} min</span></div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
   ${!API.url?'<div class="note" style="margin-bottom:12px">Os dados estão salvos só neste aparelho até a planilha ser conectada na área dos pais.</div>':''}
   ${rotOn?roteiroHTML(rot):''}
+  ${ccAvisoHTML()}
   ${(()=>{const wk=warmupKeys().length,m=missaoAtual(),f=missaoFeita(),lv=livrosLidos();return `<div class="cards2">
     ${wk&&!rotOn?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
     <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
-    ${experAtuais().map(e=>`<div class="mini" style="align-items:flex-start"><span class="ic">🧪</span><span><b>Experimento: ${esc(e.titulo)} ${experFeito(e.id)?'✅':''}</b><small><i>${esc(e.pergunta)}</i></small>${e.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}<small>🧺 ${esc(e.materiais.join(', '))}</small><details><summary style="font-weight:800;color:var(--pri);cursor:pointer">Por que acontece?</summary><small>${esc(e.explica)}</small></details></span><button class="speak" data-act="sayexper" data-arg="${e.id}" aria-label="Ouvir o experimento">🔊</button></div>`).join('')}
-    ${(()=>{const p=praticaAtual();if(!p)return '';return `<div class="mini" style="align-items:flex-start"><span class="ic">🖐️</span><span><b>Mãos na massa ${p.feita?'✅':''}</b><small><b>${esc(p.titulo)}</b></small>${p.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}${p.materiais&&p.materiais.length?`<small>🧺 ${esc(p.materiais.join(', '))}</small>`:''}</span><button class="speak" data-act="saymaos" aria-label="Ouvir a atividade">🔊</button></div>`})()}
+    ${experAtuais().map(e=>`<div class="mini" style="align-items:flex-start"><span class="ic">🧪</span><span><b>Experimento: ${esc(e.titulo)} ${experFeito(e.id)?'✅':((ccSemanaNova()||{}).k===e.cc?'<span class="badge-novo" style="position:static">NOVO</span>':'')}</b><small><i>${esc(e.pergunta)}</i></small>${e.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}<small>🧺 ${esc(e.materiais.join(', '))}</small><details><summary style="font-weight:800;color:var(--pri);cursor:pointer">Por que acontece?</summary><small>${esc(e.explica)}</small></details></span><button class="speak" data-act="sayexper" data-arg="${e.id}" aria-label="Ouvir o experimento">🔊</button></div>`).join('')}
+    ${(()=>{const p=praticaAtual();if(!p)return '';return `<div class="mini" style="align-items:flex-start"><span class="ic">🖐️</span><span><b>Mãos na massa ${p.feita?'✅':((ccSemanaNova()||{}).k===`${p.ciclo}|${p.semana}`?'<span class="badge-novo" style="position:static">NOVO</span>':'')}</b><small><b>${esc(p.titulo)}</b></small>${p.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}${p.materiais&&p.materiais.length?`<small>🧺 ${esc(p.materiais.join(', '))}</small>`:''}</span><button class="speak" data-act="saymaos" aria-label="Ouvir a atividade">🔊</button></div>`})()}
     ${(()=>{const c=potesCfg();if(!c.ativo)return '';const sd=saldos(),mi=metaInfo();return `<button class="mini" data-act="subj" data-arg="fin"><span class="ic">🐷</span><span><b>Meus potes</b><small>🛍️ ${brl(sd.gastar)} · 🐷 ${brl(sd.guardar)} · 📈 ${brl(sd.investir)}</small>${mi?`<small>🎯 ${esc(c.metaNome)}: ${mi.pct}%</small><span class="bar" style="height:8px"><i style="width:${mi.pct}%"></i></span>`:''}</span></button>`})()}
     <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
   ${livre&&typeof jogosHTML==='function'?jogosHTML():''}
