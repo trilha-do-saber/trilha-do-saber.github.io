@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v43';
+const APP_VERSAO='trilha-v44';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -449,33 +449,52 @@ const dayNum=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e
 /* Matemática ou Português: alterna pelos DIAS EM QUE ELA ESTUDOU, não pelo calendário.
    Olha o último dia antes de hoje em que ela fez lição de Matemática ou de Português e escolhe a outra.
    Assim, se ela pular o domingo, a segunda não repete a matéria de sábado. Sem histórico, usa o calendário. */
-function mainSubj(){const hoje=today(),ult={};
-  const mf=LS.get('mainFeito',{}),dias=Object.keys(mf).filter(d=>d<hoje).sort();if(dias.length)return SUBJECTS.find(x=>x.id===(mf[dias[dias.length-1]]==='mat'?'por':'mat'));
-  for(const s of S.sessions||[]){if(!s||s.date>=hoje||!s.lessonId)continue;const sub=s.subject==='Matemática'?'mat':s.subject==='Português'?'por':null;if(sub&&(!ult[sub]||s.date>ult[sub]))ult[sub]=s.date}
-  let id;if(ult.mat&&ult.por&&ult.mat!==ult.por)id=ult.mat>ult.por?'por':'mat';else if(ult.mat&&!ult.por)id='por';else if(ult.por&&!ult.mat)id='mat';else id=dayNum()%2===0?'mat':'por';
-  return SUBJECTS.find(x=>x.id===id)}
+/* ROTEIRO DE SEGUNDA A SEXTA, COM PENDÊNCIAS ACUMULADAS
+   - Dias úteis: aquecimento + matéria principal (Mat/Port alternando por dia útil) + 2 matérias do dia.
+   - Sábado e domingo: sem roteiro novo; o tempo livre abre se não houver pendência.
+   - O que ficou sem fazer num dia útil vira pendência (até 7 dias para trás, a partir de config pendZero) e se soma ao dia seguinte,
+     sem tirar nada do roteiro novo. Uma lição concluída da matéria resolve primeiro a pendência mais antiga dela.
+   - O tempo livre só abre com o roteiro de hoje feito e nenhuma pendência. */
+const ehUtil=d=>{const g=d.getDay();return g>=1&&g<=5};
+const dataDe=s=>{const[y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
+function mainFor(ds){const dias=Math.round((dataDe(ds)-new Date(1970,0,5))/864e5),w=Math.floor(dias/7)*5+Math.min(((dias%7)+7)%7,5);return w%2===0?'mat':'por'}
+function mainSubj(){const st=LS.get('rot:'+today(),null);return SUBJECTS.find(x=>x.id===((st&&st.main)||mainFor(today())))}
+const PEND_INICIO='2026-11-19';   // as pendências começam a contar a partir deste dia
+function itensDoDia(d){const st=LS.get('rot:'+d,null),it=[{d,id:(st&&st.main)||mainFor(d)}];((st&&st.ops)||[]).forEach(id=>it.push({d,id}));return it}
+function resolverItens(itens){
+  const nomeId={};SUBJECTS.forEach(s=>nomeId[s.nome]=s.id);
+  const ss=(S.sessions||[]).filter(z=>z&&z.phaseReached==='done'&&z.lessonId!=='aquecimento'&&nomeId[z.subject]).sort((x,y)=>(x.start||0)-(y.start||0));
+  itens.sort((x,y)=>x.d<y.d?-1:x.d>y.d?1:0).forEach(x=>x.ok=false);
+  for(const z of ss){const it=itens.find(x=>!x.ok&&x.id===nomeId[z.subject]&&x.d<=z.date);if(it)it.ok=true}
+  return itens}
+function diasPendentes(){const zero=[PEND_INICIO,LS.get('pendZero','')].sort().pop(),out=[];
+  for(let i=7;i>=1;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const d=today(dt);if(ehUtil(dt)&&d>=zero)out.push(d)}return out}
 const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&&f(x));
 /* conta só lição concluída: abrir e sair no meio não tira a matéria da fila */
 const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n&&z.phaseReached==='done').map(z=>z.start));
-function rotOpcoes(){
+function rotOpcoes(excluir){
   const memOk=(S.config.memDias||[1,3,5]).includes(new Date().getDay())||memNovas().length>0;
-  const pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','ing','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
-  /* matérias do último roteiro que ficaram sem fazer voltam primeiro */
-  const hoje=today(),antes=Object.keys(localStorage).filter(k=>/^ts:rot:\d{4}-\d\d-\d\d$/.test(k)).map(k=>k.slice(7)).filter(d=>d<hoje).sort().pop();
-  const pend=antes?(LS.get('rot:'+antes,{}).ops||[]).filter(id=>{const sj=SUBJECTS.find(x=>x.id===id);return sj&&pool.some(x=>x.id===id)&&!S.sessions.some(z=>z.date===antes&&z.subject===sj.nome&&z.phaseReached==='done')}):[];
-  let ops=[...new Set([...pend,...pool.map(x=>x.id)])].slice(0,2);
+  let pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','ing','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
+  /* as matérias que já estão pendentes não se repetem hoje, para variar (se sobrarem matérias) */
+  const semPend=pool.filter(x=>!(excluir||[]).includes(x.id));if(semPend.length>=2)pool=semPend;
+  let ops=pool.slice(0,2).map(x=>x.id);
   if(memNovas().length&&pool.some(x=>x.id==='mem')&&!ops.includes('mem'))ops=[ops[0],'mem'];
   return ops;
 }
 function roteiro(){
+  const dPend=diasPendentes(),passado=resolverItens(dPend.flatMap(itensDoDia)),pendIds=[...new Set(passado.filter(x=>!x.ok).map(x=>x.id))];
+  if(!ehUtil(new Date())){const pend=passado.filter(x=>!x.ok).map(x=>({...x,s:SUBJECTS.find(y=>y.id===x.id)})).filter(x=>x.s);
+    return {fds:true,pend,done:true,livre:!pend.length,total:0,feitos:0}}
   const key='rot:'+today();let st=LS.get(key,null);
-  if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes()};LS.set(key,st)}
-  if(!st.main){st.main=mainSubj().id;LS.set(key,st)}   // a matéria principal do dia fica fixa até a meia-noite
-  const main=SUBJECTS.find(x=>x.id===st.main)||mainSubj(),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
-  const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=doneToday(x=>x.subject===main.nome),opsFeitas=ops.map(o=>doneToday(x=>x.subject===o.nome)),s3=opsFeitas.every(Boolean);
-  if(s2){const mf=LS.get('mainFeito',{});if(mf[today()]!==main.id){mf[today()]=main.id;LS.set('mainFeito',mf)}}
+  if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes(pendIds)};LS.set(key,st)}
+  if(!st.main){st.main=mainFor(today());LS.set(key,st)}   // a matéria principal do dia fica fixa até a meia-noite
+  const main=SUBJECTS.find(x=>x.id===st.main),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
+  const todos=resolverItens([...dPend.flatMap(itensDoDia),{d:today(),id:main.id,hoje:'main'},...ops.map((o,k)=>({d:today(),id:o.id,hoje:k}))]);
+  const pend=todos.filter(x=>!x.hoje&&x.hoje!==0&&!x.ok).map(x=>({...x,s:SUBJECTS.find(y=>y.id===x.id)})).filter(x=>x.s);
+  const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=todos.find(x=>x.hoje==='main').ok,opsFeitas=ops.map((o,k)=>todos.find(x=>x.hoje===k).ok),s3=opsFeitas.every(Boolean);
   /* as 2 matérias do dia são obrigatórias, na ordem que ela quiser */
-  return {main,ops,opsFeitas,w,s1,s2,s3,done:s1&&s2&&s3,total:(w?1:0)+1+ops.length,feitos:(w&&s1?1:0)+(s2?1:0)+opsFeitas.filter(Boolean).length};
+  const done=s1&&s2&&s3;
+  return {main,ops,opsFeitas,w,s1,s2,s3,done,pend,livre:done&&!pend.length,total:(w?1:0)+1+ops.length,feitos:(w&&s1?1:0)+(s2?1:0)+opsFeitas.filter(Boolean).length};
 }
 function nextLessonOf(subj){
   const L=subj.lessons||[];
@@ -485,22 +504,30 @@ function nextLessonOf(subj){
 }
 function startSubjNext(id){const sb=SUBJECTS.find(x=>x.id===id);if(!sb||!sb.ready||!(sb.lessons||[]).length)return;S.subject=id;const n=nextLessonOf(sb);startLessonObj(n.l,n.i,sb.nome)}
 function roteiroHTML(r){
-  const nx=nextLessonOf(r.main);
   const passo=(act,arg,ic,tit,sub,feito,ativo)=>`<button class="passo ${feito?'feito':''} ${ativo&&!feito?'ativo':''}" data-act="${act}" ${arg?`data-arg="${arg}"`:''} ${feito||!ativo?'disabled':''}><span class="ic">${ic}</span><span class="col" style="gap:2px;flex:1"><b>${tit}</b><small>${sub}</small></span><span class="st">${feito?'✅':ativo?'▶️':'🔒'}</span></button>`;
-  let h=`<div class="card col roteiro"><div class="row"><h2 style="font-size:26px">🗺️ Roteiro de hoje</h2><span class="spacer"></span><span class="pill ${r.done?'ok':'mid'}">${r.feitos} de ${r.total}</span></div>`;
+  const DS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  const pendHTML=()=>!r.pend.length?'':`<div class="col" style="gap:8px;margin-top:4px"><b>📌 Ficou de outros dias (${r.pend.length})</b>${r.pend.map(x=>{const nx=nextLessonOf(x.s);return passo('rotpend',x.id,x.s.ic,`${esc(x.s.nome)} <small class="muted">· de ${DS[dataDe(x.d).getDay()]}</small>`,nx&&nx.l?(nx.rev?'Revisão: ':'')+esc(nx.l.titulo):'',false,true)}).join('')}</div>`;
+  if(r.fds){
+    let h=`<div class="card col roteiro"><div class="row"><h2 style="font-size:26px">🌞 Fim de semana!</h2></div>`;
+    h+=r.pend.length?`<p style="margin:0">Hoje não tem roteiro novo. Termine o que ficou da semana e o tempo livre abre. 💪</p>${pendHTML()}`:`<div class="note" style="background:var(--ok-soft);color:#11603B;text-align:center;font-size:18px">🎉 Sem tarefas hoje: aproveite o tempo livre! Se quiser, pode estudar qualquer matéria.</div>`;
+    return h+'</div>'}
+  const nx=nextLessonOf(r.main);
+  let h=`<div class="card col roteiro"><div class="row"><h2 style="font-size:26px">🗺️ Roteiro de hoje</h2><span class="spacer"></span><span class="pill ${r.done?'ok':'mid'}">${r.feitos} de ${r.total}</span>${r.pend.length?`<span class="pill">📌 +${r.pend.length}</span>`:''}</div>`;
   if(r.w)h+=passo('rot1','','🔥','Aquecimento',`${tam().aquec} questões de revisão`,r.s1,true);
   h+=passo('rot2','',r.main.ic,r.main.nome,(nx.rev?'Revisão: ':'')+esc(nx.l.titulo),r.s2,r.s1);
   r.ops.forEach((o,k)=>{const nxo=nextLessonOf(o);
     h+=passo('rot3',o.id,o.ic,`Matéria do dia ${k+1}: ${esc(o.nome)}${o.id==='mem'&&memNovas().length?' ✨':''}`,r.opsFeitas[k]?'Feita!':(nxo&&nxo.l?(nxo.rev?'Revisão: ':'')+esc(nxo.l.titulo):''),r.opsFeitas[k],r.s1&&r.s2)});
-  if(r.done)h+=`<div class="note" style="background:var(--ok-soft);color:#11603B;text-align:center;font-size:18px">🎉 Roteiro completo! Agora é tempo livre: escolha o que quiser.</div>`;
+  h+=pendHTML();
+  if(r.livre)h+=`<div class="note" style="background:var(--ok-soft);color:#11603B;text-align:center;font-size:18px">🎉 Roteiro completo! Agora é tempo livre: escolha o que quiser.</div>`;
+  else if(r.done)h+=`<p class="muted" style="margin:0;font-size:15px;text-align:center">Roteiro de hoje feito! Termine o que ficou de outros dias para liberar o tempo livre.</p>`;
   else if(S.config.livreDepois!==false)h+=`<p class="muted" style="margin:0;font-size:14px;text-align:center">Termine o roteiro para liberar o tempo livre.</p>`;
   return h+'</div>';
 }
 function renderMap(){
   S.view='map';
   if(novaVersao)setTimeout(atualizarSePuder,300);
-  const rotOn=S.config.roteiro!==false,rot=rotOn?roteiro():null,livre=!rotOn||rot.done||S.config.livreDepois===false;
-  if(rot&&rot.done&&!LS.get('rotCel:'+today(),false)){LS.set('rotCel:'+today(),true);setTimeout(()=>{confetti();speak('Roteiro completo! Agora é tempo livre.')},300)}
+  const rotOn=S.config.roteiro!==false,rot=rotOn?roteiro():null,livre=!rotOn||rot.livre||S.config.livreDepois===false;
+  if(rot&&!rot.fds&&rot.livre&&!LS.get('rotCel:'+today(),false)){LS.set('rotCel:'+today(),true);setTimeout(()=>{confetti();speak('Roteiro completo! Agora é tempo livre.')},300)}
   const goalMs=S.config.goal*60000,tm=todayMs(),pct=Math.min(100,Math.round(tm/goalMs*100));
   const name=S.config.childName?`, ${esc(S.config.childName)}`:'';
   app.innerHTML=`
@@ -815,6 +842,7 @@ function renderParent(){
     <label class="check" for="cf-fundo"><input id="cf-fundo" type="checkbox" ${S.config.fundo!==false?'checked':''}> Imagem de fundo</label>
     <label class="check" for="cf-rot"><input id="cf-rot" type="checkbox" ${S.config.roteiro!==false?'checked':''}> Roteiro do dia (Matemática e Português alternados + matéria do dia)</label>
     <label>Tamanho das lições<select id="cf-tam">${[['curta','Curta: 6 para praticar + 5 no desafio'],['media','Média: 9 + 7, com 2 exemplos resolvidos'],['longa','Longa: 12 + 9, com 2 exemplos resolvidos']].map(([v,t])=>`<option value="${v}" ${(S.config.tamanho||'media')===v?'selected':''}>${t}</option>`).join('')}</select></label>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><span class="muted" style="font-size:15px;flex:1">Pendências de outros dias: ${(()=>{try{return (roteiro().pend||[]).length}catch(e){return 0}})()}. Use se ela ficou doente ou viajou.</span><button class="btn small ghost" data-act="pendzero">Zerar pendências</button></div>
     <label class="check" for="cf-livre"><input id="cf-livre" type="checkbox" ${S.config.livreDepois!==false?'checked':''}> Tempo livre só depois do roteiro</label>
     <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:15px;color:var(--muted);margin-bottom:6px">Dias da Memória CC no roteiro</legend>
       <div class="row" style="gap:10px">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map((d,i)=>`<label class="check" for="cf-md${i}" style="font-size:15px!important"><input id="cf-md${i}" type="checkbox" ${(S.config.memDias||[1,3,5]).includes(i)?'checked':''}> ${d}</label>`).join('')}</div></fieldset>
@@ -908,6 +936,8 @@ const ACT={
   warmup(){startWarmup()},
   rot1(){startWarmup()},
   rot2(){startSubjNext(mainSubj().id)},
+  rotpend(id){startSubjNext(id)},
+  pendzero(){LS.set('pendZero',today());toast('Pendências zeradas. A contagem recomeça hoje.');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   rot3(id){const k='rot:'+today(),st=LS.get(k,{});st.escolha=id;LS.set(k,st);startSubjNext(id)},
   saymissao(){speak('Missão da semana: '+missaoAtual().texto)},
   nk(d){if(d==='ok'){if(!R.numVal){toast('Digite a resposta.');return}const v=+R.numVal,q=R.q,ok=v===q.answer,first=R.tries===0,o=q.options.find(x=>x.v===v);
