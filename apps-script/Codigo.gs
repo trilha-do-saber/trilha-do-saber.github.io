@@ -210,12 +210,14 @@ function gemini_(prompt, maxTokens) {
   return geminiParts_([{ text: prompt }], maxTokens, false);
 }
 
-function geminiParts_(parts, maxTokens, json) {
+let GEMINI_FIM_ = '';   // motivo de término da última resposta (STOP, MAX_TOKENS, RECITATION, SAFETY...)
+function geminiParts_(parts, maxTokens, json, schema) {
   const key = PROPS.getProperty('GEMINI_KEY');
   const modelo = PROPS.getProperty('GEMINI_MODEL') || 'gemini-3.5-flash-lite';
   const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent';
   const cfg = { temperature: json ? 0.1 : 0.6, maxOutputTokens: maxTokens || 800 };
   if (json) cfg.responseMimeType = 'application/json';
+  if (schema) cfg.responseSchema = schema;
   const r = UrlFetchApp.fetch(url, {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { 'x-goog-api-key': key },
@@ -224,6 +226,7 @@ function geminiParts_(parts, maxTokens, json) {
   const j = JSON.parse(r.getContentText());
   if (r.getResponseCode() !== 200) throw new Error('gemini_' + r.getResponseCode() + (j.error ? ': ' + j.error.message : ''));
   const c = j.candidates && j.candidates[0];
+  GEMINI_FIM_ = (c && c.finishReason) || (j.promptFeedback && j.promptFeedback.blockReason) || '';
   return c && c.content && c.content.parts ? c.content.parts.map(x => x.text || '').join('').trim() : '';
 }
 
@@ -235,20 +238,41 @@ function lerFotoCC_(p) {
   const imgs = (p.imagens || []).slice(0, 4);
   if (!imgs.length) throw new Error('sem_imagem');
   contarUsoIA_();
-  const prompt = 'Estas são fotos de páginas do guia Foundations do Classical Conversations, livro que a família possui, '
-    + 'para uso privado nos estudos da filha. Transcreva fielmente o conteúdo de memorização (memory work) '
+  const schema = { type: 'OBJECT', properties: { itens: { type: 'ARRAY', items: { type: 'OBJECT',
+    properties: { materia: { type: 'STRING' }, texto: { type: 'STRING' } }, required: ['materia', 'texto'] } } }, required: ['itens'] };
+  const fotos = imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } }));
+  const prompts = [
+    'Estas são fotos de páginas do guia Foundations do Classical Conversations, livro que a família possui, '
+    + 'para uso privado nos estudos da filha. Transcreva o conteúdo de memorização (memory work) '
     + 'da semana ' + p.semana + ' do ciclo ' + p.ciclo + ', separado por matéria. '
     + 'Ignore instruções ao professor, atividades, números de página e textos decorativos. '
     + 'Use estes nomes de matéria quando couber: História, Geografia, Ciências, Matemática, Inglês, Latim, Linha do tempo. '
-    + 'Se uma matéria tiver várias frases, junte em um só texto. Se não achar a semana pedida, use o conteúdo de memorização visível. '
-    + 'Responda somente JSON no formato {"itens":[{"materia":"História","texto":"..."}]}.';
-  const parts = [{ text: prompt }].concat(imgs.map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } })));
-  const txt = geminiParts_(parts, 3000, true);
+    + 'Se uma matéria tiver várias frases, junte em um só texto. Se não achar a semana pedida, use o conteúdo de memorização visível.',
+    'Leia as fotos e copie, por matéria, as frases curtas para memorizar que aparecem na página (perguntas e respostas, listas, datas, definições). '
+    + 'Ignore cabeçalhos, números de página e instruções. Se não souber a matéria, use "Memória".'
+  ];
+  let itens = [], bruto = '', motivo = '';
+  for (const pr of prompts) {
+    const txt = geminiParts_([{ text: pr }].concat(fotos), 8000, true, schema);
+    motivo = GEMINI_FIM_; bruto = txt.slice(0, 300);
+    itens = normalizaItens_(txt);
+    if (itens.length) break;
+  }
+  return { itens: itens, motivo: itens.length ? '' : motivo, bruto: itens.length ? '' : bruto };
+}
+
+/** Aceita as variações de JSON que o Gemini às vezes devolve e transforma em [{materia, texto}]. */
+function normalizaItens_(txt) {
   let j;
-  try { j = JSON.parse(txt.replace(/^```(json)?/, '').replace(/```$/, '').trim()); } catch (e) { throw new Error('ia_resposta_invalida'); }
-  const itens = (j.itens || []).filter(x => x && x.texto)
-    .map(x => ({ materia: String(x.materia || 'Memória').slice(0, 40), texto: String(x.texto).slice(0, 800) }));
-  return { itens: itens };
+  try { j = JSON.parse(String(txt || '').replace(/^```(json)?/, '').replace(/```$/, '').trim()); } catch (e) { return []; }
+  let lista = Array.isArray(j) ? j : (j.itens || j.items || j.materias || j.memoria || null);
+  if (!lista && j && typeof j === 'object') lista = Object.keys(j).map(k => ({ materia: k, texto: j[k] }));
+  return (lista || []).map(x => {
+    if (typeof x === 'string') return { materia: 'Memória', texto: x };
+    const t = x.texto || x.text || x.conteudo || x.content || x.frase || x.frases;
+    return { materia: x.materia || x.subject || x.disciplina || 'Memória', texto: Array.isArray(t) ? t.join(' ') : t };
+  }).filter(x => x.texto && String(x.texto).trim())
+    .map(x => ({ materia: String(x.materia).slice(0, 40), texto: String(x.texto).slice(0, 800) }));
 }
 
 /** Grava (ou substitui) as frases de uma semana na aba MemoriaCC. */

@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v28';
+const APP_VERSAO='trilha-v29';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -350,7 +350,11 @@ async function ccLer(btn){
   btn.disabled=true;st.textContent='Preparando as fotos…';
   try{const imagens=await Promise.all(files.map(lerImagem));st.textContent='A IA está lendo a página…';
     const r=await api('lerFotoCC',{ciclo,semana,imagens});
-    if(!r.itens||!r.itens.length){st.textContent='Não encontrei frases de memorização. Tente uma foto mais nítida e reta.';return}
+    if(!r.itens||!r.itens.length){const m=r.motivo||'';
+      st.textContent=/RECITATION|COPYRIGHT/i.test(m)?'O Gemini não quis transcrever o texto do livro (proteção de direitos autorais). Use "Digitar à mão" para esta semana.'
+        :/SAFETY|BLOCK|PROHIBITED/i.test(m)?'O Gemini bloqueou a leitura desta foto. Use "Digitar à mão" para esta semana.'
+        :/MAX_TOKENS/i.test(m)?'A resposta da IA ficou grande demais. Tente com uma foto só da página da semana.'
+        :'Não encontrei frases de memorização. Tente uma foto mais nítida, reta e só da página da semana.'+(m?` (motivo: ${m})`:'');return}
     CCD={ciclo,semana,itens:r.itens};st.textContent='Pronto! Confira abaixo e salve.';ccRedraw();
   }catch(e){st.textContent='Não deu certo: '+(e&&e.code==='limite_ia'?'limite diário de IA atingido':e&&e.code==='sem_conexao'?'sem conexão com a planilha':(e&&e.code)||'erro de conexão')}
   finally{btn.disabled=false}
