@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v40';
+const APP_VERSAO='trilha-v41';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -221,6 +221,23 @@ const missaoAtual=()=>MISSOES[((weekIdx()%MISSOES.length)+MISSOES.length)%MISSOE
 const missaoFeita=()=>store.diario().find(r=>r.id==='missao-'+weekIdx());
 const leituras=()=>store.diario().filter(r=>r.tipo==='leitura').sort((a,b)=>b.ts-a.ts);
 const livrosLidos=()=>[...new Set(leituras().map(r=>r.livro))];
+/* ---- Minha estante: livros que ela já leu (registros de leitura da área dos pais) ---- */
+const CORES_LIVRO=['#E06666','#6FA8DC','#F6C342','#93C47D','#B39DDB','#F4A261','#4DB6AC','#F48FB1'];
+function renderEstante(){S.view='estante';
+  const por={};leituras().forEach(r=>{const k=r.livro||'Sem título';const b=por[k]=por[k]||{livro:k,vezes:0,min:0,ult:0,primeiro:Infinity,recontou:false,nota:0};
+    b.vezes++;b.min+=Number(r.minutos)||0;b.ult=Math.max(b.ult,r.ts||0);b.primeiro=Math.min(b.primeiro,r.ts||Infinity);b.recontou=b.recontou||!!r.recontou;b.nota=Math.max(b.nota,Number(r.gostou)||0)});
+  const livros=Object.values(por).sort((x,y)=>y.ult-x.ult),totMin=livros.reduce((s,b)=>s+b.min,0),dt=ts=>new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  app.innerHTML=`<div class="top"><button class="btn ghost small" data-act="home">⬅ Início</button><h1 class="hello" style="font-size:28px">📚 Minha estante</h1><div class="spacer"></div></div>
+   <div class="card col" style="gap:6px;text-align:center;margin-top:10px"><div style="font-size:22px;font-weight:800">${livros.length} livro${livros.length===1?'':'s'} lido${livros.length===1?'':'s'} · ${totMin} minutos de leitura</div>
+   <div class="muted">${livros.length?'Toque no 🔊 para ouvir o nome do livro.':'Quando o papai registrar uma leitura, o livro aparece aqui na sua estante.'}</div></div>
+   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px">
+   ${livros.map((b,i)=>`<div style="background:${CORES_LIVRO[i%CORES_LIVRO.length]};border-radius:10px 18px 18px 10px;border-left:12px solid rgba(0,0,0,.18);padding:12px;color:#1D2846;box-shadow:0 4px 0 rgba(29,40,70,.15);display:flex;flex-direction:column;gap:6px;min-height:170px">
+     <div style="font-size:30px">📖</div><b style="font-size:18px;line-height:1.2;flex:1">${esc(b.livro)}</b>
+     <div style="font-size:18px">${b.nota?'⭐'.repeat(b.nota):''}</div>
+     <small style="font-weight:700">${b.vezes>1?`Lido ${b.vezes} vezes`:'Lido 1 vez'} · ${b.min} min${b.recontou?' · 🗣️ recontou':''}</small>
+     <small>Última vez: ${dt(b.ult)}</small>
+     <button class="speak" data-act="saylivro" data-arg="${esc(b.livro)}" aria-label="Ouvir o nome do livro" style="align-self:flex-end">🔊</button></div>`).join('')}
+   </div>`;window.scrollTo(0,0)}
 const potes=()=>store.diario().find(r=>r.id==='potes');
 function perguntasHoje(){const d=Math.floor(Date.now()/864e5),n=LEIT_PERGUNTAS.length;return [0,1,2].map(i=>LEIT_PERGUNTAS[(d*3+i)%n])}
 function applyFundo(){document.documentElement.classList.toggle('fundo',S.config.fundo!==false)}
@@ -485,7 +502,7 @@ function renderMap(){
     ${experAtuais().map(e=>`<div class="mini" style="align-items:flex-start"><span class="ic">🧪</span><span><b>Experimento: ${esc(e.titulo)} ${experFeito(e.id)?'✅':((ccSemanaNova()||{}).k===e.cc?'<span class="badge-novo" style="position:static">NOVO</span>':'')}</b><small><i>${esc(e.pergunta)}</i></small>${e.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}<small>🧺 ${esc(e.materiais.join(', '))}</small><details><summary style="font-weight:800;color:var(--pri);cursor:pointer">Por que acontece?</summary><small>${esc(e.explica)}</small></details></span><button class="speak" data-act="sayexper" data-arg="${e.id}" aria-label="Ouvir o experimento">🔊</button></div>`).join('')}
     ${(()=>{const p=praticaAtual();if(!p)return '';return `<div class="mini" style="align-items:flex-start"><span class="ic">🖐️</span><span><b>Mãos na massa ${p.feita?'✅':((ccSemanaNova()||{}).k===`${p.ciclo}|${p.semana}`?'<span class="badge-novo" style="position:static">NOVO</span>':'')}</b><small><b>${esc(p.titulo)}</b></small>${p.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}${p.materiais&&p.materiais.length?`<small>🧺 ${esc(p.materiais.join(', '))}</small>`:''}</span><button class="speak" data-act="saymaos" aria-label="Ouvir a atividade">🔊</button></div>`})()}
     ${(()=>{const c=potesCfg();if(!c.ativo)return '';const sd=saldos(),mi=metaInfo();return `<button class="mini" data-act="subj" data-arg="fin"><span class="ic">🐷</span><span><b>Meus potes</b><small>🛍️ ${brl(sd.gastar)} · 🐷 ${brl(sd.guardar)} · 📈 ${brl(sd.investir)}</small>${mi?`<small>🎯 ${esc(c.metaNome)}: ${mi.pct}%</small><span class="bar" style="height:8px"><i style="width:${mi.pct}%"></i></span>`:''}</span></button>`})()}
-    <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
+    <button class="mini" data-act="estante"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></button></div>`})()}
   ${livre&&typeof jogosHTML==='function'?jogosHTML():''}
   ${livre?`<div class="subjects">${SUBJECTS.map(s=>`<button class="subj ${s.ready?(s.id===S.subject?'on':''):'soon'} ${s.id==='mem'&&memNovas().length?'novo':''}" data-act="subj" data-arg="${s.id}">${s.id==='mem'&&memNovas().length?'<span class="badge-novo">NOVO!</span>':''}<span class="ic">${s.ic}</span><span>${s.nome}</span><small>${s.ano}</small></button>`).join('')}</div>
   <h2 style="font-size:26px;margin-bottom:12px">Trilha de ${curSubj().nome}</h2>
@@ -915,6 +932,7 @@ const ACT={
   mmfeita(id){const r=store.diario().find(x=>x.id===id);if(!r)return;store.setDiario({...r,feita:true,feitaTs:Date.now()});toast('Marcada como feita!');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   sayexper(id){const e=(typeof CC_EXPER!=='undefined'?CC_EXPER:[]).find(x=>x.id===id);if(e)speak('Experimento: '+e.titulo+'. '+e.pergunta+' '+e.passos.map((x,i)=>'Passo '+(i+1)+': '+x).join(' '))},
   experok(id){store.setDiario({id:'expfeito-'+id,tipo:'experimento',ref:id,data:today(),ts:Date.now(),feita:true});toast('Experimento marcado como feito!');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
+  estante(){renderEstante()},saylivro(t){speak(t)},
   saymaos(){const p=praticaAtual();if(p)speak('Mãos na massa: '+p.titulo+'. '+p.passos.map((x,i)=>'Passo '+(i+1)+': '+x).join(' '))},
   ccmanual(){const c=ccLerCampos();CCD={...c,itens:[{materia:'História',texto:''}]};ccRedraw()},
   ccadd(){ccSync();CCD.itens.push({materia:'',texto:''});ccRedraw()},
