@@ -1,4 +1,5 @@
-/* Trilha do Saber · Robô conselheiro.
+/* Trilha do Saber · Lumi, a robô conselheira (img/robo.webp).
+   Nome em ROBO_NOME.
    Lê as respostas dela no próprio aparelho, em tempo real (só a 1ª tentativa de cada questão), e:
    1) na tela inicial, mostra um balão com um elogio verdadeiro + UMA coisa para melhorar, com o botão "Treinar agora";
    2) no fim de cada lição, comenta o que acabou de acontecer;
@@ -62,6 +63,8 @@ function roboDica(tipo,skill){const t=String(tipo||'');
   if(/^Inglês/.test(skill||''))return 'Toque no 🔊 e repita a palavra em inglês em voz alta. Falando, a gente lembra mais.';
   if(/Tabuada/.test(skill||''))return 'Vezes é contar pulando: 3 vezes 4 é dar 3 pulos de 4. Conte os pulos nos dedos.';
   return ROBO_DICA_GERAL}
+const ROBO_NOME='Lumi',ROBO_IMG='img/robo.webp';
+const roboImg=(px,extra)=>`<img src="${ROBO_IMG}" alt="${ROBO_NOME}, a robô" width="${px}" height="${Math.round(px*1.065)}" style="display:block;${extra||''}">`;
 const roboNome=s=>String(s||'').replace(/^Memória · /,'').replace(/ · /g,': ');
 
 /* ---------- habilidade → geradores (para o treino rápido) ---------- */
@@ -100,7 +103,7 @@ function roboAnalise(){
   return {fraca,forte,melhorou,nHoje,okHoje,total:resp.length}}
 
 function roboMensagem(){const a=roboAnalise();
-  if(!a.total)return {k:'oi',txt:'Oi! Eu sou o Robô da Trilha. 🤖 Depois dos exercícios, eu conto o que você está fazendo bem e o que dá para treinar.'};
+  if(!a.total)return {k:'oi',txt:`Oi! Eu sou a ${ROBO_NOME}, a robô da Trilha! 💖 Depois dos exercícios, eu conto o que você está fazendo bem e o que dá para treinar.`};
   if(a.melhorou){const com=LS.get('roboComemorou',{});if(!com[a.melhorou.sk]){com[a.melhorou.sk]=today();LS.set('roboComemorou',com)}
     return {k:'mel|'+a.melhorou.sk,festa:true,txt:`Lembra que ${roboNome(a.melhorou.sk)} estava difícil? Agora você acertou ${a.melhorou.k} das últimas 6! Você treinou e melhorou! 🎉`}}
   const elogio=a.forte?`Você está mandando muito bem em ${roboNome(a.forte.sk)}! 🌟`
@@ -112,20 +115,20 @@ function roboMensagem(){const a=roboAnalise();
 
 /* ---------- visual ---------- */
 const ROBO_CSS=`<style id="robo-css">
-.robo{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,#EEF2FF,#E9FBF2);border:3px solid #fff}
-.robo .av{font-size:52px;line-height:1;animation:roboBob 2.4s ease-in-out infinite;flex:none}
+.robo{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,#F3EEFF,#FFEAF3);border:3px solid #fff}
+.robo .av{width:86px;flex:none;animation:roboBob 2.4s ease-in-out infinite;transform-origin:50% 90%}.robo .nome{display:block;font-size:15px;font-weight:800;color:#C2185B;margin-bottom:2px}
 .robo .balao{flex:1;background:#fff;border-radius:18px;padding:12px 14px;position:relative;font-size:19px;font-weight:700;color:var(--ink);box-shadow:0 2px 0 rgba(29,40,70,.08)}
 .robo .balao:before{content:'';position:absolute;left:-10px;top:18px;border:10px solid transparent;border-right-color:#fff;border-left:0}
 .robo .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
-.robo-dica{margin-top:10px;background:#EEF2FF;border-radius:14px;padding:10px 12px;font-size:18px;font-weight:700;color:#24339C;text-align:left}
+.robo-dica{margin-top:10px;background:#FCEAF3;border-radius:14px;padding:8px 12px;font-size:18px;font-weight:700;color:#8E1650;text-align:left;display:flex;gap:10px;align-items:center}.robo-dica img{flex:none}
 @keyframes roboBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
 @media (prefers-reduced-motion:reduce){.robo .av{animation:none}}
 </style>`;
 if(!document.getElementById('robo-css'))document.head.insertAdjacentHTML('beforeend',ROBO_CSS);
 let ROBO_ATUAL=null;
 function roboCardHTML(m,extra){
-  return `<div class="card robo"><span class="av" aria-hidden="true">🤖</span><div class="balao">${esc(m.txt)}
-    <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir o robô">🔊</button>${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
+  return `<div class="card robo"><span class="av">${roboImg(86)}</span><div class="balao"><span class="nome">${ROBO_NOME} diz:</span>${esc(m.txt)}
+    <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
 
 /* 1) balão na tela inicial */
 const _renderMapRobo=renderMap;
@@ -165,16 +168,16 @@ handleAnswer=function(ok,given,type,optEl){
   const iguais=S.session.answers.filter(a=>!a.ok&&a.skill===ult.skill&&(a.type||'outro erro')===tipo).length;
   if(iguais<2||R.roboDicas.has(chave))return;
   R.roboDicas.add(chave);const dica=roboDica(tipo,ult.skill),fb=document.getElementById('fb');if(!fb)return;
-  const div=document.createElement('div');div.className='robo-dica';div.innerHTML=`🤖 <b>Dica do robô:</b> ${esc(dica)}`;
+  const div=document.createElement('div');div.className='robo-dica';div.innerHTML=`${roboImg(44)}<span><b>Dica da ${ROBO_NOME}:</b> ${esc(dica)}</span>`;
   const row=fb.querySelector('.row');row?fb.insertBefore(div,row):fb.appendChild(div);
-  speak((primeira?'Quase! '+q.hint:(q.explainFala||q.explain))+' Dica do robô: '+dica)};
+  speak((primeira?'Quase! '+q.hint:(q.explainFala||q.explain))+' Dica da '+ROBO_NOME+': '+dica)};
 
 /* 4) treino rápido de uma habilidade */
 function roboTreino(skill){const keys=roboKeys(skill);if(!keys.length){toast('Ainda não tenho treino para isso.');return}
-  const nome=roboNome(skill);let dica=ROBO_DICA_GERAL;
+  const nome=roboNome(skill);let dica='Leia com calma e, se precisar, toque no 🔊 para ouvir de novo.';
   try{const err=roboRespostas(14).filter(a=>a.skill===skill&&!a.ok).slice(-8);if(err.length)dica=roboDica(modaTipo(err),skill)}catch(e){}
-  const l={id:'treino-'+skill.toLowerCase().replace(/[^a-z0-9]+/g,'-'),treino:true,skillTreino:skill,titulo:'Treino: '+nome,icone:'🤖',subject:'Revisão',
-    slides:[{v:'<div style="font-size:96px;line-height:1">🤖</div>',t:`Vamos treinar ${nome}! ${dica}`}],practice:esticar(keys,6),quiz:[]};
+  const l={id:'treino-'+skill.toLowerCase().replace(/[^a-z0-9]+/g,'-'),treino:true,skillTreino:skill,titulo:'Treino: '+nome,icone:'💖',subject:'Revisão',
+    slides:[{v:roboImg(170,'margin:0 auto'),t:`Vamos treinar ${nome}! ${dica}`}],practice:esticar(keys,6),quiz:[]};
   startLessonObj(l,-1,'Revisão')}
 Object.assign(ACT,{
   robofala(){if(ROBO_ATUAL)speak(ROBO_ATUAL.txt)},
