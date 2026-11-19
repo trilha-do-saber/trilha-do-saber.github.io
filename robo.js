@@ -65,6 +65,9 @@ function roboDica(tipo,skill){const t=String(tipo||'');
   return ROBO_DICA_GERAL}
 const ROBO_NOME='Lumi',ROBO_IMG='img/robo.webp';
 const roboImg=(px,extra)=>`<img src="${ROBO_IMG}" alt="${ROBO_NOME}, a robô" width="${px}" height="${Math.round(px*1.065)}" style="display:block;${extra||''}">`;
+/* a voz não lê os emojis (senão fala "estrela brilhante"); o 🔊 vira "botão de ouvir" */
+const roboFalaTxt=t=>String(t||'').replace(/no 🔊/g,'no botão de ouvir').replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D]/gu,'').replace(/\s+([!?.,])/g,'$1').replace(/\s{2,}/g,' ').trim();
+const roboFala=t=>speak(roboFalaTxt(t));
 const roboNome=s=>String(s||'').replace(/^Memória · /,'').replace(/ · /g,': ');
 
 /* ---------- habilidade → geradores (para o treino rápido) ---------- */
@@ -137,7 +140,7 @@ renderMap=function(){_renderMapRobo.apply(this,arguments);if(S.view!=='map')retu
   ROBO_ATUAL=m;const d=document.createElement('div');d.id='robo-home';d.style.marginBottom='14px';d.innerHTML=roboCardHTML(m);
   const top=app.querySelector('.top');if(top)top.insertAdjacentElement('afterend',d);else app.prepend(d);
   /* fala sozinho só quando a mensagem é nova */
-  if(S.config.autoRead!==false&&LS.get('roboFalou','')!==m.k){LS.set('roboFalou',m.k);setTimeout(()=>{if(S.view==='map'&&document.getElementById('robo-home')){speak(m.txt);if(m.festa&&typeof confetti==='function')confetti()}},2600)}};
+  if(S.config.autoRead!==false&&LS.get('roboFalou','')!==m.k){LS.set('roboFalou',m.k);setTimeout(()=>{if(S.view==='map'&&document.getElementById('robo-home')){roboFala(m.txt);if(m.festa&&typeof confetti==='function')confetti()}},2600)}};
 
 /* 2) comentário no fim da lição */
 function roboFimLicao(s){const l=(s.answers||[]).filter(a=>(a.attempt||1)===1);if(!l.length)return null;
@@ -155,7 +158,7 @@ finishLesson=function(){
   let m=null;try{m=s&&roboFimLicao(s)}catch(e){console.warn('robô',e)}
   const box=document.querySelector('.qcard.result');if(!m||!box)return;
   const d=document.createElement('div');d.style.cssText='width:100%;max-width:640px;text-align:left';d.innerHTML=roboCardHTML(m);box.appendChild(d);ROBO_ATUAL=m;
-  setTimeout(()=>{if(document.body.contains(box))speak(m.txt)},2600)};
+  setTimeout(()=>{if(document.body.contains(box))roboFala(m.txt)},2600)};
 
 /* 3) dica durante a lição: 2 erros do mesmo tipo */
 const _handleAnswerRobo=handleAnswer;
@@ -170,17 +173,17 @@ handleAnswer=function(ok,given,type,optEl){
   R.roboDicas.add(chave);const dica=roboDica(tipo,ult.skill),fb=document.getElementById('fb');if(!fb)return;
   const div=document.createElement('div');div.className='robo-dica';div.innerHTML=`${roboImg(44)}<span><b>Dica da ${ROBO_NOME}:</b> ${esc(dica)}</span>`;
   const row=fb.querySelector('.row');row?fb.insertBefore(div,row):fb.appendChild(div);
-  speak((primeira?'Quase! '+q.hint:(q.explainFala||q.explain))+' Dica da '+ROBO_NOME+': '+dica)};
+  speak((primeira?'Quase! '+q.hint:(q.explainFala||q.explain))+' Dica da '+ROBO_NOME+': '+roboFalaTxt(dica))};
 
 /* 4) treino rápido de uma habilidade */
 function roboTreino(skill){const keys=roboKeys(skill);if(!keys.length){toast('Ainda não tenho treino para isso.');return}
   const nome=roboNome(skill);let dica='Leia com calma e, se precisar, toque no 🔊 para ouvir de novo.';
   try{const err=roboRespostas(14).filter(a=>a.skill===skill&&!a.ok).slice(-8);if(err.length)dica=roboDica(modaTipo(err),skill)}catch(e){}
   const l={id:'treino-'+skill.toLowerCase().replace(/[^a-z0-9]+/g,'-'),treino:true,skillTreino:skill,titulo:'Treino: '+nome,icone:'💖',subject:'Revisão',
-    slides:[{v:roboImg(170,'margin:0 auto'),t:`Vamos treinar ${nome}! ${dica}`}],practice:esticar(keys,6),quiz:[]};
+    slides:[{v:roboImg(170,'margin:0 auto'),t:`Vamos treinar ${nome}! ${dica}`,fala:roboFalaTxt(`Vamos treinar ${nome}! ${dica}`)}],practice:esticar(keys,6),quiz:[]};
   startLessonObj(l,-1,'Revisão')}
 Object.assign(ACT,{
-  robofala(){if(ROBO_ATUAL)speak(ROBO_ATUAL.txt)},
+  robofala(){if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt)},
   robotreino(sk){if(R&&S.session)leaveLesson();R=null;roboTreino(sk)},
 });
 if(S.view==='map'&&!R)renderMap();
