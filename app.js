@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v41';
+const APP_VERSAO='trilha-v42';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -446,7 +446,14 @@ async function ccSalvar(btn){
 }
 /* ---- Roteiro do dia ---- */
 const dayNum=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
-const mainSubj=()=>SUBJECTS.find(x=>x.id===(dayNum()%2===0?'mat':'por'));
+/* Matemática ou Português: alterna pelos DIAS EM QUE ELA ESTUDOU, não pelo calendário.
+   Olha o último dia antes de hoje em que ela fez lição de Matemática ou de Português e escolhe a outra.
+   Assim, se ela pular o domingo, a segunda não repete a matéria de sábado. Sem histórico, usa o calendário. */
+function mainSubj(){const hoje=today(),ult={};
+  const mf=LS.get('mainFeito',{}),dias=Object.keys(mf).filter(d=>d<hoje).sort();if(dias.length)return SUBJECTS.find(x=>x.id===(mf[dias[dias.length-1]]==='mat'?'por':'mat'));
+  for(const s of S.sessions||[]){if(!s||s.date>=hoje||!s.lessonId)continue;const sub=s.subject==='Matemática'?'mat':s.subject==='Português'?'por':null;if(sub&&(!ult[sub]||s.date>ult[sub]))ult[sub]=s.date}
+  let id;if(ult.mat&&ult.por&&ult.mat!==ult.por)id=ult.mat>ult.por?'por':'mat';else if(ult.mat&&!ult.por)id='por';else if(ult.por&&!ult.mat)id='mat';else id=dayNum()%2===0?'mat':'por';
+  return SUBJECTS.find(x=>x.id===id)}
 const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&&f(x));
 const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n).map(z=>z.start));
 function rotOpcoes(){
@@ -459,8 +466,10 @@ function rotOpcoes(){
 function roteiro(){
   const key='rot:'+today();let st=LS.get(key,null);
   if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes()};LS.set(key,st)}
-  const main=mainSubj(),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
+  if(!st.main){st.main=mainSubj().id;LS.set(key,st)}   // a matéria principal do dia fica fixa até a meia-noite
+  const main=SUBJECTS.find(x=>x.id===st.main)||mainSubj(),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
   const w=warmupKeys().length>0,s1=!w||warmupDone(),s2=doneToday(x=>x.subject===main.nome),opsFeitas=ops.map(o=>doneToday(x=>x.subject===o.nome)),s3=opsFeitas.every(Boolean);
+  if(s2){const mf=LS.get('mainFeito',{});if(mf[today()]!==main.id){mf[today()]=main.id;LS.set('mainFeito',mf)}}
   /* as 2 matérias do dia são obrigatórias, na ordem que ela quiser */
   return {main,ops,opsFeitas,w,s1,s2,s3,done:s1&&s2&&s3,total:(w?1:0)+1+ops.length,feitos:(w&&s1?1:0)+(s2?1:0)+opsFeitas.filter(Boolean).length};
 }
