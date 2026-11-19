@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v31';
+const APP_VERSAO='trilha-v32';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -322,7 +322,7 @@ function ccSectionHTML(){
   return `<div class="sec"><h2>🎵 Memória CC: semanas</h2><div class="card col">${fila}
     <p class="muted" style="margin:0;font-size:15px">Pode cadastrar várias semanas de uma vez: elas ficam guardadas e abrem uma por semana, sempre na segunda-feira.</p>
     <p class="muted" style="margin:0;font-size:15px">Fotografe a página da semana no livro Foundations. A IA lê, você confere e salva. As frases ficam só na sua planilha.</p>
-    ${lista?`<div class="pill mid" style="align-self:flex-start">${esc(lista)}</div>`:''}
+    ${lista?`<div class="col" style="gap:6px"><span class="muted" style="font-size:15px">Semanas cadastradas (toque para ver ou corrigir):</span><div class="row" style="flex-wrap:wrap;gap:6px">${Object.keys(sem).sort().flatMap(c=>[...sem[c]].sort((x,y)=>x-y).map(s=>`<button class="btn small ghost" data-act="ccedit" data-arg="${c}|${s}">✏️ Ciclo ${c} · Semana ${s}</button>`)).join('')}</div></div>`:''}
     <div class="form">
       <label for="cc-ciclo">Ciclo<select id="cc-ciclo" class="sel">${['1','2','3'].map(c=>`<option ${c===ciclo?'selected':''}>${c}</option>`).join('')}</select></label>
       <label for="cc-semana">Semana<input id="cc-semana" type="number" min="1" max="24" value="${semana}"></label>
@@ -368,7 +368,7 @@ async function mmLer(btn){
 }
 function ccDraftHTML(){
   if(!CCD)return '';
-  return `<div class="col" style="gap:10px"><b>Confira as frases da semana ${CCD.semana} (ciclo ${CCD.ciclo}):</b>
+  return `<div class="col" style="gap:10px"><b>${CCD.editando?'Corrigindo':'Confira'} as frases da semana ${CCD.semana} (ciclo ${CCD.ciclo}):</b>${CCD.editando?'<span class="muted" style="font-size:14px">Ao salvar, esta semana é substituída pelo que estiver aqui. O progresso dela não se perde.</span>':''}
     ${CCD.itens.map((x,i)=>`<div class="ccrow"><input class="cc-m" aria-label="Matéria" value="${esc(x.materia)}" maxlength="40"><textarea class="cc-t" aria-label="Frase" rows="2">${esc(x.texto)}</textarea><button class="btn small ghost" data-act="ccdel" data-arg="${i}" aria-label="Remover">✕</button></div>`).join('')}
     <div class="row"><button class="btn small ghost" data-act="ccadd">+ Linha</button><button class="btn small okb" data-act="ccsalvar">Salvar semana</button><button class="btn small ghost" data-act="cccancel">Cancelar</button></div></div>`;
 }
@@ -892,6 +892,10 @@ const ACT={
   ccdel(i){ccSync();CCD.itens.splice(+i,1);ccRedraw()},
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
+  ccedit(k){const[c,s]=k.split('|'),rows=LS.get('memoria',[]).filter(r=>String(r.ciclo||'1')===c&&Number(r.semana)===Number(s));
+    CCD={ciclo:c,semana:Number(s),itens:rows.map(r=>({materia:r.materia||'',texto:r.texto||''})),editando:true};
+    const ci=document.getElementById('cc-ciclo'),se=document.getElementById('cc-semana');if(ci)ci.value=c;if(se)se.value=s;
+    ccRedraw();const d=document.getElementById('ccdraft');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});toast('Corrija o que precisar e toque em Salvar semana.')},
   chattudo(){chatTudo=true;const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   chatenviar(){const t=document.getElementById('chat-txt'),txt=(t&&t.value||'').trim();if(!txt){toast('Escreva a mensagem primeiro.');return}
     store.setDiario({id:'p-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),tipo:'pedido',data:today(),ts:Date.now(),texto:txt.slice(0,1500)});
