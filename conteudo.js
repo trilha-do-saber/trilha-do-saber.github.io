@@ -1440,6 +1440,45 @@ CC_APROF.push(
    practice:['cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia'],quiz:['cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia']},
 );
 
+/* ================= LOTE 9 · 18/11/2026 · Experimentos de ciências das semanas do CC =================
+   A página do CC cita experimentos de um material que a família não tem. Aqui ficam experimentos ORIGINAIS, simples e seguros,
+   sobre o assunto que o nome sugere. Aparecem na tela dela quando a semana é liberada (cc:'ciclo|semana').
+   Para semanas novas: o Pedro escreve os nomes no campo "Experimentos de ciências" da Mãos na massa; a rotina cria CC_EXPER.push({...}). */
+const CC_EXPER=[
+  {id:'exp-c1-s3-sumico',cc:'1|3',titulo:'O sumiço do sal',pergunta:'Para onde vai o sal quando a gente mistura na água?',
+   materiais:['1 copo com água morna','1 colher de sal','1 pires ou prato pequeno escuro'],
+   passos:['Coloque uma colher de sal no copo de água e mexa até o sal "sumir".','Prove uma gotinha com a ponta do dedo: o sal ainda está lá?','Com um adulto, coloque um pouquinho dessa água no pires.','Deixe o pires no sol ou perto da janela por 1 ou 2 dias e observe.'],
+   explica:'O sal não sumiu: ele se dissolveu e ficou misturado com a água, em pedacinhos tão pequenos que não dá para ver. Por isso a água ficou salgada. No pires, a água evaporou com o calor e o sal apareceu de novo!'},
+  {id:'exp-c1-s3-solo',cc:'1|3',titulo:'O chão quente e o chão frio',pergunta:'A terra no sol e a terra na sombra têm a mesma temperatura?',
+   materiais:['2 potinhos com terra (ou dois cantinhos do quintal)','1 termômetro (ou a sua mão)','Papel e lápis'],
+   passos:['Deixe um potinho de terra no sol e outro na sombra por 1 hora.','Coloque o termômetro (ou encoste a mão) na terra do sol.','Agora faça o mesmo na terra da sombra.','Anote ou desenhe: qual estava mais quente?'],
+   explica:'A terra no sol fica mais quente, porque o Sol esquenta o chão. Na sombra, a luz do Sol não chega direto, e a terra fica mais fresquinha. É por isso que as plantas e os bichinhos procuram sombra nos dias quentes.'},
+];
+Object.assign(GEN,{
+  cc1s3Exper:bk('Experimentos de ciências','confundiu o que aconteceu no experimento',[
+    ['Quando mexemos o sal na água, ele...','Se dissolve e fica misturado na água',['Desaparece para sempre','Vira açúcar'],'🧂','O sal fica em pedacinhos tão pequenos que não dá para ver.'],
+    ['Como sabemos que o sal ainda está na água?','A água fica salgada',['A água fica azul','A água congela'],'👅','O gosto salgado mostra que o sal continua ali.'],
+    ['O que acontece com a água do pires deixado no sol?','Ela evapora',['Ela vira gelo','Ela fica maior'],'☀️','O calor faz a água virar vapor e subir para o ar.'],
+    ['Depois que a água do pires evapora, o que aparece?','O sal',['Areia','Nada'],'✨','A água foi embora, mas o sal ficou no pires.'],
+    ['Qual destas coisas também se dissolve na água?','Açúcar',['Pedra','Moeda'],'🍬','O açúcar também se dissolve, por isso o suco fica doce.'],
+    ['Água morna ou gelada: em qual o sal se dissolve mais rápido?','Água morna',['Água gelada','É sempre igual'],'♨️','Na água morna as coisas se dissolvem mais rápido.'],
+    ['A terra que ficou no sol está...','Mais quente',['Mais fria','Igual à da sombra'],'🌞','O Sol esquenta o chão.'],
+    ['A terra que ficou na sombra está...','Mais fresca',['Mais quente','Pegando fogo'],'🌳','Na sombra a luz do Sol não bate direto.'],
+    ['O que usamos para medir se algo está quente ou frio?','Termômetro',['Régua','Balança'],'🌡️','O termômetro mede a temperatura.'],
+    ['Por que os bichinhos procuram sombra no calor?','Porque a sombra é mais fresca',['Porque a sombra é colorida','Porque a sombra tem comida'],'🐕','Na sombra o chão e o ar ficam mais frescos.'],
+    ['Num experimento, o que devemos fazer no final?','Observar e anotar o que aconteceu',['Jogar tudo fora sem olhar','Adivinhar sem testar'],'📝','Cientistas observam e anotam os resultados.'],
+    ['Antes de provar ou mexer em algo num experimento, devemos...','Pedir ajuda a um adulto',['Fazer escondido','Colocar tudo na boca'],'🧑‍🔬','Experimento seguro é com a ajuda de um adulto.'],
+    ['Por que a água do mar é salgada?','Porque tem sal dissolvido nela',['Porque os peixes choram','Porque é azul'],'🌊','A água do mar tem muito sal dissolvido.'],
+    ['Quando a roupa seca no varal, a água da roupa...','Evapora',['Vira sal','Entra na terra pelo varal'],'👕','O sol e o vento fazem a água evaporar.'],
+    ['De manhã cedinho, o chão costuma estar...','Mais fresco que à tarde',['Pegando fogo','Mais quente que ao meio-dia'],'🌅','Durante o dia o Sol vai esquentando o chão.'],
+    ['Qual chão esquenta mais no sol?','A calçada escura',['A grama na sombra','A terra molhada na sombra'],'🔥','Superfícies escuras no sol esquentam muito.'],
+    ['Um cientista que testa uma ideia está fazendo um...','Experimento',['Desenho animado','Piquenique'],'🔬','Experimento é testar para descobrir.']]),
+});
+CC_APROF.push({id:'cc-c1-s3-exper',cc:'1|3',titulo:'Aprofunde: experimentos de ciências',icone:'🧪',bncc:'CC + EF02CI07',
+  slides:[{t:'Quando misturamos sal na água, ele parece sumir. Mas ele está lá, dissolvido! Se a água evaporar, o sal aparece de novo.',v:'<div class="emo" style="font-size:52px">🧂 ➡️ 💧 ➡️ ☀️ ➡️ ✨</div>'},
+    {t:'O Sol esquenta o chão. A terra no sol fica mais quente, e a terra na sombra fica mais fresca.',v:'<div class="emo" style="font-size:52px">🌞 🟫🔥 &nbsp; 🌳 🟫❄️</div>'}],
+  practice:['cc1s3Exper','cc1s3Exper','cc1s3Exper','cc1s3Exper','cc1s3Exper','cc1s3Exper'],quiz:['cc1s3Exper','cc1s3Exper','cc1s3Exper','cc1s3Exper','cc1s3Exper']});
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */

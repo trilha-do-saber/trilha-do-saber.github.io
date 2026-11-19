@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v34';
+const APP_VERSAO='trilha-v35';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -338,6 +338,9 @@ function ccSectionHTML(){
 let MMD=null;
 const praticas=()=>store.diario().filter(r=>r.tipo==='pratica');
 const praticaDe=k=>{const[c,s]=k.split('|');return praticas().find(r=>String(r.ciclo)===c&&Number(r.semana)===Number(s))};
+/* Experimentos de ciências (CC_EXPER em conteudo.js): os da semana liberada mais recente que tiver algum */
+const experAtuais=()=>{if(typeof CC_EXPER==='undefined')return[];const lib=MEMINFO.lib;for(let i=lib.length-1;i>=0;i--){const xs=CC_EXPER.filter(e=>e.cc===lib[i].k);if(xs.length)return xs}return[]};
+const experFeito=id=>store.diario().find(r=>r.tipo==='experimento'&&r.ref===id);
 const praticaAtual=()=>{const lib=MEMINFO.lib;for(let i=lib.length-1;i>=0;i--){const p=praticaDe(lib[i].k);if(p)return p}return null};
 function maosParentHTML(){
   const ps=praticas().sort((a,b)=>String(a.ciclo).localeCompare(String(b.ciclo))||a.semana-b.semana);
@@ -347,12 +350,14 @@ function maosParentHTML(){
   <label for="mm-fotos" class="muted" style="font-size:15px">Fotos da atividade (use o ciclo e a semana escolhidos acima)<input id="mm-fotos" type="file" accept="image/*" capture="environment" multiple></label>
   <div class="row"><button class="btn small" data-act="mmler">📷 Resumir com IA</button><button class="btn small ghost" data-act="mmmanual">Escrever à mão</button><span class="muted" style="font-size:14px" id="mm-status"></span></div>
   <div id="mmdraft">${mmDraftHTML()}</div>
+  ${typeof CC_EXPER!=='undefined'&&CC_EXPER.length?`<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${CC_EXPER.map(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`}).join('')}</div>`:''}
   ${ps.length?`<div class="col" style="gap:6px">${ps.map(p=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${p.feita?'ok':'mid'}">C${esc(p.ciclo)} · S${p.semana}</span><span style="flex:1">${esc(p.titulo)}</span>${p.feita?'<span class="pill ok">✅ Feita</span>':`<button class="btn small okb" data-act="mmfeita" data-arg="${esc(p.id)}">Marcar como feita</button>`}</div>`).join('')}</div>`:''}`;
 }
 function mmDraftHTML(){if(!MMD)return '';
   return `<div class="form"><label for="mm-tit">Título<input id="mm-tit" maxlength="80" value="${esc(MMD.titulo||'')}"></label>
    <label for="mm-pas">Passos (um por linha)<textarea id="mm-pas" rows="5">${esc((MMD.passos||[]).join('\n'))}</textarea></label>
-   <label for="mm-mat">Materiais (um por linha)<textarea id="mm-mat" rows="3">${esc((MMD.materiais||[]).join('\n'))}</textarea></label></div>
+   <label for="mm-mat">Materiais (um por linha)<textarea id="mm-mat" rows="3">${esc((MMD.materiais||[]).join('\n'))}</textarea></label>
+   <label for="mm-cie">Experimentos de ciências citados na página (só os nomes, um por linha). Eu crio um experimento parecido à noite.<textarea id="mm-cie" rows="2">${esc((MMD.ciencias||[]).join('\n'))}</textarea></label></div>
    <div class="row"><button class="btn small okb" data-act="mmsalvar">Salvar atividade da semana ${MMD.semana}</button><button class="btn small ghost" data-act="mmcancel">Cancelar</button></div>`}
 function mmRedraw(){const d=document.getElementById('mmdraft');if(d)d.innerHTML=mmDraftHTML()}
 async function mmLer(btn){
@@ -459,6 +464,7 @@ function renderMap(){
   ${(()=>{const wk=warmupKeys().length,m=missaoAtual(),f=missaoFeita(),lv=livrosLidos();return `<div class="cards2">
     ${wk&&!rotOn?`<button class="mini" data-act="warmup"><span class="ic">🔥</span><span><b>Aquecimento do dia</b><small>${warmupDone()?'✅ Feito hoje! Pode fazer de novo.':'5 questões rápidas de revisão'}</small></span></button>`:''}
     <div class="mini"><span class="ic">${m.icone}</span><span><b>Missão da semana ${f?'✅':''}</b><small>${esc(m.texto)}</small></span><button class="speak" data-act="saymissao" aria-label="Ouvir a missão">🔊</button></div>
+    ${experAtuais().map(e=>`<div class="mini" style="align-items:flex-start"><span class="ic">🧪</span><span><b>Experimento: ${esc(e.titulo)} ${experFeito(e.id)?'✅':''}</b><small><i>${esc(e.pergunta)}</i></small>${e.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}<small>🧺 ${esc(e.materiais.join(', '))}</small><details><summary style="font-weight:800;color:var(--pri);cursor:pointer">Por que acontece?</summary><small>${esc(e.explica)}</small></details></span><button class="speak" data-act="sayexper" data-arg="${e.id}" aria-label="Ouvir o experimento">🔊</button></div>`).join('')}
     ${(()=>{const p=praticaAtual();if(!p)return '';return `<div class="mini" style="align-items:flex-start"><span class="ic">🖐️</span><span><b>Mãos na massa ${p.feita?'✅':''}</b><small><b>${esc(p.titulo)}</b></small>${p.passos.map((x,i)=>`<small>${i+1}. ${esc(x)}</small>`).join('')}${p.materiais&&p.materiais.length?`<small>🧺 ${esc(p.materiais.join(', '))}</small>`:''}</span><button class="speak" data-act="saymaos" aria-label="Ouvir a atividade">🔊</button></div>`})()}
     ${(()=>{const c=potesCfg();if(!c.ativo)return '';const sd=saldos(),mi=metaInfo();return `<button class="mini" data-act="subj" data-arg="fin"><span class="ic">🐷</span><span><b>Meus potes</b><small>🛍️ ${brl(sd.gastar)} · 🐷 ${brl(sd.guardar)} · 📈 ${brl(sd.investir)}</small>${mi?`<small>🎯 ${esc(c.metaNome)}: ${mi.pct}%</small><span class="bar" style="height:8px"><i style="width:${mi.pct}%"></i></span>`:''}</span></button>`})()}
     <div class="mini"><span class="ic">📚</span><span><b>Minha estante</b><small>${lv.length} livro${lv.length===1?'':'s'} lido${lv.length===1?'':'s'}${lv.length?' · último: '+esc(leituras()[0].livro):''}</small></span></div></div>`})()}
@@ -884,9 +890,11 @@ const ACT={
   mmsalvar(){if(!MMD)return;const tit=document.getElementById('mm-tit').value.trim(),linhas=id=>document.getElementById(id).value.split('\n').map(x=>x.trim()).filter(Boolean);
     const passos=linhas('mm-pas');if(!tit||!passos.length){toast('Preencha o título e pelo menos um passo.');return}
     const id=`pratica-c${MMD.ciclo}-s${MMD.semana}`,ant=store.diario().find(r=>r.id===id)||{};
-    store.setDiario({...ant,id,tipo:'pratica',data:today(),ts:Date.now(),ciclo:MMD.ciclo,semana:MMD.semana,titulo:tit,passos,materiais:linhas('mm-mat')});
+    store.setDiario({...ant,id,tipo:'pratica',data:today(),ts:Date.now(),ciclo:MMD.ciclo,semana:MMD.semana,titulo:tit,passos,materiais:linhas('mm-mat'),ciencias:linhas('mm-cie')});
     toast('Atividade salva! Ela aparece junto com a semana do CC.');MMD=null;const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   mmfeita(id){const r=store.diario().find(x=>x.id===id);if(!r)return;store.setDiario({...r,feita:true,feitaTs:Date.now()});toast('Marcada como feita!');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
+  sayexper(id){const e=(typeof CC_EXPER!=='undefined'?CC_EXPER:[]).find(x=>x.id===id);if(e)speak('Experimento: '+e.titulo+'. '+e.pergunta+' '+e.passos.map((x,i)=>'Passo '+(i+1)+': '+x).join(' '))},
+  experok(id){store.setDiario({id:'expfeito-'+id,tipo:'experimento',ref:id,data:today(),ts:Date.now(),feita:true});toast('Experimento marcado como feito!');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
   saymaos(){const p=praticaAtual();if(p)speak('Mãos na massa: '+p.titulo+'. '+p.passos.map((x,i)=>'Passo '+(i+1)+': '+x).join(' '))},
   ccmanual(){const c=ccLerCampos();CCD={...c,itens:[{materia:'História',texto:''}]};ccRedraw()},
   ccadd(){ccSync();CCD.itens.push({materia:'',texto:''});ccRedraw()},
