@@ -44,6 +44,56 @@ function criarAbasNovas() {
 }
 function criarAbaMemoria() { criarAbasNovas(); }
 
+/* ===================== MURAL DE FOTOS E FIGURINHAS =====================
+   As fotos ficam numa pasta PRIVADA do Google Drive do Pedro ("Trilha do Saber · Mural") e a descrição na aba Mural.
+   Assim o tablet dela e o telefone do Pedro veem o mesmo mural. */
+function autorizarDrive() { const f = pastaMural_(); Logger.log('Pasta do mural pronta: ' + f.getName()); }
+function pastaMural_() {
+  const id = PROPS.getProperty('MURAL_PASTA');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const f = DriveApp.createFolder('Trilha do Saber · Mural');
+  PROPS.setProperty('MURAL_PASTA', f.getId());
+  return f;
+}
+function abaMural_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName('Mural') || criarAba_(ss, 'Mural', ['id', 'data', 'ts', 'autor', 'texto', 'arquivo', 'editado']) || ss.getSheetByName('Mural');
+}
+function muralLinhas_() {
+  const sh = abaMural_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues().map((r, i) => ({ linha: i + 2, id: String(r[0]), ts: Number(r[2]) || 0, autor: String(r[3] || ''), texto: String(r[4] || ''), arquivo: String(r[5] || ''), editado: Number(r[6]) || 0 })).filter(x => x.id);
+}
+function muralListar_() { return muralLinhas_().map(x => ({ id: x.id, ts: x.ts, autor: x.autor, texto: x.texto, editado: x.editado })); }
+function muralFoto_(p) {
+  const x = muralLinhas_().find(r => r.id === String(p.id));
+  if (!x || !x.arquivo) throw new Error('foto_nao_encontrada');
+  const b = DriveApp.getFileById(x.arquivo).getBlob();
+  return { id: x.id, img: 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()) };
+}
+function muralSalvar_(p) {
+  if (!p.id) throw new Error('sem_id');
+  const sh = abaMural_(), x = muralLinhas_().find(r => r.id === String(p.id));
+  const fuso = Session.getScriptTimeZone();
+  if (x) {
+    sh.getRange(x.linha, 4, 1, 4).setValues([[p.autor || x.autor, String(p.texto || '').slice(0, 400), x.arquivo, Number(p.editado) || Date.now()]]);
+    return { id: x.id, atualizado: true };
+  }
+  const m = String(p.img || '').match(/^data:(image\/[a-z+]+);base64,(.+)$/);
+  if (!m) throw new Error('sem_imagem');
+  const blob = Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], 'mural-' + p.id + '.jpg');
+  const arq = pastaMural_().createFile(blob);
+  sh.appendRow([String(p.id), Utilities.formatDate(new Date(Number(p.ts) || Date.now()), fuso, 'yyyy-MM-dd'), Number(p.ts) || Date.now(), p.autor || '', String(p.texto || '').slice(0, 400), arq.getId(), Number(p.editado) || Date.now()]);
+  return { id: String(p.id), criado: true };
+}
+function muralApagar_(p) {
+  const sh = abaMural_(), x = muralLinhas_().find(r => r.id === String(p.id));
+  if (!x) return { id: String(p.id), apagado: true };
+  if (x.arquivo) { try { DriveApp.getFileById(x.arquivo).setTrashed(true); } catch (e) {} }
+  sh.deleteRow(x.linha);
+  return { id: x.id, apagado: true };
+}
+
 function lerMemoria_() {
   const sh = aba_('MemoriaCC');
   if (!sh || sh.getLastRow() < 2) return [];
@@ -85,6 +135,10 @@ function doPost(e) {
       case 'ai': res = ia_(p); break;
       case 'lerFotoCC': res = lerFotoCC_(p); break;
       case 'salvarMemoria': res = comTrava_(() => salvarMemoria_(p)); break;
+      case 'muralListar': res = muralListar_(); break;
+      case 'muralFoto': res = muralFoto_(p); break;
+      case 'muralSalvar': res = comTrava_(() => muralSalvar_(p)); break;
+      case 'muralApagar': res = comTrava_(() => muralApagar_(p)); break;
       default: throw new Error('acao_desconhecida');
     }
     return json_({ ok: true, data: res });
