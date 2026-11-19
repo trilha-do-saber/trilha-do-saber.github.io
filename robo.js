@@ -68,6 +68,10 @@ const roboImg=(px,extra)=>`<img src="${ROBO_IMG}" alt="${ROBO_NOME}, a robô" wi
 /* a voz não lê os emojis (senão fala "estrela brilhante"); o 🔊 vira "botão de ouvir" */
 const roboFalaTxt=t=>String(t||'').replace(/no 🔊/g,'no botão de ouvir').replace(/[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D]/gu,'').replace(/\s+([!?.,])/g,'$1').replace(/\s{2,}/g,' ').trim();
 const roboFala=t=>speak(roboFalaTxt(t));
+/* nome dela: vem das Configurações (S.config.childName, salvo só na planilha particular). Nunca escrever o nome no código.
+   Nos textos, "@n" vira ", <primeiro nome>" (ou some, se não houver nome). */
+const lumiNome=()=>String((S.config&&S.config.childName)||'').trim().split(/\s+/)[0]||'';
+const comNome=t=>String(t).replace(/@n/g,lumiNome()?', '+lumiNome():'');
 const roboNome=s=>String(s||'').replace(/^Memória · /,'').replace(/ · /g,': ');
 
 /* ---------- habilidade → geradores (para o treino rápido) ---------- */
@@ -106,12 +110,12 @@ function roboAnalise(){
   return {fraca,forte,melhorou,nHoje,okHoje,total:resp.length}}
 
 function roboMensagem(){const a=roboAnalise();
-  if(!a.total)return {k:'oi',txt:`Oi! Eu sou a ${ROBO_NOME}, a robô da Trilha! 💖 Depois dos exercícios, eu conto o que você está fazendo bem e o que dá para treinar.`};
+  if(!a.total)return {k:'oi',txt:comNome(`Oi@n! Eu sou a ${ROBO_NOME}, a robô da Trilha! 💖 Depois dos exercícios, eu conto o que você está fazendo bem e o que dá para treinar.`)};
   if(a.melhorou){const com=LS.get('roboComemorou',{});if(!com[a.melhorou.sk]){com[a.melhorou.sk]=today();LS.set('roboComemorou',com)}
-    return {k:'mel|'+a.melhorou.sk,festa:true,txt:`Lembra que ${roboNome(a.melhorou.sk)} estava difícil? Agora você acertou ${a.melhorou.k} das últimas 6! Você treinou e melhorou! 🎉`}}
-  const elogio=a.forte?`Você está mandando muito bem em ${roboNome(a.forte.sk)}! 🌟`
-    :a.okHoje>=5?`Você já acertou ${a.okHoje} perguntas hoje. Que esforço! 💪`
-    :'Que bom te ver aqui! Cada exercício deixa a sua cabeça mais forte. 💪';
+    return {k:'mel|'+a.melhorou.sk,festa:true,txt:comNome(`Lembra@n que ${roboNome(a.melhorou.sk)} estava difícil? Agora você acertou ${a.melhorou.k} das últimas 6! Você treinou e melhorou! 🎉`)}}
+  const elogio=a.forte?comNome(`Você está mandando muito bem em ${roboNome(a.forte.sk)}@n! 🌟`)
+    :a.okHoje>=5?comNome(`Você já acertou ${a.okHoje} perguntas hoje. Que esforço@n! 💪`)
+    :comNome('Que bom te ver aqui@n! Cada exercício deixa a sua cabeça mais forte. 💪');
   if(!a.fraca)return {k:'ok|'+(a.forte?a.forte.sk:''),txt:elogio+' Hoje não tenho nenhuma dica: continue assim!'};
   const f=a.fraca;
   return {k:'f|'+f.sk+'|'+f.tipo,txt:`${elogio} Agora vamos melhorar ${roboNome(f.sk)}? ${roboDica(f.tipo,f.sk)}`,treino:roboKeys(f.sk).length?f.sk:null}}
@@ -135,10 +139,10 @@ function roboCardHTML(m,extra){
     <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
 
 /* 1) balão na tela inicial, com interação: humor do dia, curiosidade do dia, toque na Lumi (reação ou adivinha) */
-const LUMI_HUMOR={feliz:['😊','Feliz','Que bom! Então vamos com tudo hoje! 💖'],
+const LUMI_HUMOR={feliz:['😊','Feliz','Que bom@n! Então vamos com tudo hoje! 💖'],
   cansada:['😴','Cansada','Ficar cansada é normal. Beba um pouco de água e respire fundo três vezes. Vamos com calma! 💧'],
-  meio:['😐','Mais ou menos','Tudo bem, tem dia que é assim. Que tal começar por uma coisa de que você gosta? 🌈'],
-  triste:['😢','Triste','Sinto muito que você está triste. Que tal dar um abraço no papai ou na mamãe e contar o que aconteceu? Eu fico aqui torcendo por você. 💖']};
+  meio:['😐','Mais ou menos','Tudo bem@n, tem dia que é assim. Que tal começar por uma coisa de que você gosta? 🌈'],
+  triste:['😢','Triste','Sinto muito que você está triste@n. Que tal dar um abraço no papai ou na mamãe e contar o que aconteceu? Eu fico aqui torcendo por você. 💖']};
 let LUMI={modo:null,adiv:null,ver:false,txt:''};
 const lumiSaudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia! ☀️':h<18?'Boa tarde! 🌤️':'Boa noite! 🌙'};
 const lumiDia=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
@@ -151,12 +155,12 @@ function lumiSequencia(){const dias=new Set((S.sessions||[]).filter(x=>x.phaseRe
   return n}
 function lumiConteudo(){const m=ROBO_ATUAL,b=(a,arg,t,cls)=>`<button class="btn small ${cls||'ghost'}" data-act="${a}" ${arg?`data-arg="${arg}"`:''}>${t}</button>`;
   const humor=LS.get('lumiHumor:'+today(),null);
-  if(!humor&&LUMI.modo!=='reacao'&&LUMI.modo!=='adivinha')return {txt:`${lumiSaudacao()} Como você está hoje?`,
+  if(!humor&&LUMI.modo!=='reacao'&&LUMI.modo!=='adivinha')return {txt:lumiSaudacao().replace('!',comNome('@n!'))+' Como você está hoje?',
     bts:`<div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(LUMI_HUMOR).map(([k,[e,t]])=>b('lumihumor',k,`${e} ${t}`)).join('')}</div>`};
-  if(LUMI.modo==='humor')return {txt:LUMI_HUMOR[humor][2],bts:b('lumivolta','','Continuar ➜','okb')};
-  if(LUMI.modo==='curio')return {txt:'💡 Curiosidade do dia: '+lumiCurioDia(),bts:b('lumivolta','','⬅ Voltar')};
-  if(LUMI.modo==='reacao')return {txt:LUMI.txt,bts:b('lumivolta','','⬅ Voltar')};
-  if(LUMI.modo==='adivinha'){const [p,r]=LUMI.adiv;return {txt:LUMI.ver?`${p} ${r} 🎉`:p,bts:LUMI.ver?b('lumivolta','','⬅ Voltar'):b('lumiresp','','🤔 Ver a resposta','okb')}}
+  if(LUMI.modo==='humor')return {txt:comNome(LUMI_HUMOR[humor][2]),bts:b('lumivolta','','Continuar ➜','okb')};
+  if(LUMI.modo==='curio')return {txt:comNome('💡 Sabia@n? ')+lumiCurioDia(),bts:b('lumivolta','','⬅ Voltar')};
+  if(LUMI.modo==='reacao')return {txt:comNome(LUMI.txt),bts:b('lumivolta','','⬅ Voltar')};
+  if(LUMI.modo==='adivinha'){const [p,r]=LUMI.adiv;return {txt:LUMI.ver?`${p} ${r} ${comNome('Acertou@n? 🎉')}`:p,bts:LUMI.ver?b('lumivolta','','⬅ Voltar'):b('lumiresp','','🤔 Ver a resposta','okb')}}
   return {txt:m.txt,bts:(m.treino?b('robotreino',esc(m.treino),'💪 Treinar agora','okb'):'')+(lumiCurioDia()?b('lumicurio','','💡 Curiosidade do dia'):'')}}
 function lumiHomeHTML(){const c=lumiConteudo(),seq=lumiSequencia();LUMI.falaAtual=c.txt;
   return `<div class="card robo"><button class="av" data-act="lumitoque" aria-label="Tocar na ${ROBO_NOME}" style="background:none;border:0;padding:0;cursor:pointer">${roboImg(86)}</button>
@@ -178,8 +182,8 @@ renderMap=function(){_renderMapRobo.apply(this,arguments);if(S.view!=='map')retu
 function roboFimLicao(s){const l=(s.answers||[]).filter(a=>(a.attempt||1)===1);if(!l.length)return null;
   const ok=l.filter(a=>a.ok).length,porSk={};l.filter(a=>!a.ok).forEach(a=>(porSk[a.skill]=porSk[a.skill]||[]).push(a));
   const pior=Object.entries(porSk).sort((a,b)=>b[1].length-a[1].length)[0];
-  const elogio=ok===l.length?`Uau! Você acertou todas as ${ok} de primeira! 🌟`:`Você acertou ${ok} de ${l.length} de primeira. 👏`;
-  if(!pior||pior[1].length<2)return {txt:elogio+(ok===l.length?'':' Muito bom!')};
+  const elogio=ok===l.length?comNome(`Uau@n! Você acertou todas as ${ok} de primeira! 🌟`):comNome(`Muito bem@n! Você acertou ${ok} de ${l.length} de primeira. 👏`);
+  if(!pior||pior[1].length<2)return {txt:elogio};
   const [sk,erros]=pior;
   return {txt:`${elogio} O que deu mais trabalho foi ${roboNome(sk)}. ${roboDica(modaTipo(erros),sk)}`,treino:roboKeys(sk).length?sk:null}}
 const _finishLessonRobo=finishLesson;
@@ -212,7 +216,7 @@ function roboTreino(skill){const keys=roboKeys(skill);if(!keys.length){toast('Ai
   const nome=roboNome(skill);let dica='Leia com calma e, se precisar, toque no 🔊 para ouvir de novo.';
   try{const err=roboRespostas(14).filter(a=>a.skill===skill&&!a.ok).slice(-8);if(err.length)dica=roboDica(modaTipo(err),skill)}catch(e){}
   const l={id:'treino-'+skill.toLowerCase().replace(/[^a-z0-9]+/g,'-'),treino:true,skillTreino:skill,titulo:'Treino: '+nome,icone:'💖',subject:'Revisão',
-    slides:[{v:roboImg(170,'margin:0 auto'),t:`Vamos treinar ${nome}! ${dica}`,fala:roboFalaTxt(`Vamos treinar ${nome}! ${dica}`)}],practice:esticar(keys,6),quiz:[]};
+    slides:[{v:roboImg(170,'margin:0 auto'),t:comNome(`Vamos treinar ${nome}@n! ${dica}`),fala:roboFalaTxt(comNome(`Vamos treinar ${nome}@n! ${dica}`))}],practice:esticar(keys,6),quiz:[]};
   startLessonObj(l,-1,'Revisão')}
 Object.assign(ACT,{
   robofala(){if(S.view==='map'&&document.getElementById('robo-home')&&LUMI.falaAtual)roboFala(LUMI.falaAtual);else if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt)},

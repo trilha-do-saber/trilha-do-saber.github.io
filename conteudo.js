@@ -1825,9 +1825,10 @@ const LUMI_ADIVINHAS=[
   ['O que é, o que é? Anda com os pés na cabeça.','O piolho!'],['O que é, o que é? Tem folhas, mas não é árvore.','O livro!'],
   ['O que é, o que é? Quanto mais cresce, menos a gente vê.','A escuridão!'],['O que é, o que é? Tem rabo, mas não é bicho. Voa, mas não é ave.','A pipa!'],
 ];
-const LUMI_REACOES=['Hihi, faz cócegas! 😆','Oba! Vamos aprender juntas? 💖','Eu acredito em você! ⭐','Toca de novo, toca! 🤭','Você sabia que eu adoro números? 🔢',
-  'Bip bop! Minha antena está brilhando de alegria! ✨','Errar faz parte de aprender. Eu também erro! 💪','Você é muito curiosa. Isso é ótimo! 🔎',
-  'Que tal beber um copo de água? Cérebro gosta de água! 💧','Eu adoro quando você estuda comigo! 🥰'];
+/* "@n" vira ", <nome dela>", que vem das Configurações (nunca escreva o nome aqui) */
+const LUMI_REACOES=['Hihi, faz cócegas@n! 😆','Oba@n! Vamos aprender juntas? 💖','Eu acredito em você@n! ⭐','Toca de novo, toca! 🤭','Você sabia que eu adoro números? 🔢',
+  'Bip bop! Minha antena está brilhando de alegria! ✨','Errar faz parte de aprender. Eu também erro! 💪','Você é muito curiosa@n. Isso é ótimo! 🔎',
+  'Que tal beber um copo de água? Cérebro gosta de água! 💧','Eu adoro quando você estuda comigo@n! 🥰'];
 MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');ING_LESSONS.forEach(l=>l.subject='Inglês');HIS_LESSONS.forEach(l=>l.subject='História');GEO_LESSONS.forEach(l=>l.subject='Geografia');
 SUBJECTS[0].lessons=MAT_LESSONS;Object.assign(SUBJECTS[1],{lessons:POR_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS[2],{lessons:CIE_LESSONS,ready:true,ano:'2º ano'});
