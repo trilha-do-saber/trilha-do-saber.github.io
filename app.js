@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v35';
+const APP_VERSAO='trilha-v36';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -351,7 +351,7 @@ function maosParentHTML(){
   <div class="row"><button class="btn small" data-act="mmler">📷 Resumir com IA</button><button class="btn small ghost" data-act="mmmanual">Escrever à mão</button><span class="muted" style="font-size:14px" id="mm-status"></span></div>
   <div id="mmdraft">${mmDraftHTML()}</div>
   ${typeof CC_EXPER!=='undefined'&&CC_EXPER.length?`<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${CC_EXPER.map(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`}).join('')}</div>`:''}
-  ${ps.length?`<div class="col" style="gap:6px">${ps.map(p=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${p.feita?'ok':'mid'}">C${esc(p.ciclo)} · S${p.semana}</span><span style="flex:1">${esc(p.titulo)}</span>${p.feita?'<span class="pill ok">✅ Feita</span>':`<button class="btn small okb" data-act="mmfeita" data-arg="${esc(p.id)}">Marcar como feita</button>`}</div>`).join('')}</div>`:''}`;
+  ${ps.length?`<div class="col" style="gap:6px">${ps.map(p=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${p.feita?'ok':'mid'}">C${esc(p.ciclo)} · S${p.semana}</span><span style="flex:1">${esc(p.titulo)}</span><button class="btn small ghost" data-act="mmedit" data-arg="${esc(p.id)}">✏️ Editar</button>${p.feita?'<span class="pill ok">✅ Feita</span>':`<button class="btn small okb" data-act="mmfeita" data-arg="${esc(p.id)}">Marcar como feita</button>`}</div>`).join('')}</div>`:''}`;
 }
 function mmDraftHTML(){if(!MMD)return '';
   return `<div class="form"><label for="mm-tit">Título<input id="mm-tit" maxlength="80" value="${esc(MMD.titulo||'')}"></label>
@@ -886,7 +886,9 @@ const ACT={
   ptmeta(el){const c=potesCfg(),b=document.querySelector('[data-act=ptmeta]');if(b&&!b.dataset.ok){b.dataset.ok='1';b.textContent='Toque de novo para confirmar';return}
     addMov('meta',{guardar:-c.metaValor},'Comprou: '+c.metaNome);const p=potes();store.setDiario({...p,ts:Date.now(),metaNome:'',metaValor:0});toast('Parabéns pela conquista! Escolham uma meta nova.');renderParent()},
   ccler(_,el){ccLer(el)},
-  mmler(_,el){mmLer(el)},mmmanual(){const c=ccLerCampos();MMD={...c,titulo:'',passos:[],materiais:[]};mmRedraw()},mmcancel(){MMD=null;mmRedraw()},
+  mmler(_,el){mmLer(el)},
+  mmedit(id){const r=store.diario().find(x=>x.id===id);if(!r)return;MMD={ciclo:String(r.ciclo),semana:Number(r.semana),titulo:r.titulo,passos:r.passos||[],materiais:r.materiais||[],ciencias:r.ciencias||[]};
+    mmRedraw();const d=document.getElementById('mmdraft');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});toast('Edite e toque em Salvar. Os experimentos vão no último campo, um por linha.')},mmmanual(){const c=ccLerCampos();MMD={...c,titulo:'',passos:[],materiais:[]};mmRedraw()},mmcancel(){MMD=null;mmRedraw()},
   mmsalvar(){if(!MMD)return;const tit=document.getElementById('mm-tit').value.trim(),linhas=id=>document.getElementById(id).value.split('\n').map(x=>x.trim()).filter(Boolean);
     const passos=linhas('mm-pas');if(!tit||!passos.length){toast('Preencha o título e pelo menos um passo.');return}
     const id=`pratica-c${MMD.ciclo}-s${MMD.semana}`,ant=store.diario().find(r=>r.id===id)||{};
