@@ -1786,6 +1786,48 @@ const ING_LESSONS=[
     'Também tem {grandma}, a avó, {grandpa}, o avô, e o {baby}, o bebê. A família mora na {house}, a casa.','👵 👴 👶 🏠'),
 ];
 
+/* ================= LOTE 11 · 19/11/2026 · Falas da Lumi (curiosidade do dia, adivinhas, reações) =================
+   Usadas por robo.js. Curiosidades verdadeiras e simples; adivinhas tradicionais (domínio público). */
+const LUMI_CURIOSIDADES=[
+  'O polvo tem três corações!','O beija-flor consegue voar para trás.','O bicho-preguiça desce da árvore mais ou menos uma vez por semana, só para fazer cocô.',
+  'A baleia-azul é o maior animal que já viveu na Terra. É maior que qualquer dinossauro!','O cavalo-marinho é diferente: quem carrega os ovos na barriga é o papai.',
+  'O pinguim é uma ave, mas não voa. Em compensação, ele nada muito bem!','O avestruz é a maior ave do mundo e bota o maior ovo de todos.',
+  'O guepardo é o animal mais rápido da terra. Ele corre mais rápido que um carro na cidade!','A capivara é o maior roedor do mundo e vive aqui na América do Sul.',
+  'Os flamingos ficam cor-de-rosa por causa do que comem.','A estrela-do-mar não tem cérebro, mas consegue andar pelo fundo do mar.',
+  'A cobra usa a língua para sentir cheiros.','O elefante usa a tromba para beber água, pegar comida e até fazer carinho.',
+  'A coruja consegue virar a cabeça quase até as costas.','Os golfinhos dormem com metade do cérebro de cada vez.',
+  'O sapo bebe água pela pele.','O camaleão consegue mudar de cor.','As formigas carregam coisas muito mais pesadas do que elas.',
+  'A lagarta vira borboleta dentro de um casulo.','O morcego é um mamífero que voa, como se tivesse braços com asas.',
+  'As abelhas fazem o mel com o néctar das flores.','O mel quase não estraga, mesmo guardado por muitos e muitos anos.',
+  'A girafa tem uma língua bem comprida e escura, que ajuda a pegar as folhas lá no alto.','Os gatos passam mais da metade do dia dormindo.',
+  'O seu coração bate mais de cem mil vezes por dia, sem parar!','O corpo de uma pessoa grande tem 206 ossos.',
+  'O bebê nasce com mais ossos que o adulto. Alguns vão se juntando enquanto a criança cresce.','A pele é o maior órgão do nosso corpo.',
+  'As crianças têm 20 dentes de leite. Eles caem para dar lugar aos dentes novos.','Quando a gente espirra, os olhos se fecham sozinhos.',
+  'A gente pisca milhares de vezes por dia, e nem percebe!','O Sol é uma estrela. É a estrela mais perto da Terra.',
+  'A Lua não tem luz própria. Ela brilha porque reflete a luz do Sol.','A Terra gira em volta dela mesma. É por isso que existe o dia e a noite.',
+  'A Terra leva um ano inteiro para dar uma volta em volta do Sol.','Júpiter é o maior planeta do Sistema Solar. Caberiam mais de mil Terras dentro dele!',
+  'O chão de Marte é avermelhado porque tem ferrugem.','O arco-íris aparece quando a luz do Sol passa pelas gotinhas de chuva.',
+  'A água pode ser gelo, água líquida ou vapor. É a mesma água!','O gelo boia na água.','O ímã puxa coisas de ferro, como clipes e pregos.',
+  'O som anda mais rápido dentro da água do que no ar.','As plantas fazem o próprio alimento usando a luz do Sol.',
+  'A maior parte da Floresta Amazônica, a maior floresta tropical do mundo, fica no Brasil.','O rio Amazonas é o rio com mais água do mundo.',
+  'Os dinossauros viveram muito, muito tempo antes de existirem pessoas.','As tartarugas-marinhas voltam para a praia onde nasceram para botar seus ovos.',
+  'O polvo pode soltar uma tinta escura para fugir dos perigos.','A vaca tem um estômago dividido em quatro partes.',
+];
+const LUMI_ADIVINHAS=[
+  ['O que é, o que é? Cai em pé e corre deitado.','A chuva!'],['O que é, o que é? Tem dentes, mas não morde.','O pente!'],
+  ['O que é, o que é? Quanto mais se tira, maior fica.','O buraco!'],['O que é, o que é? Tem pescoço, mas não tem cabeça.','A garrafa!'],
+  ['O que é, o que é? Quanto mais seca, mais molhada fica.','A toalha!'],['O que é, o que é? Passa na frente do Sol e não faz sombra.','O vento!'],
+  ['O que é, o que é? Tem cabeça e tem dente, não é bicho nem é gente.','O alho!'],['O que é, o que é? Nasce grande e vai ficando pequeno.','O lápis!'],
+  ['O que é, o que é? Tem um olho só, mas não enxerga.','A agulha!'],['O que é, o que é? Sobe quando a chuva desce.','O guarda-chuva!'],
+  ['O que é, o que é? Tem coroa, mas não é rei. Tem escamas, mas não é peixe.','O abacaxi!'],['O que é, o que é? Está no meio do ovo.','A letra V! O-V-O.'],
+  ['O que é, o que é? Dá muitas voltas e não sai do lugar.','O relógio!'],['O que é, o que é? Foi feita para andar, mas não anda.','A rua!'],
+  ['O que é, o que é? Tem chapéu, mas não tem cabeça. Tem pé, mas não tem sapato.','O cogumelo!'],['O que é, o que é? Tem asa, mas não voa. Tem bico, mas não bica.','O bule!'],
+  ['O que é, o que é? Anda com os pés na cabeça.','O piolho!'],['O que é, o que é? Tem folhas, mas não é árvore.','O livro!'],
+  ['O que é, o que é? Quanto mais cresce, menos a gente vê.','A escuridão!'],['O que é, o que é? Tem rabo, mas não é bicho. Voa, mas não é ave.','A pipa!'],
+];
+const LUMI_REACOES=['Hihi, faz cócegas! 😆','Oba! Vamos aprender juntas? 💖','Eu acredito em você! ⭐','Toca de novo, toca! 🤭','Você sabia que eu adoro números? 🔢',
+  'Bip bop! Minha antena está brilhando de alegria! ✨','Errar faz parte de aprender. Eu também erro! 💪','Você é muito curiosa. Isso é ótimo! 🔎',
+  'Que tal beber um copo de água? Cérebro gosta de água! 💧','Eu adoro quando você estuda comigo! 🥰'];
 MAT_LESSONS.forEach(l=>l.subject='Matemática');POR_LESSONS.forEach(l=>l.subject='Português');CIE_LESSONS.forEach(l=>l.subject='Ciências');FIN_LESSONS.forEach(l=>l.subject='Dinheiro');LOG_LESSONS.forEach(l=>l.subject='Lógica');ING_LESSONS.forEach(l=>l.subject='Inglês');HIS_LESSONS.forEach(l=>l.subject='História');GEO_LESSONS.forEach(l=>l.subject='Geografia');
 SUBJECTS[0].lessons=MAT_LESSONS;Object.assign(SUBJECTS[1],{lessons:POR_LESSONS,ready:true,ano:'2º ano'});
 Object.assign(SUBJECTS[2],{lessons:CIE_LESSONS,ready:true,ano:'2º ano'});

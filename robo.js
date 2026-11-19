@@ -124,6 +124,7 @@ const ROBO_CSS=`<style id="robo-css">
 .robo .balao:before{content:'';position:absolute;left:-10px;top:18px;border:10px solid transparent;border-right-color:#fff;border-left:0}
 .robo .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 .robo-dica{margin-top:10px;background:#FCEAF3;border-radius:14px;padding:8px 12px;font-size:18px;font-weight:700;color:#8E1650;text-align:left;display:flex;gap:10px;align-items:center}.robo-dica img{flex:none}
+button.av.pula img{animation:lumiPula .6s ease}@keyframes lumiPula{0%{transform:translateY(0) scale(1)}30%{transform:translateY(-18px) scale(1.08) rotate(-6deg)}60%{transform:translateY(0) scale(.96)}100%{transform:translateY(0) scale(1)}}
 @keyframes roboBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
 @media (prefers-reduced-motion:reduce){.robo .av{animation:none}}
 </style>`;
@@ -133,14 +134,45 @@ function roboCardHTML(m,extra){
   return `<div class="card robo"><span class="av">${roboImg(86)}</span><div class="balao"><span class="nome">${ROBO_NOME} diz:</span>${esc(m.txt)}
     <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${m.treino?`<button class="btn small okb" data-act="robotreino" data-arg="${esc(m.treino)}">💪 Treinar agora</button>`:''}${extra||''}</div></div></div>`}
 
-/* 1) balão na tela inicial */
+/* 1) balão na tela inicial, com interação: humor do dia, curiosidade do dia, toque na Lumi (reação ou adivinha) */
+const LUMI_HUMOR={feliz:['😊','Feliz','Que bom! Então vamos com tudo hoje! 💖'],
+  cansada:['😴','Cansada','Ficar cansada é normal. Beba um pouco de água e respire fundo três vezes. Vamos com calma! 💧'],
+  meio:['😐','Mais ou menos','Tudo bem, tem dia que é assim. Que tal começar por uma coisa de que você gosta? 🌈'],
+  triste:['😢','Triste','Sinto muito que você está triste. Que tal dar um abraço no papai ou na mamãe e contar o que aconteceu? Eu fico aqui torcendo por você. 💖']};
+let LUMI={modo:null,adiv:null,ver:false,txt:''};
+const lumiSaudacao=()=>{const h=new Date().getHours();return h<12?'Bom dia! ☀️':h<18?'Boa tarde! 🌤️':'Boa noite! 🌙'};
+const lumiDia=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
+const lumiCurioDia=()=>(typeof LUMI_CURIOSIDADES!=='undefined'&&LUMI_CURIOSIDADES.length)?LUMI_CURIOSIDADES[(lumiDia()*7)%LUMI_CURIOSIDADES.length]:'';
+/* dias seguidos estudando (sábado e domingo sem estudo não quebram a sequência) */
+function lumiSequencia(){const dias=new Set((S.sessions||[]).filter(x=>x.phaseReached==='done').map(x=>x.date));
+  const ds=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const d=new Date();if(!dias.has(ds(d)))d.setDate(d.getDate()-1);let n=0;
+  for(let k=0;k<400;k++){const s=ds(d),fds=d.getDay()===0||d.getDay()===6;if(dias.has(s))n++;else if(!fds)break;d.setDate(d.getDate()-1)}
+  return n}
+function lumiConteudo(){const m=ROBO_ATUAL,b=(a,arg,t,cls)=>`<button class="btn small ${cls||'ghost'}" data-act="${a}" ${arg?`data-arg="${arg}"`:''}>${t}</button>`;
+  const humor=LS.get('lumiHumor:'+today(),null);
+  if(!humor&&LUMI.modo!=='reacao'&&LUMI.modo!=='adivinha')return {txt:`${lumiSaudacao()} Como você está hoje?`,
+    bts:`<div class="row" style="gap:6px;flex-wrap:wrap">${Object.entries(LUMI_HUMOR).map(([k,[e,t]])=>b('lumihumor',k,`${e} ${t}`)).join('')}</div>`};
+  if(LUMI.modo==='humor')return {txt:LUMI_HUMOR[humor][2],bts:b('lumivolta','','Continuar ➜','okb')};
+  if(LUMI.modo==='curio')return {txt:'💡 Curiosidade do dia: '+lumiCurioDia(),bts:b('lumivolta','','⬅ Voltar')};
+  if(LUMI.modo==='reacao')return {txt:LUMI.txt,bts:b('lumivolta','','⬅ Voltar')};
+  if(LUMI.modo==='adivinha'){const [p,r]=LUMI.adiv;return {txt:LUMI.ver?`${p} ${r} 🎉`:p,bts:LUMI.ver?b('lumivolta','','⬅ Voltar'):b('lumiresp','','🤔 Ver a resposta','okb')}}
+  return {txt:m.txt,bts:(m.treino?b('robotreino',esc(m.treino),'💪 Treinar agora','okb'):'')+(lumiCurioDia()?b('lumicurio','','💡 Curiosidade do dia'):'')}}
+function lumiHomeHTML(){const c=lumiConteudo(),seq=lumiSequencia();LUMI.falaAtual=c.txt;
+  return `<div class="card robo"><button class="av" data-act="lumitoque" aria-label="Tocar na ${ROBO_NOME}" style="background:none;border:0;padding:0;cursor:pointer">${roboImg(86)}</button>
+    <div class="balao"><span class="nome">${ROBO_NOME} diz:${seq>=2?` <span class="pill" style="font-size:13px;margin-left:6px">🔥 ${seq} dias seguidos estudando!</span>`:''}</span><span id="lumi-txt">${esc(c.txt)}</span>
+    <div class="acoes"><button class="speak" data-act="robofala" aria-label="Ouvir a ${ROBO_NOME}">🔊</button>${c.bts}</div></div></div>`}
+function lumiRedraw(falar){const d=document.getElementById('robo-home');if(!d)return;d.innerHTML=lumiHomeHTML();
+  if(falar){roboFala(LUMI.falaAtual);const av=d.querySelector('.av');if(av){av.classList.remove('pula');void av.offsetWidth;av.classList.add('pula')}}}
 const _renderMapRobo=renderMap;
 renderMap=function(){_renderMapRobo.apply(this,arguments);if(S.view!=='map')return;
   let m;try{m=roboMensagem()}catch(e){console.warn('robô',e);return}
-  ROBO_ATUAL=m;const d=document.createElement('div');d.id='robo-home';d.style.marginBottom='14px';d.innerHTML=roboCardHTML(m);
+  ROBO_ATUAL=m;if(LUMI.modo!=='humor')LUMI.modo=null;
+  const d=document.createElement('div');d.id='robo-home';d.style.marginBottom='14px';d.innerHTML=lumiHomeHTML();
   const top=app.querySelector('.top');if(top)top.insertAdjacentElement('afterend',d);else app.prepend(d);
-  /* fala sozinho só quando a mensagem é nova */
-  if(S.config.autoRead!==false&&LS.get('roboFalou','')!==m.k){LS.set('roboFalou',m.k);setTimeout(()=>{if(S.view==='map'&&document.getElementById('robo-home')){roboFala(m.txt);if(m.festa&&typeof confetti==='function')confetti()}},2600)}};
+  /* fala sozinha só quando a mensagem é nova (a pergunta do humor, uma vez por dia; os conselhos, quando mudam) */
+  const k=LS.get('lumiHumor:'+today(),null)?m.k:'humor|'+today();
+  if(S.config.autoRead!==false&&LS.get('roboFalou','')!==k){LS.set('roboFalou',k);setTimeout(()=>{if(S.view==='map'&&document.getElementById('robo-home')){roboFala(LUMI.falaAtual);if(m.festa&&typeof confetti==='function')confetti()}},2600)}};
 
 /* 2) comentário no fim da lição */
 function roboFimLicao(s){const l=(s.answers||[]).filter(a=>(a.attempt||1)===1);if(!l.length)return null;
@@ -183,7 +215,15 @@ function roboTreino(skill){const keys=roboKeys(skill);if(!keys.length){toast('Ai
     slides:[{v:roboImg(170,'margin:0 auto'),t:`Vamos treinar ${nome}! ${dica}`,fala:roboFalaTxt(`Vamos treinar ${nome}! ${dica}`)}],practice:esticar(keys,6),quiz:[]};
   startLessonObj(l,-1,'Revisão')}
 Object.assign(ACT,{
-  robofala(){if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt)},
+  robofala(){if(S.view==='map'&&document.getElementById('robo-home')&&LUMI.falaAtual)roboFala(LUMI.falaAtual);else if(ROBO_ATUAL)roboFala(ROBO_ATUAL.txt)},
+  lumihumor(k){if(!LUMI_HUMOR[k])return;LS.set('lumiHumor:'+today(),k);LUMI.modo='humor';lumiRedraw(true)},
+  lumivolta(){const f=LUMI.modo==='humor';LUMI.modo=null;LUMI.ver=false;lumiRedraw(f)},
+  lumicurio(){LUMI.modo='curio';lumiRedraw(true)},
+  lumiresp(){LUMI.ver=true;lumiRedraw(true);if(typeof confetti==='function')confetti()},
+  lumitoque(){if(!LS.get('lumiHumor:'+today(),null)&&!LUMI.modo){lumiRedraw(true);return}
+    if(Math.random()<.4&&typeof LUMI_ADIVINHAS!=='undefined'){const a=LUMI_ADIVINHAS;let x;do{x=a[Math.floor(Math.random()*a.length)]}while(a.length>1&&LUMI.adiv===x);LUMI.adiv=x;LUMI.ver=false;LUMI.modo='adivinha'}
+    else{const r=typeof LUMI_REACOES!=='undefined'?LUMI_REACOES:['Oi! 💖'];let t;do{t=r[Math.floor(Math.random()*r.length)]}while(r.length>1&&t===LUMI.txt);LUMI.txt=t;LUMI.modo='reacao'}
+    lumiRedraw(true)},
   robotreino(sk){if(R&&S.session)leaveLesson();R=null;roboTreino(sk)},
 });
 if(S.view==='map'&&!R)renderMap();
