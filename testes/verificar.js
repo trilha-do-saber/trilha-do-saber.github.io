@@ -2,8 +2,10 @@
    Falha (código 1) se alguma questão tiver resposta errada, opções repetidas ou lição quebrada. */
 const fs=require('fs'),path=require('path');
 const src=fs.readFileSync(path.join(__dirname,'..','conteudo.js'),'utf8');
-const ctx={};new Function('ctx',src+';ctx.GEN=GEN;ctx.LESSONS=LESSONS;ctx.SUBJECTS=SUBJECTS;ctx.NIVEL=NIVEL;')(ctx);
-const {GEN,LESSONS,SUBJECTS}=ctx;
+const ctx={};new Function('ctx',src+';ctx.GEN=GEN;ctx.LESSONS=LESSONS;ctx.SUBJECTS=SUBJECTS;ctx.NIVEL=NIVEL;ctx.CC_APROF=typeof CC_APROF!=="undefined"?CC_APROF:[];')(ctx);
+const {GEN,SUBJECTS}=ctx;
+/* as lições "Aprofunde" do CC entram na trilha Memória pelo app; aqui são testadas junto com as outras */
+const LESSONS=[...ctx.LESSONS,...ctx.CC_APROF.map(l=>({...l,subject:'Memória'}))];
 const HAB_NIVEL=eval((fs.readFileSync(path.join(__dirname,'..','app.js'),'utf8').match(/const HAB_NIVEL=(\[[^\]]*\])/)||[])[1]||'[]');const erros=[];
 /* Memória: testa o construtor com frases de exemplo inventadas (as reais ficam só na planilha da família) */
 const EXEMPLO=[{ciclo:'1',semana:1,materia:'História',texto:'Pedro Álvares Cabral chegou ao Brasil em 1500.'},{ciclo:'1',semana:1,materia:'Ciências',texto:'As plantas precisam de luz, água e ar.'},

@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v30';
+const APP_VERSAO='trilha-v31';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -945,6 +945,9 @@ function applyMemoria(rows){
   const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;
   MEMINFO=memLiberacao(rows);const abertas=new Set(MEMINFO.lib.map(x=>x.k));
   let L=[];try{L=buildMemoria((rows||[]).filter(r=>r&&abertas.has(memChave(r))))}catch(e){console.warn('memória',e)}
+  /* Aprofunde (CC_APROF em conteudo.js): lições originais da semana, logo depois da lição de memorização dela, só quando a semana está liberada */
+  if(typeof CC_APROF!=='undefined'){const out=[];for(const l of L){out.push(l);const m=/^mem-c(.+)-s(\d+)$/.exec(l.id);
+    if(m)out.push(...CC_APROF.filter(a=>a.cc===`${m[1]}|${m[2]}`).map(a=>({...a,subject:'Memória'})))}L=out}
   for(let i=LESSONS.length-1;i>=0;i--)if(LESSONS[i].subject==='Memória')LESSONS.splice(i,1);
   LESSONS.push(...L);subj.lessons=L;subj.ready=L.length>0;subj.nome='Memória CC';subj.ano=L.length?`${L.length} lições`:'em breve';
 }

@@ -1192,6 +1192,174 @@ MISSOES.push(
   {icone:'🔁',materia:'Português',texto:'Brinque de "contrário" com alguém: um fala uma palavra (quente) e o outro responde o contrário (frio).'},
 );
 
+/* ================= LOTE 7 · 18/11/2026 · Aprofunde a semana do CC (ciclo 1, semanas 1 a 3) =================
+   Lições ORIGINAIS que explicam os assuntos da semana do CC com palavras próprias, para entender o que ela memoriza.
+   Nunca copiam frases do livro. Cada lição tem cc:'ciclo|semana' e só aparece na trilha Memória CC quando essa semana é liberada.
+   Para semanas novas: CC_APROF.push({id:'cc-c1-s4-…',cc:'1|4',…}) num lote novo. */
+const CC_APROF=[];
+/* tabuada: f × n, com grupos desenhados até 6 grupos */
+function tabGen(fat){return comoNum(()=>{const f=pick(fat),n=rnd(1,10),r=f*n,t=pick(['conta','conta','pular']);
+  if(t==='pular'&&n>=3){const seq=Array.from({length:n-1},(_,i)=>f*(i+1)).slice(-3);
+    return{skill:`Tabuada do ${fat.join(' e do ')}`,text:`Conte de ${f} em ${f}: ${seq.join(', ')}, ...`,visual:'',desc:`pular ${f} até ${r}`,
+      options:opts(r,[{v:r+1,type:'somou 1 em vez de pular'},{v:r-1,type:'errou o pulo'},{v:r+f,type:'pulou duas vezes'}]),hint:`Some ${f} ao último número.`,explain:`${seq[seq.length-1]} + ${f} = ${r}.`}}
+  return{skill:`Tabuada do ${fat.join(' e do ')}`,text:`Quanto é ${f} × ${n}?`,visual:n<=6&&f<=6?gruposHTML(n,f,'🔵'):'',desc:`${f}x${n}`,
+    options:opts(r,[{v:f+n,type:'somou em vez de multiplicar'},{v:r+f,type:'contou um grupo a mais'},{v:r-f,type:'contou um grupo a menos'}]),
+    hint:`${f} × ${n} é o mesmo que ${n} grupos de ${f}. Conte de ${f} em ${f}.`,explain:`${n} grupos de ${f}: ${Array(Math.min(n,6)).fill(f).join(' + ')}${n>6?' + …':''} = ${r}.`}})}
+/* mapa com pontos numerados: [nome, x, y, explicação] */
+const mapaSVG=(fundo,pontos)=>`<svg viewBox="0 0 300 200" style="width:min(360px,90vw);border-radius:16px;border:3px solid #D5DDEE;background:#F3E9C9">${fundo}${pontos.map(([,x,y],j)=>`<circle cx="${x}" cy="${y}" r="11" fill="#fff" stroke="#1D2846" stroke-width="2.5"/><text x="${x}" y="${y+5}" text-anchor="middle" font-size="14" font-weight="800" fill="#1D2846">${j+1}</text>`).join('')}</svg>`;
+function mapaGen(skill,fundo,pontos){return()=>{const i=rnd(0,pontos.length-1),[nome,,,exp]=pontos[i],outros=shuffle(pontos.map((_,j)=>j).filter(j=>j!==i)).slice(0,2),svg=mapaSVG(fundo,pontos);
+  if(Math.random()<.5)return{skill,text:`No mapa, o que é o número ${i+1}?`,visual:svg,desc:`mapa inverso ${skill} ${nome}`,optClass:'sent',
+    options:shuffle([i,...outros].map(j=>({v:j,label:cap1(pontos[j][0]),ok:j===i,type:j===i?null:'confundiu os lugares do mapa'}))),hint:'Rios são linhas azuis; mares e lagos são manchas azuis.',explain:`O número ${i+1} é ${pontos[i][0]}. ${exp}`};
+  return{skill,text:`No mapa, qual número mostra ${nome}?`,visual:svg,desc:`mapa ${skill} ${nome}`,optClass:'txt',
+    options:shuffle([i,...outros].map(j=>({v:j+1,label:`Número ${j+1}`,ok:j===i,type:j===i?null:'confundiu os lugares do mapa'}))),hint:'Leia as dicas: rios são linhas azuis, mares são manchas azuis.',explain:`${cap1(nome)} é o número ${i+1}. ${exp}`}}}
+const AGUA='#7FB8E6',RIO='#3E8ED0';
+/* ---- Ciclo 1 · Semana 1 ---- */
+const FUNDO_C1S1=`<path d="M0 0 H70 C80 40 60 80 75 120 C85 160 60 185 70 200 H0 Z" fill="${AGUA}"/><path d="M230 200 C235 170 255 150 300 140 V200 Z" fill="${AGUA}"/>
+  <path d="M120 15 C150 50 160 90 190 120 C210 140 230 160 245 175" stroke="${RIO}" stroke-width="4" fill="none"/><path d="M175 10 C190 50 215 90 230 120 C238 140 242 160 247 175" stroke="${RIO}" stroke-width="4" fill="none"/>
+  <path d="M90 60 C140 20 200 20 260 60" stroke="#93C47D" stroke-width="18" fill="none" opacity=".45" stroke-linecap="round"/>`;
+const CLASSIF=['Domínio','Reino','Filo','Classe','Ordem','Família','Gênero','Espécie'];
+Object.assign(GEN,{
+  cc1s1Tab:tabGen([1,2]),
+  cc1s1Mapa:mapaGen('Mapa do Crescente Fértil',FUNDO_C1S1,[['o Mar Mediterrâneo',35,100,'É o grande mar a oeste, à esquerda do mapa.'],['o Rio Eufrates',150,60,'O Eufrates é o rio da esquerda (oeste).'],['o Rio Tigre',212,85,'O Tigre é o rio da direita (leste).'],['a Mesopotâmia',190,95,'Mesopotâmia quer dizer "terra entre rios": fica entre o Tigre e o Eufrates.'],['a Suméria',238,160,'A Suméria ficava no sul, perto de onde os rios chegam ao mar.']]),
+  cc1s1Classif(){const i=rnd(0,CLASSIF.length-2),dep=Math.random()<.5,j=dep?i+1:i,base=dep?CLASSIF[i]:CLASSIF[i+1],cert=dep?CLASSIF[i+1]:CLASSIF[i];
+    const outros=shuffle(CLASSIF.filter(x=>x!==cert&&x!==base)).slice(0,2);
+    return{skill:'Grupos dos seres vivos',text:dep?`Na ordem dos grupos dos seres vivos, o que vem logo DEPOIS de ${base}?`:`O que vem logo ANTES de ${base}?`,visual:`<div class="emo" style="font-size:44px">🗄️</div>`,desc:`classif ${dep?'dep':'ant'} ${base}`,optClass:'txt',
+      options:shuffle([{v:cert,label:cert,ok:true,type:null},...outros.map(o=>({v:o,label:o,ok:false,type:'errou a ordem dos grupos'}))]),hint:'Do maior para o menor: Domínio, Reino, Filo, Classe, Ordem, Família, Gênero, Espécie.',explain:`A ordem é: ${CLASSIF.join(', ')}. ${dep?`Depois de ${base} vem ${cert}.`:`Antes de ${base} vem ${cert}.`}`}},
+  cc1s1Fatos:bk('Primeiras civilizações','confundiu as civilizações',[
+    ['O que quer dizer "Mesopotâmia"?','Terra entre rios',['Terra do gelo','Terra das montanhas'],'🏞️','Mesopotâmia é a região entre os rios Tigre e Eufrates.'],
+    ['Por que a região se chama "Crescente Fértil"?','Tem forma de lua crescente e terra boa para plantar',['Porque a lua nasce lá','Porque lá só tem deserto'],'🌙','No mapa a região faz uma curva como a lua crescente, e a terra perto dos rios é boa para plantar.'],
+    ['Por que os povos antigos moravam perto dos rios?','Para ter água para beber e plantar',['Para fugir da água','Porque lá não chovia nunca'],'💧','Rio é água para beber, plantar, pescar e viajar.'],
+    ['Os sumérios criaram uma das primeiras formas de...','Escrita',['Avião','Internet'],'✍️','Os sumérios escreviam marcando tabuinhas de barro.'],
+    ['Os egípcios viviam perto de qual rio?','Rio Nilo',['Rio Amazonas','Rio Tigre'],'🐊','O Egito antigo cresceu às margens do Rio Nilo.'],
+    ['Que construções famosas os egípcios fizeram?','As pirâmides',['Os arranha-céus','As pontes de ferro'],'🔺','As pirâmides do Egito existem até hoje.'],
+    ['A civilização do Vale do Indo ficava perto de qual rio?','Rio Indo',['Rio Nilo','Rio Jordão'],'🏺','O nome vem do Rio Indo, na Ásia.'],
+    ['Os minoicos viviam em uma...','Ilha, chamada Creta',['Floresta gelada','Montanha sem mar'],'🏝️','Os minoicos viviam na ilha de Creta, no Mar Mediterrâneo.'],
+    ['Os grupos dos seres vivos são organizados do...','Maior para o menor',['Mais bonito para o mais feio','Mais novo para o mais velho'],'🗄️','Como gavetas: Domínio é a maior e Espécie é a menor.'],
+    ['Qual é o grupo mais pequeno, que junta seres bem parecidos?','Espécie',['Domínio','Reino'],'🐕','Todos os cachorros são da mesma espécie.'],
+    ['Qual é o grupo maior de todos?','Domínio',['Espécie','Gênero'],'🌍','O Domínio é a gaveta maior, que junta muitos seres vivos.'],
+    ['Para que os cientistas separam os seres vivos em grupos?','Para estudar e organizar melhor',['Para brigar','Para esconder os animais'],'🔬','Organizar em grupos ajuda a estudar e a encontrar parecidos.']]),
+});
+CC_APROF.push(
+  {id:'cc-c1-s1-tab',cc:'1|1',titulo:'Aprofunde: tabuada do 1 e do 2',icone:'✖️',bncc:'CC + EF02MA07',
+   slides:[{t:'Tabuada é contar grupos iguais. 2 × 3 quer dizer 3 grupos de 2: 2 + 2 + 2 = 6.',v:gruposHTML(3,2,'🔵')},{t:'Na tabuada do 1, a resposta é sempre o próprio número: 1 × 7 = 7. Na do 2, é o dobro: 2 × 7 = 14.',v:'<div class="big" style="font-size:34px">1 × 7 = 7 · 2 × 7 = 14</div>'}],
+   practice:['cc1s1Tab','cc1s1Tab','cc1s1Tab','cc1s1Tab','cc1s1Tab','cc1s1Tab'],quiz:['cc1s1Tab','cc1s1Tab','cc1s1Tab','cc1s1Tab','cc1s1Tab']},
+  {id:'cc-c1-s1-mundo',cc:'1|1',titulo:'Aprofunde: rios, povos e seres vivos',icone:'🗺️',bncc:'CC',
+   slides:[{t:'Há muito tempo, os povos moravam perto dos rios. Entre os rios Tigre e Eufrates ficava a Mesopotâmia, a "terra entre rios".',v:mapaSVG(FUNDO_C1S1,[])},
+    {t:'Os cientistas organizam os seres vivos em grupos, como gavetas dentro de gavetas: da maior, o Domínio, até a menor, a Espécie.',v:'<div class="emo" style="font-size:44px">🗄️ ➡️ 🐕</div>'}],
+   practice:['cc1s1Mapa','cc1s1Fatos','cc1s1Classif','cc1s1Fatos','cc1s1Classif','cc1s1Mapa'],quiz:['cc1s1Fatos','cc1s1Classif','cc1s1Mapa','cc1s1Fatos','cc1s1Classif']},
+);
+/* ---- Ciclo 1 · Semana 2 ---- */
+const FUNDO_C1S2=`<path d="M20 0 H130 C125 30 90 45 60 40 C35 36 20 20 20 0 Z" fill="${AGUA}"/><path d="M215 10 C245 0 270 20 262 60 C258 85 235 90 225 70 C215 50 205 25 215 10 Z" fill="${AGUA}"/>
+  <path d="M40 120 L70 120 L120 200 L95 200 Z" fill="${AGUA}"/><path d="M215 150 C240 140 275 150 300 175 V200 H235 Z" fill="${AGUA}"/>
+  <path d="M120 60 C150 90 175 120 210 150" stroke="${RIO}" stroke-width="3.5" fill="none"/><path d="M155 50 C175 85 200 115 215 150" stroke="${RIO}" stroke-width="3.5" fill="none"/>`;
+Object.assign(GEN,{
+  cc1s2Tab:tabGen([3,4]),
+  cc1s2Mapa:mapaGen('Mapa do Império Assírio',FUNDO_C1S2,[['o Mar Negro',75,20,'O Mar Negro fica no norte, à esquerda.'],['o Mar Cáspio',240,45,'O Mar Cáspio fica no norte, à direita.'],['o Mar Vermelho',80,165,'O Mar Vermelho é comprido e fica no sudoeste.'],['o Golfo Pérsico',262,180,'O Golfo Pérsico fica no sudeste, onde os rios chegam.'],['a Babilônia',178,118,'A Babilônia era uma grande cidade às margens do Rio Eufrates.']]),
+  cc1s2Reinos:bk('Reinos dos seres vivos','confundiu os reinos',[
+    ['O cachorro pertence a qual reino?','Animais (Animalia)',['Plantas (Plantae)','Fungos (Fungi)'],'🐶','O cachorro se move e come outros seres: é um animal.'],
+    ['O ser humano pertence a qual reino?','Animais (Animalia)',['Fungos (Fungi)','Bactérias'],'🧍','Nós, seres humanos, somos do reino dos animais.'],
+    ['A árvore pertence a qual reino?','Plantas (Plantae)',['Animais (Animalia)','Fungos (Fungi)'],'🌳','As plantas fazem o próprio alimento com a luz do Sol.'],
+    ['O cogumelo pertence a qual reino?','Fungos (Fungi)',['Plantas (Plantae)','Animais (Animalia)'],'🍄','O cogumelo parece planta, mas é um fungo: ele não usa a luz do Sol para fazer alimento.'],
+    ['O bolor que aparece no pão velho é um...','Fungo',['Animal','Planta'],'🍞','O bolor é um fungo. Por isso não se come pão mofado.'],
+    ['O fermento que faz o pão crescer é um...','Fungo',['Animal','Planta'],'🥖','O fermento de pão é feito de fungos bem pequenininhos.'],
+    ['As bactérias são...','Bem pequenas, de uma célula só',['Do tamanho de um gato','Plantas grandes'],'🦠','As bactérias só aparecem no microscópio.'],
+    ['Qual reino faz o próprio alimento com a luz do Sol?','Plantas (Plantae)',['Animais (Animalia)','Fungos (Fungi)'],'☀️','As plantas usam luz, água e ar para fazer alimento.'],
+    ['A samambaia pertence a qual reino?','Plantas (Plantae)',['Fungos (Fungi)','Animais (Animalia)'],'🌿','A samambaia é uma planta.'],
+    ['A ameba, um ser de uma célula só que vive na água, é um...','Protista',['Animal grande','Fungo de pão'],'💧','A ameba é um protista: um ser bem simples que vive na água.'],
+    ['Quantos reinos de seres vivos aparecem na lista da semana?','Seis',['Dois','Dez'],'6️⃣','São seis: animais, plantas, fungos, protistas, arqueas e bactérias.'],
+    ['O peixe pertence a qual reino?','Animais (Animalia)',['Plantas (Plantae)','Protistas'],'🐟','O peixe é um animal.']]),
+  cc1s2Fatos:bk('Povos antigos','confundiu os povos antigos',[
+    ['Qual das Sete Maravilhas do Mundo Antigo ainda existe hoje?','As Pirâmides de Gizé, no Egito',['Os Jardins Suspensos da Babilônia','O Farol de Alexandria'],'🔺','Das sete maravilhas, só as pirâmides continuam de pé.'],
+    ['Os Jardins Suspensos ficavam em qual cidade?','Babilônia',['Roma','Londrina'],'🌿','Conta-se que eram jardins em terraços, na Babilônia.'],
+    ['Os babilônios ficaram famosos por escrever...','Leis para todos seguirem',['Livros de receitas de bolo','Jornais diários'],'📜','O rei Hamurabi mandou escrever leis em uma grande pedra.'],
+    ['A capital dos assírios era...','Nínive',['Paris','Brasília'],'🏛️','Nínive ficava às margens do Rio Tigre.'],
+    ['O reino de Cuxe ficava em qual continente?','África, ao sul do Egito',['América','Europa'],'🌍','Cuxe ficava na África, rio Nilo acima.'],
+    ['Os hititas eram conhecidos por trabalhar com...','Ferro',['Plástico','Vidro de celular'],'⚒️','Os hititas foram dos primeiros a fazer objetos de ferro.'],
+    ['A dinastia Shang foi uma das primeiras famílias de reis da...','China',['Itália','Argentina'],'🐉','A dinastia Shang governou a China antiga e fazia objetos de bronze.'],
+    ['O Mar Vermelho fica entre a África e a...','Ásia',['Oceania','Antártida'],'🌊','O Mar Vermelho separa a África da Península Arábica, na Ásia.'],
+    ['Babilônia ficava perto de qual rio?','Rio Eufrates',['Rio Nilo','Rio Amazonas'],'🏞️','A Babilônia foi construída às margens do Rio Eufrates.'],
+    ['O Mar Cáspio é tão grande que parece um mar, mas é um...','Lago enorme',['Rio pequeno','Deserto'],'💧','O Mar Cáspio é o maior lago do mundo.']]),
+});
+CC_APROF.push(
+  {id:'cc-c1-s2-tab',cc:'1|2',titulo:'Aprofunde: tabuada do 3 e do 4',icone:'✖️',bncc:'CC + EF02MA07',
+   slides:[{t:'3 × 4 quer dizer 4 grupos de 3: 3, 6, 9, 12.',v:gruposHTML(4,3,'🔵')},{t:'A tabuada do 4 é o dobro da do 2: 2 × 5 = 10, então 4 × 5 = 20.',v:'<div class="big" style="font-size:34px">2 × 5 = 10 → 4 × 5 = 20</div>'}],
+   practice:['cc1s2Tab','cc1s2Tab','cc1s2Tab','cc1s2Tab','cc1s2Tab','cc1s2Tab'],quiz:['cc1s2Tab','cc1s2Tab','cc1s2Tab','cc1s2Tab','cc1s2Tab']},
+  {id:'cc-c1-s2-mundo',cc:'1|2',titulo:'Aprofunde: reinos e povos antigos',icone:'🍄',bncc:'CC',
+   slides:[{t:'Os seres vivos estão em reinos: animais, plantas, fungos (como o cogumelo), protistas e os bem pequeninos, como as bactérias.',v:'<div class="emo" style="font-size:48px">🐶 🌳 🍄 🦠</div>'},
+    {t:'O Império Assírio ficava entre vários mares. A Babilônia era uma cidade famosa, perto do Rio Eufrates.',v:mapaSVG(FUNDO_C1S2,[])}],
+   practice:['cc1s2Reinos','cc1s2Mapa','cc1s2Fatos','cc1s2Reinos','cc1s2Mapa','cc1s2Fatos'],quiz:['cc1s2Reinos','cc1s2Mapa','cc1s2Fatos','cc1s2Reinos','cc1s2Fatos']},
+);
+/* ---- Ciclo 1 · Semana 3 ---- */
+const FUNDO_C1S3=`<path d="M0 0 H95 C88 40 80 80 70 120 C62 150 58 175 55 200 H0 Z" fill="${AGUA}"/>
+  <ellipse cx="185" cy="45" rx="14" ry="20" fill="${AGUA}"/><path d="M185 65 C190 90 180 110 188 130" stroke="${RIO}" stroke-width="4" fill="none"/><ellipse cx="190" cy="160" rx="16" ry="32" fill="${AGUA}"/>
+  <path d="M85 122 H250" stroke="#B08850" stroke-width="2" stroke-dasharray="6 5"/>`;
+const DEUSES=[['Zeus','Júpiter','rei dos deuses, do céu e dos raios','⚡'],['Hera','Juno','rainha dos deuses','👑'],['Ares','Marte','guerra','🛡️'],['Afrodite','Vênus','amor e beleza','🌹'],['Hermes','Mercúrio','mensageiro, com sandálias de asas','🪽'],['Atena','Minerva','sabedoria; seu símbolo é a coruja','🦉'],['Poseidon','Netuno','mar; carrega um tridente','🔱']];
+const PREPOS=[['Vou ao parque ___ minha irmã.','com',['contra','entre']],['O gato está ___ as duas caixas.','entre',['com','após']],['Eu moro ___ Londrina.','em',['contra','após']],['Estou acordada ___ cedinho.','desde',['entre','contra']],
+  ['Quero um copo ___ suco.','de',['contra','entre']],['O time verde jogou ___ o time azul.','contra',['desde','de']],['Vamos brincar ___ o almoço.','após',['entre','contra']],['Ela andou ___ a esquina.','até',['entre','de']],
+  ['Comi bolo ___ chocolate.','de',['contra','entre']],['Fui para a escola ___ pé.','a',['entre','contra']],['O livro está ___ cima da mesa.','em',['contra','após']],['Estudo inglês ___ o ano passado.','desde',['com','entre']],
+  ['A escola fica ___ a praça e a igreja.','entre',['com','desde']],['Vou viajar ___ meus avós.','com',['contra','entre']],['A festa vai ___ a noite.','até',['de','contra']],['Estou brincando ___ meus primos.','com',['contra','desde']],['O sapo pulou ___ as pedras.','entre',['desde','com']],['O suco é ___ uva.','de',['contra','entre']]];
+Object.assign(GEN,{
+  cc1s3Tab:tabGen([5,6]),
+  cc1s3Mapa:mapaGen('Mapa da terra dos hebreus',FUNDO_C1S3,[['o Mar Mediterrâneo',40,110,'O Mar Mediterrâneo fica a oeste, à esquerda.'],['a Fenícia',112,30,'A Fenícia ficava no norte, na beira do mar.'],['o Mar da Galileia',185,45,'O Mar da Galileia é um lago de água doce, no norte.'],['o Rio Jordão',186,98,'O Rio Jordão desce do Mar da Galileia até o Mar Morto.'],['o Mar Morto',190,160,'O Mar Morto fica no sul e é muito salgado.'],['Judá',125,160,'Judá era o reino do sul, onde ficava Jerusalém.'],['Israel',135,90,'Israel era o reino do norte.']]),
+  cc1s3Celula:bk('Célula animal','confundiu as partes da célula',[
+    ['Do que são feitos todos os seres vivos?','De células',['De plástico','De pedras'],'🔬','Todo ser vivo é feito de células, pecinhas tão pequenas que só vemos no microscópio.'],
+    ['Para ver uma célula, usamos...','Um microscópio',['Um binóculo','Um espelho'],'🔬','A célula é pequena demais para ver só com os olhos.'],
+    ['Qual parte comanda a célula, como um chefe?','O núcleo',['O vacúolo','A membrana'],'🧠','O núcleo guarda as informações e comanda a célula.'],
+    ['Qual parte envolve a célula, como uma pele?','A membrana celular',['O núcleo','A mitocôndria'],'🫧','A membrana envolve a célula e escolhe o que entra e o que sai.'],
+    ['Qual parte produz energia para a célula?','A mitocôndria',['O vacúolo','A membrana'],'⚡','A mitocôndria é como a usina de energia da célula.'],
+    ['Como se chama o "gel" onde ficam as partes da célula?','Citoplasma',['Núcleo','Golgi'],'🟡','O citoplasma é um líquido grosso, como gelatina, que preenche a célula.'],
+    ['Qual parte guarda água e outras substâncias?','O vacúolo',['A mitocôndria','O núcleo'],'💧','O vacúolo é como um saquinho de guardar.'],
+    ['Qual parte empacota e envia substâncias, como um correio?','O complexo de Golgi',['O núcleo','A membrana'],'📦','O complexo de Golgi prepara e despacha substâncias.'],
+    ['Nosso corpo tem...','Muitíssimas células',['Uma célula só','Nenhuma célula'],'🧍','O corpo humano tem trilhões de células.'],
+    ['A mitocôndria seria qual parte de uma cidade?','A usina de energia',['A biblioteca','O parque'],'🏭','Ela produz a energia que a célula usa.'],
+    ['O núcleo seria qual parte de uma escola?','A diretoria, que comanda',['O recreio','A cantina'],'🏫','O núcleo comanda, como a diretoria.'],
+    ['A membrana seria qual parte de uma casa?','As paredes e a porta',['A geladeira','O telhado de vidro'],'🏠','A membrana protege e controla quem entra e sai.'],
+    ['O que faz o núcleo?','Comanda a célula',['Faz a energia','Guarda água'],'🧠','O núcleo comanda e guarda as informações da célula.'],
+    ['O que faz a mitocôndria?','Produz energia',['Comanda a célula','Envolve a célula'],'⚡','A mitocôndria transforma o alimento em energia.'],
+    ['O que faz a membrana celular?','Envolve e protege a célula',['Produz energia','Empacota substâncias'],'🫧','A membrana é a "pele" da célula.'],
+    ['O que faz o vacúolo?','Guarda água e substâncias',['Comanda a célula','Produz energia'],'💧','O vacúolo é o saquinho que guarda coisas.'],
+    ['O que faz o complexo de Golgi?','Empacota e envia substâncias',['Comanda a célula','Guarda água'],'📦','O Golgi é o "correio" da célula.'],
+    ['O citoplasma é parecido com...','Uma gelatina',['Uma pedra','Um fio de cabelo'],'🟡','O citoplasma é um líquido grosso, como gelatina.']]),
+  cc1s3Deuses(){const d=pick(DEUSES),t=pick(['gr','rom','faz']);let q,a,w,x;
+    if(t==='faz'){q=`Nas histórias antigas, ${d[0]} (ou ${d[1]}, para os romanos) era o deus ou a deusa do quê?`;a=d[2];w=shuffle(DEUSES.filter(e=>e!==d)).slice(0,2).map(e=>e[2]);x=`${d[0]}/${d[1]}: ${d[2]}.`}
+    else{const gr=t==='gr';q=gr?`Os romanos chamavam ${d[0]} de...`:`Os gregos chamavam ${d[1]} de...`;a=gr?d[1]:d[0];w=shuffle(DEUSES.filter(e=>e!==d)).slice(0,2).map(e=>gr?e[1]:e[0]);x=`${d[0]} (grego) e ${d[1]} (romano) são o mesmo personagem: ${d[2]}.`+(['Júpiter','Marte','Vênus','Mercúrio','Netuno'].includes(d[1])?` Um planeta tem o nome ${d[1]}!`:'')}
+    return{skill:'Mitos gregos e romanos',text:q,visual:`<div class="emo" style="font-size:52px">${d[3]}</div>`,desc:`deus ${t} ${d[0]}`,optClass:'sent',
+      options:shuffle([{v:a,label:cap1(a),ok:true,type:null},...w.map(v=>({v,label:cap1(v),ok:false,type:'confundiu os nomes gregos e romanos'}))]),hint:'Os gregos e os romanos contavam as mesmas histórias, com nomes diferentes.',explain:x}},
+  cc1s3Prep(){const [f,a,w]=pick(PREPOS);
+    return{skill:'Preposições',text:'Que palavrinha completa a frase?',speak:'Que palavrinha completa a frase? '+f.replace('___','…'),visual:`<div class="big" style="font-size:28px;line-height:1.5">${f.replace('___','<span style="color:var(--pri);border-bottom:4px solid var(--pri);padding:0 14px">?</span>')}</div>`,
+      desc:'prep '+f,optClass:'txt',options:shuffle([{v:a,label:a,ok:true,type:null},...w.map(v=>({v,label:v,ok:false,type:'escolheu a preposição errada'}))]),hint:'Preposição é a palavrinha que liga duas partes da frase. Leia com cada opção.',explain:`"${f.replace('___',a)}" A preposição "${a}" liga as palavras da frase.`}},
+  cc1s3Fatos:bk('Povos do Mediterrâneo','confundiu os povos antigos',[
+    ['Os fenícios eram ótimos...','Navegadores e comerciantes',['Astronautas','Pilotos de avião'],'⛵','Os fenícios viajavam de barco pelo Mar Mediterrâneo para comprar e vender.'],
+    ['Os fenícios criaram um alfabeto que deu origem ao...','Nosso alfabeto',['Desenho animado','Código do computador'],'🔤','O alfabeto fenício passou para os gregos e os romanos, e chegou até nós.'],
+    ['Os olmecas viviam onde hoje fica o...','México',['Japão','Egito'],'🗿','Os olmecas viveram na América, no México antigo.'],
+    ['Os olmecas são famosos por esculpir...','Cabeças gigantes de pedra',['Estátuas de gelo','Bonecos de neve'],'🗿','Eles fizeram cabeças de pedra enormes, mais altas que um adulto.'],
+    ['Por que o Mar Morto tem esse nome?','Porque é tão salgado que quase nada vive nele',['Porque é muito frio','Porque não tem água'],'🧂','A água do Mar Morto é salgadíssima. As pessoas até boiam sem esforço!'],
+    ['O Rio Jordão corre do Mar da Galileia até o...','Mar Morto',['Mar Mediterrâneo','Rio Nilo'],'🏞️','O Jordão desce do norte (Galileia) até o sul (Mar Morto).'],
+    ['O Mar da Galileia é de água...','Doce',['Salgada como o oceano','Gasosa'],'🐟','Ele é um lago de água doce, com muitos peixes.'],
+    ['Judá era o reino do...','Sul',['Norte','Oeste'],'🧭','Judá ficava no sul, e Israel no norte.'],
+    ['O Hinduísmo é uma religião muito antiga da...','Índia',['Grécia','Brasil'],'🇮🇳','O Hinduísmo surgiu na Índia, há muito tempo.'],
+    ['Na Idade das Trevas da Grécia, o povo...','Esqueceu a escrita por um tempo',['Inventou a luz elétrica','Morava no escuro de verdade'],'📜','Nessa época os gregos pararam de escrever, e por isso sabemos pouco sobre ela.'],
+    ['Os planetas Marte, Vênus e Júpiter têm nomes de...','Personagens dos mitos romanos',['Jogadores de futebol','Cidades do Brasil'],'🪐','Os planetas ganharam nomes dos deuses das histórias romanas.'],
+    ['Mitos são...','Histórias antigas que os povos contavam',['Notícias de jornal','Receitas de bolo'],'📖','Os gregos e romanos contavam mitos para explicar o mundo.']]),
+});
+CC_APROF.push(
+  {id:'cc-c1-s3-tab',cc:'1|3',titulo:'Aprofunde: tabuada do 5 e do 6',icone:'✖️',bncc:'CC + EF02MA07',
+   slides:[{t:'Na tabuada do 5, as respostas terminam em 0 ou em 5: 5, 10, 15, 20…',v:'<div class="big" style="font-size:32px">5 · 10 · 15 · 20 · 25 · 30</div>'},{t:'6 × 3 quer dizer 3 grupos de 6. Dica: 6 × 3 é 5 × 3 mais 3: 15 + 3 = 18.',v:gruposHTML(3,6,'🔵')}],
+   practice:['cc1s3Tab','cc1s3Tab','cc1s3Tab','cc1s3Tab','cc1s3Tab','cc1s3Tab'],quiz:['cc1s3Tab','cc1s3Tab','cc1s3Tab','cc1s3Tab','cc1s3Tab']},
+  {id:'cc-c1-s3-celula',cc:'1|3',titulo:'Aprofunde: a célula animal',icone:'🔬',bncc:'CC',
+   slides:[{t:'Todo ser vivo é feito de células, pecinhas tão pequenas que só vemos no microscópio.',v:'<div class="emo" style="font-size:56px">🔬 🦠</div>'},
+    {t:'A célula é como uma cidade: o núcleo comanda, a membrana protege, a mitocôndria faz energia, o vacúolo guarda e o Golgi entrega pacotes. Tudo boia no citoplasma.',v:'<svg viewBox="0 0 220 150" style="width:min(320px,85vw)"><ellipse cx="110" cy="75" rx="100" ry="65" fill="#FFE9B3" stroke="#E5A100" stroke-width="5"/><circle cx="105" cy="72" r="24" fill="#B39DDB" stroke="#5E35B1" stroke-width="3"/><ellipse cx="160" cy="50" rx="18" ry="9" fill="#EF9A9A" stroke="#C62828" stroke-width="2"/><ellipse cx="55" cy="100" rx="14" ry="10" fill="#90CAF9"/><path d="M150 100 q10 -8 20 0 q-10 8 -20 0 M150 110 q10 -8 20 0" stroke="#43A047" stroke-width="3" fill="none"/><text x="105" y="77" text-anchor="middle" font-size="10" font-weight="800">núcleo</text></svg>'}],
+   practice:['cc1s3Celula','cc1s3Celula','cc1s3Celula','cc1s3Celula','cc1s3Celula','cc1s3Celula'],quiz:['cc1s3Celula','cc1s3Celula','cc1s3Celula','cc1s3Celula','cc1s3Celula']},
+  {id:'cc-c1-s3-mundo',cc:'1|3',titulo:'Aprofunde: mitos, mapa e povos antigos',icone:'🏛️',bncc:'CC',
+   slides:[{t:'Os gregos e os romanos contavam histórias, os mitos, com os mesmos personagens e nomes diferentes: Zeus para os gregos é Júpiter para os romanos.',v:'<div class="emo" style="font-size:52px">⚡ 🔱 🦉</div>'},
+    {t:'Na terra dos hebreus, o Rio Jordão desce do Mar da Galileia até o Mar Morto, que é salgadíssimo. Os fenícios moravam no norte, na beira do mar.',v:mapaSVG(FUNDO_C1S3,[])}],
+   practice:['cc1s3Deuses','cc1s3Mapa','cc1s3Fatos','cc1s3Deuses','cc1s3Mapa','cc1s3Fatos'],quiz:['cc1s3Deuses','cc1s3Mapa','cc1s3Fatos','cc1s3Deuses','cc1s3Fatos']},
+  {id:'cc-c1-s3-prep',cc:'1|3',titulo:'Aprofunde: preposições',icone:'🔗',bncc:'CC + EF02LP',
+   slides:[{t:'Preposições são palavrinhas que ligam as palavras da frase: de, em, com, entre, até, desde, contra, após…',v:'<div class="big" style="font-size:30px">copo <b style="color:var(--pri)">de</b> suco</div>'},
+    {t:'Experimente as opções lendo a frase em voz alta: a certa faz a frase ficar com sentido.',v:'<div class="big" style="font-size:28px">O gato está <b style="color:var(--pri)">entre</b> as caixas.</div>'}],
+   practice:['cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep'],quiz:['cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep']},
+);
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
