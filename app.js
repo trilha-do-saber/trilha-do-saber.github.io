@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v42';
+const APP_VERSAO='trilha-v43';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -455,11 +455,15 @@ function mainSubj(){const hoje=today(),ult={};
   let id;if(ult.mat&&ult.por&&ult.mat!==ult.por)id=ult.mat>ult.por?'por':'mat';else if(ult.mat&&!ult.por)id='por';else if(ult.por&&!ult.mat)id='mat';else id=dayNum()%2===0?'mat':'por';
   return SUBJECTS.find(x=>x.id===id)}
 const doneToday=f=>S.sessions.some(x=>x.date===today()&&x.phaseReached==='done'&&f(x));
-const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n).map(z=>z.start));
+/* conta só lição concluída: abrir e sair no meio não tira a matéria da fila */
+const lastStudied=n=>Math.max(0,...S.sessions.filter(z=>z.subject===n&&z.phaseReached==='done').map(z=>z.start));
 function rotOpcoes(){
   const memOk=(S.config.memDias||[1,3,5]).includes(new Date().getDay())||memNovas().length>0;
   const pool=SUBJECTS.filter(x=>x.ready&&['cie','his','geo','fin','log','ing','mem'].includes(x.id)&&(x.id!=='mem'||memOk)).sort((a,b)=>lastStudied(a.nome)-lastStudied(b.nome));
-  let ops=pool.slice(0,2).map(x=>x.id);
+  /* matérias do último roteiro que ficaram sem fazer voltam primeiro */
+  const hoje=today(),antes=Object.keys(localStorage).filter(k=>/^ts:rot:\d{4}-\d\d-\d\d$/.test(k)).map(k=>k.slice(7)).filter(d=>d<hoje).sort().pop();
+  const pend=antes?(LS.get('rot:'+antes,{}).ops||[]).filter(id=>{const sj=SUBJECTS.find(x=>x.id===id);return sj&&pool.some(x=>x.id===id)&&!S.sessions.some(z=>z.date===antes&&z.subject===sj.nome&&z.phaseReached==='done')}):[];
+  let ops=[...new Set([...pend,...pool.map(x=>x.id)])].slice(0,2);
   if(memNovas().length&&pool.some(x=>x.id==='mem')&&!ops.includes('mem'))ops=[ops[0],'mem'];
   return ops;
 }
