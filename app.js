@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v37';
+const APP_VERSAO='trilha-v38';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -350,7 +350,11 @@ function maosParentHTML(){
   <label for="mm-fotos" class="muted" style="font-size:15px">Fotos da atividade (use o ciclo e a semana escolhidos acima)<input id="mm-fotos" type="file" accept="image/*" capture="environment" multiple></label>
   <div class="row"><button class="btn small" data-act="mmler">📷 Resumir com IA</button><button class="btn small ghost" data-act="mmmanual">Escrever à mão</button><span class="muted" style="font-size:14px" id="mm-status"></span></div>
   <div id="mmdraft">${mmDraftHTML()}</div>
-  ${typeof CC_EXPER!=='undefined'&&CC_EXPER.length?`<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${CC_EXPER.map(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`}).join('')}</div>`:''}
+  ${(()=>{const EX=typeof CC_EXPER!=='undefined'?CC_EXPER:[],hora=new Date().getHours()*60+new Date().getMinutes(),quando=hora<21*60+13?'hoje às 21h13':'amanhã às 21h13';
+    /* nomes que o Pedro escreveu e que ainda não viraram experimento (a rotina da noite cria) */
+    const pend=praticas().filter(p=>(p.ciencias||[]).length&&!EX.some(e=>e.cc===`${p.ciclo}|${p.semana}`)).flatMap(p=>p.ciencias.map(n=>({n,c:p.ciclo,s:p.semana})));
+    if(!EX.length&&!pend.length)return '';
+    return `<b>🧪 Experimentos de ciências</b><div class="col" style="gap:6px">${pend.map(x=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill mid">C${esc(x.c)} · S${x.s}</span><span style="flex:1">${esc(x.n)}</span><span class="pill">⏳ fica pronto ${quando}</span></div>`).join('')}${EX.map(e=>{const[c,s]=e.cc.split('|'),f=experFeito(e.id);return `<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${f?'ok':'mid'}">C${c} · S${s}</span><span style="flex:1">${esc(e.titulo)}</span>${f?'<span class="pill ok">✅ Feito</span>':`<button class="btn small okb" data-act="experok" data-arg="${e.id}">Marcar como feito</button>`}</div>`}).join('')}</div>`})()}
   ${ps.length?`<div class="col" style="gap:6px">${ps.map(p=>`<div class="row" style="gap:8px;flex-wrap:wrap"><span class="pill ${p.feita?'ok':'mid'}">C${esc(p.ciclo)} · S${p.semana}</span><span style="flex:1">${esc(p.titulo)}</span><button class="btn small ghost" data-act="mmedit" data-arg="${esc(p.id)}">✏️ Editar</button>${p.feita?'<span class="pill ok">✅ Feita</span>':`<button class="btn small okb" data-act="mmfeita" data-arg="${esc(p.id)}">Marcar como feita</button>`}</div>`).join('')}</div>`:''}`;
 }
 function mmDraftHTML(){if(!MMD)return '';
