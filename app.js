@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v44';
+const APP_VERSAO='trilha-v45';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -94,14 +94,14 @@ async function checarVersao(){
 function atualizarSePuder(){
   if(!novaVersao)return;
   /* espera só no meio de uma lição (sessão aberta), na área dos pais ou no meio de uma partida; na tela de resultado e no menu de jogos pode atualizar */
-  if((R&&S.session)||S.view==='parent'||S.view==='pin'||(S.view==='jogo'&&typeof JG!=='undefined'&&JG))return;
+  if((R&&S.session)||S.view==='parent'||S.view==='pin'||(S.view==='jogo'&&typeof JG!=='undefined'&&JG)||(S.view==='fotos'&&typeof FOTO_ATUAL!=='undefined'&&FOTO_ATUAL))return;
   const t=LS.get('updTent',{});
   if(t.v===novaVersao&&Date.now()-t.ts<90000){setTimeout(atualizarSePuder,90000);return} // tentou há pouco: tenta de novo sozinho, sem botão
   LS.set('updTent',{v:novaVersao,ts:Date.now()});
   toast('Atualizando o app…');atualizarApp();
 }
 function mostrarAtualizacao(){}
-const ARQ_APP=['./','index.html','app.js','jogos.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
+const ARQ_APP=['./','index.html','app.js','jogos.js','fotos.js','conteudo.js','versao.json','sw.js','manifest.webmanifest'];
 async function atualizarApp(){
   const b=document.querySelector('[data-act=atualizar]');if(b){b.disabled=true;b.textContent='Atualizando…'}
   try{flushSession&&flushSession()}catch(e){}

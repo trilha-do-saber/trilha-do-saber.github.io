@@ -1,7 +1,7 @@
 /* Trilha do Saber · funciona sem internet.
    Ao publicar uma versão nova, troque o número abaixo para o tablet baixar tudo de novo. */
-const VERSAO = 'trilha-v44';
-const ARQUIVOS = ['./', 'index.html', 'conteudo.js', 'app.js', 'jogos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'img/fundo.webp', 'versao.json'];
+const VERSAO = 'trilha-v45';
+const ARQUIVOS = ['./', 'index.html', 'conteudo.js', 'app.js', 'jogos.js', 'fotos.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'img/fundo.webp', 'versao.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ARQUIVOS.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
