@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v32';
+const APP_VERSAO='trilha-v33';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -384,6 +384,7 @@ async function ccLer(btn){
   btn.disabled=true;st.textContent='Preparando as fotos…';
   try{const imagens=await Promise.all(files.map(lerImagem));st.textContent='A IA está lendo a página…';
     const r=await api('lerFotoCC',{ciclo,semana,imagens});
+    if(r.itens)r.itens=r.itens.map(x=>({...x,materia:ccMateria(x.materia)}));
     if(!r.itens||!r.itens.length){const m=r.motivo||'';
       st.textContent=/RECITATION|COPYRIGHT/i.test(m)?'O Gemini não quis transcrever o texto do livro (proteção de direitos autorais). Use "Digitar à mão" para esta semana.'
         :/SAFETY|BLOCK|PROHIBITED/i.test(m)?'O Gemini bloqueou a leitura desta foto. Use "Digitar à mão" para esta semana.'
@@ -893,7 +894,7 @@ const ACT={
   cccancel(){CCD=null;ccRedraw()},
   ccsalvar(_,el){ccSalvar(el)},
   ccedit(k){const[c,s]=k.split('|'),rows=LS.get('memoria',[]).filter(r=>String(r.ciclo||'1')===c&&Number(r.semana)===Number(s));
-    CCD={ciclo:c,semana:Number(s),itens:rows.map(r=>({materia:r.materia||'',texto:r.texto||''})),editando:true};
+    CCD={ciclo:c,semana:Number(s),itens:rows.map(r=>({materia:ccMateria(r.materia),texto:r.texto||''})),editando:true};
     const ci=document.getElementById('cc-ciclo'),se=document.getElementById('cc-semana');if(ci)ci.value=c;if(se)se.value=s;
     ccRedraw();const d=document.getElementById('ccdraft');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});toast('Corrija o que precisar e toque em Salvar semana.')},
   chattudo(){chatTudo=true;const y=window.scrollY;renderParent();window.scrollTo(0,y)},
@@ -945,7 +946,10 @@ function memLiberacao(rows){
   return {ks,lib,prox:ks[i]||null,proxEm:q?proxSegunda(q):null};
 }
 let MEMINFO={ks:[],lib:[],prox:null,proxEm:null};
+/* O livro do CC em português tem a matéria "Português" (no lugar do Inglês da edição americana); a IA às vezes troca o nome. */
+const ccMateria=m=>/ingl|english/i.test(String(m||''))?'Português':(m||'Memória');
 function applyMemoria(rows){
+  rows=(rows||[]).map(r=>r&&{...r,materia:ccMateria(r.materia)});
   const subj=SUBJECTS.find(x=>x.id==='mem');if(!subj)return;
   MEMINFO=memLiberacao(rows);const abertas=new Set(MEMINFO.lib.map(x=>x.k));
   let L=[];try{L=buildMemoria((rows||[]).filter(r=>r&&abertas.has(memChave(r))))}catch(e){console.warn('memória',e)}

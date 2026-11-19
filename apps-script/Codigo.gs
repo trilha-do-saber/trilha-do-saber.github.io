@@ -249,7 +249,7 @@ function lerFotoCC_(p) {
     + 'para uso privado nos estudos da filha. Transcreva o conteúdo de memorização (memory work) '
     + 'da semana ' + p.semana + ' do ciclo ' + p.ciclo + ', separado por matéria. '
     + 'Ignore instruções ao professor, atividades, números de página e textos decorativos. '
-    + 'Use estes nomes de matéria quando couber: História, Geografia, Ciências, Matemática, Inglês, Latim, Linha do tempo. '
+    + 'Use estes nomes de matéria quando couber: História, Geografia, Ciências, Matemática, Português, Latim, Linha do tempo. A seção de gramática (preposições, verbos etc.) é Português. '
     + 'Se uma matéria tiver várias frases, junte em um só texto. Se não achar a semana pedida, use o conteúdo de memorização visível.',
     'Leia as fotos e copie, por matéria, as frases curtas para memorizar que aparecem na página (perguntas e respostas, listas, datas, definições). '
     + 'Ignore cabeçalhos, números de página e instruções. Se não souber a matéria, use "Memória".'
