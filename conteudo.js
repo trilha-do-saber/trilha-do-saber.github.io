@@ -1360,6 +1360,86 @@ CC_APROF.push(
    practice:['cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep'],quiz:['cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep','cc1s3Prep']},
 );
 
+/* ================= LOTE 8 · 18/11/2026 · Aprofunde bíblico do CC (ciclo 1, semanas 1 a 3) =================
+   A família é cristã: as histórias bíblicas são contadas como a Bíblia conta, com palavras simples e próprias (sem copiar o livro do CC nem traduções da Bíblia). */
+const MANDAMENTOS={1:'Amar a Deus acima de tudo, sem outros deuses',2:'Não fazer ídolos para adorar',3:'Não usar o nome de Deus à toa',4:'Separar um dia para descansar e adorar a Deus',5:'Honrar o pai e a mãe',
+  6:'Não matar: respeitar e cuidar da vida',7:'Ser fiel no casamento',8:'Não roubar',9:'Não mentir contra os outros',10:'Não cobiçar: ficar contente com o que tem'};
+function mandGen(nums,situacoes){return()=>{const t=pick(['num','qual','sit','sit']);let q,certo,outros,x;
+  if(t==='sit'){const[s,n]=pick(situacoes);q=`"${s}" Que mandamento ensina isso?`;certo=n;x=`O ${n}º mandamento é: ${MANDAMENTOS[n].toLowerCase()}.`}
+  else{certo=pick(nums);q=t==='num'?`O que ensina o ${certo}º mandamento?`:`"${MANDAMENTOS[certo]}" é o mandamento número…`;x=`O ${certo}º mandamento é: ${MANDAMENTOS[certo].toLowerCase()}.`}
+  outros=shuffle(nums.filter(n=>n!==certo)).slice(0,2);
+  const lab=n=>t==='qual'?`${n}º`:MANDAMENTOS[n];
+  return{skill:'Dez Mandamentos',text:q,visual:'<div class="emo" style="font-size:48px">📜</div>',desc:`mand ${t} ${t==='sit'?q:certo}`,optClass:t==='qual'?'txt':'sent',
+    options:shuffle([certo,...outros].map(n=>({v:n,label:lab(n),ok:n===certo,type:n===certo?null:'confundiu os mandamentos'}))),hint:'Os Dez Mandamentos ensinam a amar a Deus e a amar as pessoas.',explain:x}}}
+Object.assign(GEN,{
+  cc1s1Mand:mandGen([1,2,3,4,5],[['Amar a Deus mais do que tudo, mais do que os brinquedos.',1],['Não adorar uma estátua como se fosse Deus.',2],['Falar o nome de Deus com respeito e carinho.',3],
+    ['A família separa um dia da semana para descansar e adorar a Deus.',4],['A mamãe pediu para arrumar a cama, e a filha obedeceu com alegria.',5],['Responder ao papai com educação, sem gritar.',5]]),
+  cc1s1Biblia:bk('Histórias da Bíblia','confundiu as histórias da Bíblia',[
+    ['Segundo a Bíblia, quem criou o céu, a terra e tudo o que existe?','Deus',['Os homens','Os animais'],'🌍','A Bíblia começa contando que Deus criou todas as coisas.'],
+    ['Em quantos dias Deus fez a criação, segundo a Bíblia?','Seis dias, e no sétimo descansou',['Um dia só','Cem dias'],'🌅','Deus criou tudo em seis dias e descansou no sétimo.'],
+    ['Quem foram o primeiro homem e a primeira mulher?','Adão e Eva',['Noé e Sara','Abraão e Raquel'],'👫','Deus criou Adão e Eva.'],
+    ['Onde Adão e Eva moravam?','No Jardim do Éden',['No Egito','Numa arca'],'🌳','Eles moravam num jardim lindo chamado Éden.'],
+    ['O que aconteceu quando Adão e Eva desobedeceram a Deus?','Tiveram que sair do jardim',['Ganharam um presente','Viraram anjos'],'🍎','A desobediência trouxe tristeza. Mas Deus continuou cuidando deles e prometeu um Salvador.'],
+    ['Quem construiu a arca?','Noé',['Moisés','Davi'],'🚢','Deus pediu e Noé obedeceu, construindo uma arca enorme.'],
+    ['Por que Noé construiu a arca?','Deus avisou que viria um grande dilúvio',['Para pescar','Para morar no mar para sempre'],'🌧️','Noé confiou em Deus e se preparou para o dilúvio.'],
+    ['Como os animais entraram na arca?','Em casais: macho e fêmea',['Um de cada vez, só os pequenos','Nenhum animal entrou'],'🦒','Os animais entraram em casais, para as famílias continuarem depois do dilúvio.'],
+    ['Que ave voltou para a arca com um raminho de oliveira?','A pomba',['O papagaio','A coruja'],'🕊️','O raminho mostrou que a terra estava secando.'],
+    ['Que sinal Deus colocou no céu depois do dilúvio?','O arco-íris',['Um cometa','Uma nuvem preta'],'🌈','O arco-íris lembra a promessa de Deus de nunca mais destruir a terra com um dilúvio.'],
+    ['Na Torre de Babel, o que Deus fez?','Confundiu as línguas, e o povo se espalhou',['Construiu a torre mais alta','Mandou chover'],'🗼','As pessoas queriam ser maiores que Deus. Ele confundiu as línguas e elas se espalharam pela terra.'],
+    ['Quantos são os mandamentos que Deus deu?','Dez',['Cinco','Cem'],'🔟','São os Dez Mandamentos.']]),
+  cc1s2Mand:mandGen([6,7,8,9,10],[['Devolver o lápis que pegou do colega.',8],['Contar a verdade, mesmo quando foi você que quebrou o vaso.',9],['Ficar feliz pelo amigo que ganhou um brinquedo novo, sem inveja.',10],
+    ['Cuidar das pessoas e nunca machucar ninguém.',6],['O papai e a mamãe são fiéis um ao outro.',7],['Não inventar uma história falsa sobre um colega.',9],['Pedir antes de pegar a bola do irmão.',8]]),
+  cc1s2Patri:bk('Patriarcas da Bíblia','confundiu os patriarcas',[
+    ['Deus prometeu a Abraão uma família tão grande quanto...','As estrelas do céu',['As folhas de uma árvore só','Os dedos da mão'],'✨','Deus pediu que Abraão olhasse o céu: sua família seria incontável como as estrelas.'],
+    ['Qual era o nome da esposa de Abraão?','Sara',['Eva','Maria'],'👵','Sara era a esposa de Abraão.'],
+    ['Qual foi o filho que Deus deu a Abraão e Sara já bem velhinhos?','Isaque',['José','Moisés'],'👶','Isaque nasceu quando Abraão e Sara já eram bem velhinhos. Deus cumpriu a promessa!'],
+    ['Os filhos gêmeos de Isaque se chamavam...','Jacó e Esaú',['Caim e Abel','Davi e Golias'],'👬','Isaque foi pai dos gêmeos Jacó e Esaú.'],
+    ['Deus deu a Jacó um nome novo. Qual?','Israel',['Egito','Babel'],'🏷️','Jacó passou a se chamar Israel, e seus filhos formaram o povo de Israel.'],
+    ['Quantos filhos Jacó teve?','Doze',['Dois','Cem'],'1️⃣2️⃣','Os doze filhos de Jacó deram origem às doze tribos de Israel.'],
+    ['Que presente especial José ganhou do pai?','Uma túnica colorida',['Um cavalo branco','Uma coroa de ouro'],'🧥','Jacó deu a José uma túnica muito bonita, e os irmãos ficaram com ciúme.'],
+    ['O que os irmãos de José fizeram com ele?','Venderam José, que foi levado para o Egito',['Deram uma festa para ele','Fizeram uma arca'],'😢','Por ciúme, os irmãos venderam José.'],
+    ['No Egito, José chegou a ser...','Governador, ajudando o faraó',['Pescador no mar','Rei de Babel'],'👑','Deus estava com José, e ele ajudou o Egito a guardar comida.'],
+    ['Quando os irmãos foram ao Egito pedir comida, José...','Perdoou os irmãos',['Prendeu todos para sempre','Fugiu'],'🤗','José perdoou os irmãos, e a família ficou junta de novo.'],
+    ['Abraão, Isaque e Jacó são chamados de...','Patriarcas, os pais do povo de Israel',['Faraós do Egito','Reis da Grécia'],'🌳','Eles são os pais do povo de Israel.'],
+    ['O que aprendemos com a história de José?','A perdoar e a confiar em Deus',['A ter ciúme','A mentir'],'💛','Mesmo sofrendo, José confiou em Deus e perdoou.']]),
+  cc1s3Biblia:bk('Histórias da Bíblia','confundiu as histórias da Bíblia',[
+    ['Quando Moisés era bebê, a mãe dele o colocou...','Num cesto, no rio Nilo',['Numa arca no mar','Numa torre alta'],'🧺','A mãe de Moisés o escondeu num cesto no rio para protegê-lo.'],
+    ['Quem encontrou o bebê Moisés no rio?','A filha do faraó',['Noé','José'],'👸','A filha do faraó achou o cesto e criou Moisés.'],
+    ['Como Deus chamou Moisés no deserto?','Por uma sarça (arbusto) que pegava fogo e não queimava',['Por um bilhete','Por um passarinho'],'🔥','Deus falou com Moisés da sarça que ardia sem se queimar.'],
+    ['O que Moisés pediu ao faraó, a mando de Deus?','Que deixasse o povo de Israel sair do Egito',['Uma coroa','Um palácio'],'🗣️','O povo de Israel era escravo no Egito, e Deus queria libertá-lo.'],
+    ['Quantas pragas vieram sobre o Egito?','Dez',['Duas','Cem'],'🐸','Foram dez pragas, até o faraó deixar o povo ir.'],
+    ['Como o povo atravessou o Mar Vermelho?','Deus abriu o mar e eles passaram pelo chão seco',['Nadando','De avião'],'🌊','Deus abriu o caminho no meio do mar.'],
+    ['Que alimento Deus mandava do céu no deserto?','O maná',['Pizza','Sorvete'],'🍞','Toda manhã o maná aparecia no chão, e o povo tinha o que comer.'],
+    ['Quantos anos o povo andou pelo deserto?','Quarenta anos',['Quatro dias','Mil anos'],'🏜️','O povo andou quarenta anos pelo deserto.'],
+    ['Onde Deus deu os Dez Mandamentos a Moisés?','No monte Sinai',['No rio Jordão','Na torre de Babel'],'⛰️','No monte Sinai, Deus deu os mandamentos escritos em tábuas de pedra.'],
+    ['Quem liderou o povo depois de Moisés, entrando na terra prometida?','Josué',['Faraó','Golias'],'🚶','Josué levou o povo para a terra que Deus tinha prometido.'],
+    ['O que aconteceu com as muralhas de Jericó?','Caíram depois que o povo marchou e tocou as trombetas',['Ficaram mais altas','Viraram ouro'],'🎺','O povo obedeceu a Deus, marchou ao redor da cidade, e as muralhas caíram.'],
+    ['Quem eram os juízes de Israel?','Líderes que Deus levantava para ajudar o povo',['Jogadores de futebol','Reis do Egito'],'⚖️','Gideão, Débora e Sansão foram alguns dos juízes.'],
+    ['Quem foi o primeiro rei de Israel?','Saul',['Davi','Salomão'],'👑','Saul foi o primeiro rei.'],
+    ['Davi, quando menino, venceu o gigante...','Golias',['Faraó','Sansão'],'🪨','Davi confiou em Deus e venceu Golias com uma funda e uma pedrinha.'],
+    ['Antes de ser rei, Davi trabalhava como...','Pastor de ovelhas',['Pescador','Carpinteiro'],'🐑','Davi cuidava das ovelhas do pai.'],
+    ['Que rei pediu sabedoria a Deus?','Salomão',['Saul','Faraó'],'🦉','Salomão pediu sabedoria para governar bem, e Deus deu.'],
+    ['Que construção Salomão fez em Jerusalém?','O templo para adorar a Deus',['Uma pirâmide','Uma arca'],'🏛️','Salomão construiu o templo de Jerusalém.'],
+    ['Davi escreveu muitos cânticos de louvor a Deus, chamados...','Salmos',['Mandamentos','Pragas'],'🎶','Muitos salmos da Bíblia foram escritos por Davi.']]),
+});
+CC_APROF.push(
+  {id:'cc-c1-s1-biblia',cc:'1|1',titulo:'Aprofunde: a Criação, Noé e os Mandamentos 1 a 5',icone:'📖',bncc:'CC · Ensino religioso',
+   slides:[{t:'A Bíblia começa contando que Deus criou o céu, a terra, os animais e as pessoas. Adão e Eva moravam no Jardim do Éden.',v:'<div class="emo" style="font-size:52px">🌍 🌳 👫</div>'},
+    {t:'Noé obedeceu a Deus e construiu uma arca. Depois do dilúvio, o arco-íris lembrou a promessa de Deus.',v:'<div class="emo" style="font-size:52px">🚢 🦒 🕊️ 🌈</div>'},
+    {t:'Deus deu Dez Mandamentos. Os cinco primeiros ensinam a amar a Deus e a honrar o pai e a mãe.',v:'<div class="emo" style="font-size:52px">📜 ❤️</div>'}],
+   practice:['cc1s1Biblia','cc1s1Mand','cc1s1Biblia','cc1s1Mand','cc1s1Biblia','cc1s1Mand'],quiz:['cc1s1Mand','cc1s1Biblia','cc1s1Mand','cc1s1Biblia','cc1s1Mand']},
+  {id:'cc-c1-s2-biblia',cc:'1|2',titulo:'Aprofunde: os patriarcas e os Mandamentos 6 a 10',icone:'📖',bncc:'CC · Ensino religioso',
+   slides:[{t:'Deus prometeu a Abraão uma família tão grande quanto as estrelas. Depois vieram Isaque, Jacó e os doze filhos de Jacó.',v:'<div class="emo" style="font-size:52px">👴 ✨ 👶</div>'},
+    {t:'José foi vendido pelos irmãos, mas Deus estava com ele. No Egito, José perdoou a família.',v:'<div class="emo" style="font-size:52px">🧥 🇪🇬 🤗</div>'},
+    {t:'Os Mandamentos 6 a 10 ensinam a amar as pessoas: cuidar da vida, ser fiel, não roubar, não mentir e ficar contente com o que temos.',v:'<div class="emo" style="font-size:52px">📜 🤝</div>'}],
+   practice:['cc1s2Patri','cc1s2Mand','cc1s2Patri','cc1s2Mand','cc1s2Patri','cc1s2Mand'],quiz:['cc1s2Mand','cc1s2Patri','cc1s2Mand','cc1s2Patri','cc1s2Mand']},
+  {id:'cc-c1-s3-biblia',cc:'1|3',titulo:'Aprofunde: Moisés, o deserto e os reis de Israel',icone:'📖',bncc:'CC · Ensino religioso',
+   slides:[{t:'Deus usou Moisés para tirar o povo de Israel do Egito. O mar se abriu e o povo passou pelo chão seco.',v:'<div class="emo" style="font-size:52px">🧺 🔥 🌊</div>'},
+    {t:'No deserto, Deus mandou o maná e deu os Dez Mandamentos no monte Sinai. Depois, Josué levou o povo para a terra prometida.',v:'<div class="emo" style="font-size:52px">🍞 ⛰️ 📜</div>'},
+    {t:'Mais tarde Israel teve reis: Saul, Davi (que venceu Golias) e o sábio Salomão, que construiu o templo.',v:'<div class="emo" style="font-size:52px">👑 🪨 🏛️</div>'}],
+   practice:['cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia'],quiz:['cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia','cc1s3Biblia']},
+);
+
 /* ================= MEMÓRIA CC (dinâmica) =================
    As frases vêm da aba privada "MemoriaCC" da planilha da família (material do Classical Conversations
    que eles possuem). NADA desse texto fica no repositório: aqui só está o código que monta as atividades. */
