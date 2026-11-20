@@ -460,7 +460,23 @@ const dataDe=s=>{const[y,m,d]=String(s).split('-').map(Number);return new Date(y
 function mainFor(ds){const dias=Math.round((dataDe(ds)-new Date(1970,0,5))/864e5),w=Math.floor(dias/7)*5+Math.min(((dias%7)+7)%7,5);return w%2===0?'mat':'por'}
 function mainSubj(){const st=LS.get('rot:'+today(),null);return SUBJECTS.find(x=>x.id===((st&&st.main)||mainFor(today())))}
 const PEND_INICIO='2026-11-19';   // as pendências começam a contar a partir deste dia
-function itensDoDia(d){const st=LS.get('rot:'+d,null),it=[{d,id:(st&&st.main)||mainFor(d)}];((st&&st.ops)||[]).forEach(id=>it.push({d,id}));return it}
+/* ROTEIRO IGUAL NOS DOIS APARELHOS: a escolha do dia fica salva no Diario (id rot-AAAA-MM-DD, tipo roteiro),
+   gravada pelo aparelho em que ela começa o roteiro. Sem esse registro, as matérias que ela concluiu no dia ocupam as vagas. */
+const ROT_POOL=['cie','his','geo','fin','log','ing','mem'];
+function rotRemoto(d){const r=LS.get('diario',{})['rot-'+d];return r&&r.tipo==='roteiro'&&Array.isArray(r.ops)?r:null}
+function rotDoDia(d,st,excluir){
+  const rem=rotRemoto(d);if(rem)return {main:rem.main||mainFor(d),ops:rem.ops.slice(0,2)};
+  st=st||LS.get('rot:'+d,null);if(!st)return null;const main=st.main||mainFor(d);
+  if(LS.get('rotMeu:'+d,false))return {main,ops:(st.ops||[]).slice()};
+  const nomeId={};SUBJECTS.forEach(x=>nomeId[x.nome]=x.id);
+  const feitos=[...new Set((S.sessions||[]).filter(z=>z&&z.date===d&&z.phaseReached==='done'&&z.lessonId!=='aquecimento').sort((a,b)=>(a.start||0)-(b.start||0)).map(z=>nomeId[z.subject]))]
+    .filter(id=>id&&ROT_POOL.includes(id)&&id!==main&&!(excluir||[]).includes(id));
+  const ops=[...feitos,...(st.ops||[]).filter(id=>!feitos.includes(id))].slice(0,Math.max(2,(st.ops||[]).length));
+  return {main,ops};
+}
+function rotGravar(){const d=today();if(rotRemoto(d)||LS.get('rotMeu:'+d,false))return;const st=LS.get('rot:'+d,null);if(!st||!st.ops)return;
+  LS.set('rotMeu:'+d,true);try{store.setDiario({id:'rot-'+d,tipo:'roteiro',data:d,ts:Date.now(),main:st.main||mainFor(d),ops:st.ops})}catch(e){console.warn(e)}}
+function itensDoDia(d){const st=rotDoDia(d),it=[{d,id:(st&&st.main)||mainFor(d)}];((st&&st.ops)||[]).forEach(id=>it.push({d,id}));return it}
 function resolverItens(itens){
   const nomeId={};SUBJECTS.forEach(s=>nomeId[s.nome]=s.id);
   const ss=(S.sessions||[]).filter(z=>z&&z.phaseReached==='done'&&z.lessonId!=='aquecimento'&&nomeId[z.subject]).sort((x,y)=>(x.start||0)-(y.start||0));
@@ -490,6 +506,7 @@ function roteiro(){
   const key='rot:'+today();let st=LS.get(key,null);
   if(!st||!st.ops||!st.ops.length){st={ops:rotOpcoes(pendIds)};LS.set(key,st)}
   if(!st.main){st.main=mainFor(today());LS.set(key,st)}   // a matéria principal do dia fica fixa até a meia-noite
+  {const r=rotDoDia(today(),st,pendIds);if(r){st={...st,main:r.main,ops:r.ops};LS.set(key,st)}}
   const main=SUBJECTS.find(x=>x.id===st.main),ops=st.ops.map(id=>SUBJECTS.find(x=>x.id===id)).filter(x=>x&&x.ready);
   const todos=resolverItens([...dPend.flatMap(itensDoDia),{d:today(),id:main.id,hoje:'main'},...ops.map((o,k)=>({d:today(),id:o.id,hoje:k}))]);
   const pend=todos.filter(x=>!x.hoje&&x.hoje!==0&&!x.ok).map(x=>({...x,s:SUBJECTS.find(y=>y.id===x.id)})).filter(x=>x.s);
@@ -937,12 +954,12 @@ const ACT={
   nextq(){if(R.qi<R.items.length-1){R.qi++;renderQ()}else if(R.phase==='practice'&&!R.lesson.treino){R.quizOk=0;beginPhase('quiz')}else finishLesson()},
   again(){if(R.lesson.id==='aquecimento')startWarmup();else if(R.lesson.treino&&typeof roboTreino==='function')roboTreino(R.lesson.skillTreino);else startLessonObj(R.base||R.lesson,R.idx,R.subjName)},
   warmup(){startWarmup()},
-  rot1(){startWarmup()},
-  rot2(){startSubjNext(mainSubj().id)},
-  rotpend(id){startSubjNext(id)},
+  rot1(){rotGravar();startWarmup()},
+  rot2(){rotGravar();startSubjNext(mainSubj().id)},
+  rotpend(id){rotGravar();startSubjNext(id)},
   ccabrir(id){const sb=SUBJECTS.find(x=>x.id==='mem'),L=(sb&&sb.lessons)||[],i=L.findIndex(l=>l.id===id);if(i<0)return;S.subject='mem';startLessonObj(L[i],i,sb.nome)},
   pendzero(){LS.set('pendZero',today());toast('Pendências zeradas. A contagem recomeça hoje.');const y=window.scrollY;renderParent();window.scrollTo(0,y)},
-  rot3(id){const k='rot:'+today(),st=LS.get(k,{});st.escolha=id;LS.set(k,st);startSubjNext(id)},
+  rot3(id){rotGravar();const k='rot:'+today(),st=LS.get(k,{});st.escolha=id;LS.set(k,st);startSubjNext(id)},
   saymissao(){speak('Missão da semana: '+missaoAtual().texto)},
   nk(d){if(d==='ok'){if(!R.numVal){toast('Digite a resposta.');return}const v=+R.numVal,q=R.q,ok=v===q.answer,first=R.tries===0,o=q.options.find(x=>x.v===v);
       handleAnswer(ok,v,ok?null:((o&&o.type)||'errou a conta'),null);if(!ok&&R.phase==='practice'&&first){R.numVal='';drawNum()}return}
