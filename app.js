@@ -84,7 +84,7 @@ const aiOn=()=>!!(API.url&&API.aiReady);
 /* ATUALIZAÇÃO AUTOMÁTICA: o app confere se há versão nova e se atualiza sozinho quando ela não está no meio de uma lição
    (ao abrir, ao voltar para a tela inicial ou ao sair da área dos pais). Se a atualização não pegar, tenta de novo sozinha a cada 90 segundos.
    Ao publicar, mude APP_VERSAO, versao.json e VERSAO no sw.js para o mesmo valor. */
-const APP_VERSAO='trilha-v55';
+const APP_VERSAO='trilha-v56';
 let novaVersao=null;
 async function checarVersao(){
   try{const r=await fetch('versao.json?t='+Date.now(),{cache:'no-store'});const j=await r.json();
@@ -842,7 +842,7 @@ function renderParent(){
   ${ccSectionHTML()}
   ${potesParentHTML()}
   <div class="sec"><h2>Análise com IA</h2>
-    <div class="row"><button class="btn small" data-act="aianalyze">Gerar análise da semana</button><span class="muted" style="font-size:14px">Envia só números e erros, sem o nome dela.</span></div><div id="aianalysis"></div></div>
+    <div class="row"><button class="btn small" data-act="aianalyze">Gerar análise da semana</button><span class="muted" style="font-size:14px">Envia só números e erros, sem o nome dela.</span></div><div id="aianalysis">${aiAnaliseHTML()}</div></div>
   <div class="sec"><h2>Desempenho por habilidade</h2><div class="card tbl">${st.skills.length?`<table><thead><tr><th>Habilidade</th><th>Acerto</th><th>Nível</th><th class="n">Respostas</th><th class="n">Tempo médio</th></tr></thead><tbody>
     ${st.skills.map(s=>`<tr><td>${esc(s.k)}</td><td>${meter(s.pct)}</td><td>${HAB_NIVEL.includes(s.k)?['','🟢 1 (até 30)','🟡 2 (até 60)','🔵 3 (até 100)'][NIVEL[s.k]||1]:'—'}</td><td class="n">${s.n}</td><td class="n">${s.avg} s</td></tr>`).join('')}</tbody></table>`:'<p class="muted">Ainda sem respostas. Os dados aparecem depois da primeira lição.</p>'}</div></div>
   <div class="sec"><h2>Lições</h2><div class="card tbl"><table><thead><tr><th>Lição</th><th>BNCC</th><th>Estrelas</th><th class="n">Tentativas</th><th class="n">Melhor desafio</th></tr></thead><tbody>
@@ -875,8 +875,12 @@ function renderParent(){
     <div class="row"><button class="btn small" data-act="savecon">Salvar e testar conexão</button><span class="muted" style="font-size:14px" id="constat">${API.url?(store.synced?'Conectado'+(API.aiReady?' · IA ativa':' · IA não configurada'):'Configurado, mas sem resposta ainda'):'Não configurado'}</span></div>
     <p class="muted" style="font-size:14px;margin:0">A conexão fica salva só neste aparelho. No tablet dela, use o link de configuração do guia para não precisar digitar.</p></div></div>`;
 }
+/* a análise fica guardada (LS aiAnalise), para não sumir quando a área dos pais se atualiza sozinha a cada 45 s */
+function aiAnaliseHTML(){const a=LS.get('aiAnalise',null);if(!a||!a.html)return '';
+  return a.html+(a.ts?`<p class="muted" style="font-size:13px;margin:6px 0 0">Gerada em ${new Date(a.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</p>`:'')}
 async function aiAnalyze(btn){
-  const out=document.getElementById('aianalysis');btn.disabled=true;
+  const mostra=(h,guardar)=>{if(guardar)LS.set('aiAnalise',{html:h,ts:Date.now()});const o=document.getElementById('aianalysis');if(o)o.innerHTML=guardar?aiAnaliseHTML():h};
+  const out={set innerHTML(h){mostra(h,false)}};btn.disabled=true;
   if(!aiOn()){out.innerHTML='<div class="aibox">A IA ainda não está configurada. Veja o passo do Gemini no guia de instalação.</div>';btn.disabled=false;return}
   const st=stats();
   if(!st.total){out.innerHTML='<div class="aibox">Ainda não há respostas para analisar. Faça uma lição primeiro.</div>';btn.disabled=false;return}
@@ -895,7 +899,7 @@ Dados: ${JSON.stringify(summary)}`;
   out.innerHTML='<div class="aibox">Analisando…</div>';
   try{
     const r=await api('ai',{kind:'analyze',prompt});
-    out.innerHTML='<div class="aibox">'+mdLite(r.text||'')+'</div>';
+    mostra('<div class="aibox">'+mdLite(r.text||'')+'</div>',true);
   }catch(e){out.innerHTML='<div class="aibox">Não foi possível gerar a análise agora'+(e&&e.code==='limite_ia'?' (limite diário de IA atingido)':e&&e.code?' ('+esc(e.code)+')':'')+'.</div>'}
   btn.disabled=false;
 }
